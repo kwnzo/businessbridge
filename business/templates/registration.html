@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="{{ url_for('static', filename = 'styles.css')}}" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap" rel="stylesheet" />
+  <link rel="icon", type="image/png", href="{{ url_for('static', filename='logo.png') }}"> 
+  <title>Бизнес‑Мост | Регистрация</title>
+  <style>
+    body, html {
+      height: 100%;
+      margin: 0;
+      font-family: 'Unbounded', sans-serif;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-image: url('static/authorization.png');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="container-login">
+    <header class="logo">
+      <a class="logo" href="index">
+        <img src="{{ url_for('static', filename='logo.png')}}" alt="logo" width="65" height="65" />
+        Бизнес‑Мост
+      </a>
+    </header>
+    <div class="auth-container">
+      <div class="auth-box">
+        <h2>Регистрация</h2>
+        <form class="auth-form">
+          <div class="input-group row">
+            <div class="FIO">
+              <input type="text" placeholder="Фамилия" required />
+            </div>
+            <div class="FIO">
+              <input type="text" placeholder="Имя" required />
+            </div>
+            <div class="FIO">
+              <input type="text" placeholder="Отчество" required />
+            </div>
+          </div>
+          
+          <div class="input-group">
+            <input type="tel" id="phoneInput" placeholder="Телефон" required />
+            <div class="error-message" id="phoneError"></div>
+          </div>
+          
+          <div class="input-group">
+            <input type="email" placeholder="Электронная почта" required />
+          </div>
+          
+          <div class="input-group row">
+            <div class="input-group">
+              <input type="password" id="passwordInput" placeholder="Придумайте пароль" required />
+              <div class="error-message" id="passwordError"></div>
+            </div>
+            <div class="input-group">
+              <input type="password" id="confirmPasswordInput" placeholder="Подтвердите пароль" required />
+              <div class="error-message" id="confirmPasswordError"></div>
+            </div>
+          </div>
+            
+          <div class="input-group" style="display: flex; justify-content: center;">
+            <label class="terms-of-use">
+              <input type="checkbox" required />
+              Я соглашаюсь с <a href="#">условиями использования</a>
+            </label>
+          </div>
+  
+          <button type="submit" class="login-btn">Зарегистрироваться</button>
+          <p class="register">Уже есть аккаунт? <a href="login">Войти</a></p>
+        </form>
+      </div>
+    </div>
+  </div> 
+
+  <script src="{{ url_for('static', filename='registration-fiels.js')}}"></script>
+  <script src="js/registration-json.js"></script>
+      
+</body>
+</html>
+  

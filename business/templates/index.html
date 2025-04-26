@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="icon", type="image/png", href="{{ url_for('static', filename='logo.png') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap" rel="stylesheet">
+  <title>Бизнес‑Мост</title>
+</head>
+
+<style>
+  .footer-bg {
+    background-image: url('static/footer.jpeg'); 
+    background-size: cover; /* Изображение охватывает весь экран */ 
+    position: absolute; 
+    width: 100%; 
+    height: auto;
+  }
+</style>
+
+<body>
+
+<!-- ======= Header ======= -->
+<header class="header">
+  <div class="header-inner">
+    <!-- logo -->
+    <a class="logo" href="index">
+      <img src="{{ url_for ('static', filename = 'logo.png')}}" alt="logo" width="65" height="65">
+      Бизнес‑Мост
+    </a>
+
+    <!-- Навигация -->
+    <nav class="header-nav">
+      <a href="index">Главная</a>
+      <a href="#">Чат</a>
+      <a href="#">Эксперты</a>
+      <a href="login" class="login-button" id="login-btn">Вход</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page-wrapper">
+
+  <!-- ======= Призыв присоединиться ======= -->
+  <section class="join-us" aria-labelledby="join-us-title">
+    <h2 id="join-us-title">Присоединяйтесь к&nbsp;сообществу</h2>
+    <p>Публикуйте статьи, делитесь опытом и&nbsp;находите <br> деловые контакты</p>
+  </section>
+
+  <!-- ======= О нас ======= -->
+  <section class="about-us" aria-labelledby="about-title">
+    <h2 id="about-title">О&nbsp;нас</h2>
+    <p>Бизнес‑Мост — это платформа для общения, публикации <br>экспертных статей и&nbsp;деловых контактов</p>
+  </section>
+
+  <!-- ======= Публикации ======= -->
+  <section class="publications" aria-labelledby="publications-title">
+    <h2 id="publications-title">Публикации</h2>
+
+    <!-- Контейнер, куда будут добавляться карточки из БД -->
+    <div id="posts-wrapper" class="posts-wrapper">
+      <p>asd</p>
+    </div>
+  </section>
+</div>  
+
+
+<!-- ======= Footer ======= -->
+<footer class="footer">
+  <div>
+  <div class="footer-bg">
+    <!-- Отзыв -->
+    <div class="quote-wrapper">
+      <section class="quote">
+        <blockquote>
+          <p>Отличная&nbsp;платформа&nbsp;для&nbsp;профессионалов!&nbsp;Нашёл <br>много&nbsp;полезной&nbsp;информации&nbsp;и&nbsp;новых&nbsp;партнёров.</p>
+          <cite>Сергей&nbsp;Иванов</cite>
+        </blockquote>
+      </section>
+    </div>
+    <!-- Копирайт -->
+    <p class="copyright">© 2025 Бизнес‑Мост</p><br>
+  </div>
+</footer>
+
+</body>
+</html>
+

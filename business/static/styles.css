@@ -1,0 +1,499 @@
+/* ====== ГЛОБАЛЬНЫЕ СТИЛИ ================================================================================= */
+/* Сброс стандартных отступов и использование border-box для всех элементов */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Основные стили для body */
+
+input, button, select, textarea, a {
+  font-family: 'Unbounded', sans-serif;
+}
+
+body {
+  font-family: "Unbounded", sans-serif; /* Основной шрифт */
+  font-optical-sizing: auto; /* Автоматическая оптимизация шрифта */
+  font-weight: 200; /* Толщина шрифта */
+  font-style: normal; /* Стиль шрифта */
+  line-height: 1.4; /* Межстрочный интервал */
+  color: #ffffff; /* Цвет текста по умолчанию */
+  background: #ffffff; /* Цвет фона */
+  display: flex; /* Используем flexbox */
+  flex-direction: column; /* Колоночная направленность */
+  min-height: 100vh; /* Минимальная высота - весь экран */
+}
+
+/* ====== ОСНОВНАЯ СТРУКТУРА ЛАЙАУТА ======================================================================= */
+/* Обертка для основного контента страницы */
+.page-wrapper {
+  flex: 1; /* Занимает все доступное пространство */
+}
+
+/* ====== ШАПКА САЙТА ====================================================================================== */
+/* Основные стили шапки */
+.header {
+  background: #2E2138; /* Фон шапки */
+  width: 100%; /* На всю ширину */
+  position: sticky; /* Липкая шапка */
+  top: 0; /* Прилипает к верху */
+  z-index: 1000; /* Поверх других элементов */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .1); /* Тень */
+}
+
+/* Внутренняя часть шапки */
+.header-inner {
+  max-width: 1320px; /* Максимальная ширина */
+  margin: 0 auto; /* Центрирование */
+  padding: 6px 24px; /* Внутренние отступы */
+  display: flex; /* Flexbox для выравнивания элементов */
+  align-items: center; /* Выравнивание по центру */
+  justify-content: space-between; /* Распределение пространства */
+}
+
+/* Логотип в шапке */
+.logo {
+  display: flex; /* Flexbox для элементов лого */
+  align-items: center; /* Выравнивание по центру */
+  gap: 12px; /* Расстояние между элементами */
+  text-decoration: none; /* Убираем подчеркивание */
+  font-weight: 600; /* Толщина шрифта */
+  font-size: 20px; /* Размер шрифта */
+  color: #ffffff; /* Цвет текста */
+}
+
+/* Альтернативный вариант логотипа */
+header.logo {
+  font-weight: 600; /* Толщина шрифта */
+  width: 100%; /* На всю ширину */
+  background-color: transparent; /* Прозрачный фон */
+  display: flex; /* Flexbox */
+  justify-content: center; /* Центрирование по горизонтали */
+}
+
+/* ====== НАВИГАЦИЯ ======================================================================================== */
+/* Контейнер навигации */
+.header-nav {
+  display: flex; /* Flexbox для элементов навигации */
+  align-items: center; /* Выравнивание по центру */
+  gap: 30px; /* Расстояние между элементами */
+}
+
+/* Ссылки в навигации */
+.header-nav a {
+  color: #ffffff; /* Цвет текста */
+  text-decoration: none; /* Убираем подчеркивание */
+  transition: opacity .2s ease; /* Плавное изменение прозрачности */
+}
+
+/* Эффект при наведении на ссылки */
+.header-nav a:hover {
+  opacity: .75; /* Уменьшаем прозрачность */
+}
+
+/* ====== КНОПКА ВХОДА ===================================================================================== */
+.login-button {
+  display: inline-block; /* Строчно-блочный элемент */
+  padding: 8px 24px; /* Внутренние отступы */
+  background: #ff4c8d; /* Цвет фона */
+  border-radius: 8px; /* Закругление углов */
+  color: #ffffff; /* Цвет текста */
+  text-decoration: none; /* Убираем подчеркивание */
+  transition: background .2s ease, transform .15s ease; /* Плавные переходы */
+}
+
+/* Эффект при наведении на кнопку */
+.login-button:hover {
+  background: #ff337a; /* Изменение цвета фона */
+  transform: translateY(-2px); /* Сдвиг вверх */
+}
+
+/* Эффект при нажатии на кнопку */
+.login-button:active {
+  transform: translateY(0); /* Возвращаем на место */
+}
+
+/* ====== ГЛАВНЫЙ БАННЕР ================================================================================== */
+.join-us {
+  background: #2F1E60; /* Цвет фона */
+  text-align: center; /* Выравнивание текста по центру */
+  padding: 64px 16px; /* Внутренние отступы */
+}
+
+/* Заголовок баннера */
+.join-us h2 {
+  font-size: 32px; /* Размер шрифта */
+  line-height: 1.2; /* Межстрочный интервал */
+  font-weight: 600; /* Толщина шрифта */
+  color: #ffffff; /* Цвет текста */
+  margin-bottom: 12px; /* Отступ снизу */
+}
+
+/* Текст баннера */
+.join-us p {
+  max-width: 600px; /* Максимальная ширина */
+  margin: 0 auto; /* Центрирование */
+  font-size: 18px; /* Размер шрифта */
+  color: #ffffff; /* Цвет текста */
+}
+
+/* ====== БЛОК "О НАС" ===================================================================================== */
+.about-us {
+  text-align: left; /* Выравнивание текста по левому краю */
+  padding: 40px 200px; /* Внутренние отступы */
+  background: #F4F4F4; /* Цвет фона */
+}
+
+/* Заголовок блока */
+.about-us h2 {
+  font-size: 26px; /* Размер шрифта */
+  font-weight: 600; /* Толщина шрифта */
+  color: #111111; /* Цвет текста */
+  margin-bottom: 12px; /* Отступ снизу */
+}
+
+/* Текст блока */
+.about-us p {
+  font-size: 18px; /* Размер шрифта */
+  line-height: 1.5; /* Межстрочный интервал */
+  font-weight: 400; /* Толщина шрифта */
+  color: #111111; /* Цвет текста */
+  padding-left: 55px; /* Отступ слева */
+}
+
+/* ====== БЛОК ПУБЛИКАЦИЙ ================================================================================== */
+.publications {
+  margin: auto 0; /* Вертикальное центрирование */
+  background: white; /* Цвет фона */
+  padding: 40px 200px; /* Внутренние отступы */
+}
+
+/* Заголовок блока публикаций */
+.publications h2 {
+  font-size: 28px; /* Размер шрифта */
+  font-weight: 600; /* Толщина шрифта */
+  color: #111111; /* Цвет текста */
+}
+
+/* Обертка для карточек публикаций */
+.posts-wrapper {
+  display: grid; /* Используем grid */
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Адаптивные колонки */
+  gap: 32px; /* Расстояние между элементами */
+  color: #111111; /* Цвет текста */
+}
+
+/* Карточка публикации */
+.post-card {
+  background: #d9d9d9; /* Цвет фона */
+  border-radius: 12px; /* Закругление углов */
+  min-height: 180px; /* Минимальная высота */
+  display: flex; /* Flexbox */
+  flex-direction: column; /* Колоночная направленность */
+  justify-content: flex-end; /* Выравнивание внизу */
+  padding: 16px; /* Внутренние отступы */
+  transition: box-shadow .2s ease; /* Плавная тень */
+}
+
+/* Эффект при наведении на карточку */
+.post-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .12); /* Тень */
+}
+
+/* Заголовок публикации */
+.post-title {
+  font-size: 18px; /* Размер шрифта */
+  font-weight: 600; /* Толщина шрифта */
+  margin-bottom: 4px; /* Отступ снизу */
+}
+
+/* Краткое описание публикации */
+.post-excerpt {
+  font-size: 15px; /* Размер шрифта */
+  line-height: 1.4; /* Межстрочный интервал */
+  margin-bottom: 8px; /* Отступ снизу */
+}
+
+/* Мета-информация публикации */
+.post-meta {
+  font-size: 14px; /* Размер шрифта */
+  display: flex; /* Flexbox */
+  justify-content: space-between; /* Распределение пространства */
+  align-items: center; /* Выравнивание по центру */
+}
+
+/* Счетчик лайков */
+.post-likes {
+  font-weight: 500; /* Толщина шрифта */
+  color: #ff4c8d; /* Цвет текста */
+}
+
+/* ====== БЛОК ЦИТАТЫ ====================================================================================== */
+.quote {
+  background: #ffffff; /* Цвет фона */
+  text-align: left; /* Выравнивание текста по левому краю */
+}
+
+/* Обертка для цитаты */
+.quote-wrapper {
+  background: #ffffff; /* Цвет фона */
+  max-width: 875px; /* Максимальная ширина */
+  margin: 72px auto; /* Внешние отступы и центрирование */
+  padding: 32px 24px; /* Внутренние отступы */
+  border-radius: 16px; /* Закругление углов */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Тень */
+}
+
+/* Стили для цитаты */
+.quote blockquote {
+  max-width: 720px; /* Максимальная ширина */
+  margin: 0 auto; /* Центрирование */
+  font-size: 20px; /* Размер шрифта */
+  line-height: 1.5; /* Межстрочный интервал */
+  color: #111111; /* Цвет текста */
+  font-weight: 600; /* Толщина шрифта */
+  position: relative; /* Относительное позиционирование */
+}
+
+/* Декоративные кавычки */
+.quote blockquote::before,
+.quote blockquote::after {
+  content: "“"; /* Символ кавычки */
+  font-size: 200px; /* Размер кавычек */
+  color: #2F1E60; /* Цвет кавычек */
+  position: absolute; /* Абсолютное позиционирование */
+  top: -65px; /* Позиционирование сверху */
+  left: -30px; /* Позиционирование слева */
+}
+
+/* Текст цитаты */
+.quote p {
+  font-size: 18px; /* Размер шрифта */
+  margin: 0px 120px; /* Внешние отступы */
+}
+
+/* Автор цитаты */
+.quote cite {
+  display: block; /* Блочный элемент */
+  font-size: 16px; /* Размер шрифта */
+  margin-top: 18px; /* Отступ сверху */
+  font-weight: 200; /* Толщина шрифта */
+  color: #7A7A7A; /* Цвет текста */
+  margin: 15px 0px 0px 120px; /* Внешние отступы */
+}
+
+
+/* ====== ПОДВАЛ САЙТА ===================================================================================== */
+.footer {
+  background-size: cover; /* Размер фона */
+  background-position: center; /* Позиция фона */
+  color: #dadada; /* Цвет текста */
+  text-align: center; /* Выравнивание по центру */
+  margin-top: auto; /* Прижимаем к низу */
+  width: 100%; /* На всю ширину */
+}
+
+/* Внутренняя часть подвала */
+.footer-bg {
+  margin: 0 auto; /* Центрирование */
+  padding: 0 20px; /* Внутренние отступы */
+}
+
+/* Текст копирайта */
+.copyright {
+  margin-top: 20px; /* Отступ сверху */
+  font-size: 14px; /* Размер шрифта */
+}
+
+    /* ====== ФОРМА АВТОРИЗАЦИИ ================================================================================ */
+    /* Контейнер для формы авторизации */
+    .auth-container {
+      flex: 1; /* Занимает все доступное пространство */
+      display: flex; /* Flexbox */
+      justify-content: center; /* Центрирование по горизонтали */
+      align-items: center; /* Центрирование по вертикали */
+      width: 100%; /* На всю ширину */
+      padding: 0px 16px; /* Внутренние отступы */
+      flex-wrap: wrap; /* Перенос на новую строку */
+      align-content: flex-start; /* Выравнивание содержимого */
+    }
+
+    /* Контейнер для формы входа */
+    .container-login {
+      width: 650px; /* Ширина контейнера */
+    }
+
+    /* Блок формы авторизации */
+    .auth-box {
+      background-color: #ffffff; /* Цвет фона */
+      color: #000000; /* Цвет текста */
+      border-radius: 35px; /* Закругление углов */
+      padding: 40px 30px; /* Внутренние отступы */
+      width: 100%; /* На всю ширину */
+      max-width: 550px; /* Максимальная ширина */
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2); /* Тень */
+      margin-bottom: 45px;
+    }
+
+    /* Заголовок формы */
+    .auth-box h2 {
+      text-align: center; /* Выравнивание по центру */
+      font-size: 28px; /* Размер шрифта */
+      font-weight: 600; /* Толщина шрифта */
+      margin-bottom: 24px; /* Отступ снизу */
+    }
+
+    /* Переключатель типа формы */
+    .auth-toggle {
+      display: flex; /* Flexbox */
+      justify-content: center; /* Центрирование по горизонтали */
+      margin-bottom: 24px; /* Отступ снизу */
+      gap: 30px; /* Расстояние между элементами */
+    }
+
+    /* Кнопки переключателя */
+    .auth-toggle button {
+      padding: 10px 20px; /* Внутренние отступы */
+      border: 2px solid #ccc; /* Граница */
+      background-color: #635c6c; /* Прозрачный фон */
+      border-radius: 15px; /* Закругление углов */
+      font-size: 16px; /* Размер шрифта */
+      cursor: pointer; /* Курсор-указатель */
+      transition: all 0.3s ease; /* Плавные переходы */
+      color: #ffffff; /* Цвет текста */
+      width: 170px;
+      font-weight: 600;
+    }
+
+    /* Активная кнопка переключателя */
+    .auth-toggle button.active,
+    .auth-toggle button:hover {
+      background-color: #2E2138; /* Цвет фона */
+      color: #fff; /* Цвет текста */
+      border-color: #2E2138; /* Цвет границы */
+    }
+
+    /* ====== ФОРМА ============================================================================================ */
+    /* Общие стили формы */
+    .auth-form {
+      display: flex; /* Flexbox */
+      flex-direction: column; /* Колоночная направленность */
+      gap: 16px; /* Расстояние между элементами */
+    }
+
+    /* Группа полей ввода */
+    .input-group {
+      position: relative; /* Относительное позиционирование */
+    }
+
+    /* Иконка в поле ввода */
+    .input-group .icon {
+      position: absolute; /* Абсолютное позиционирование */
+      top: 50%; /* Позиционирование сверху */
+      left: 12px; /* Позиционирование слева */
+      transform: translateY(-50%); /* Центрирование по вертикали */
+      width: 20px; /* Ширина */
+      height: 20px; /* Высота */
+      opacity: 0.7; /* Прозрачность */
+    }
+
+    /* Поле ввода */
+    .input-group input {
+      width: 100%; /* На всю ширину */
+      padding: 12px 12px 12px 12px; /* Внутренние отступы */
+      border: 1px solid #bfbfbf; /* Граница */
+      border-radius: 8px; /* Закругление углов */
+      font-size: 15px; /* Размер шрифта */
+      font-weight: 300;
+    }
+
+    /* Стили для строки с ФИО */
+    .input-group.row {
+      display: flex;
+      gap: 10px; /* Расстояние между полями */
+      justify-content: space-between;
+    }
+
+    .input-group.row .FIO {
+      flex: 1; /* Равномерное распределение пространства */
+    }
+
+    .input-group.row input {
+      width: 100%;
+      padding: 12px; /* Убираем левый отступ, так как иконок нет */
+    }
+
+    /* Чекбокс "Запомнить меня" */
+    .save-login {
+      display: flex; /* Flexbox */
+      gap: 8px; /* Расстояние между элементами */
+      font-size: 14px; /* Размер шрифта */
+      color: #444; /* Цвет текста */
+      justify-content: center;
+    }
+
+    /* Кнопка отправки формы */
+    .login-btn {
+      background-color: #2E2138; /* Цвет фона */
+      color: #fff; /* Цвет текста */
+      font-size: 16px; /* Размер шрифта */
+      padding: 12px; /* Внутренние отступы */
+      border: none; /* Убираем границу */
+      border-radius: 15px; /* Закругление углов */
+      cursor: pointer; /* Курсор-указатель */
+      transition: background 0.3s ease; /* Плавное изменение фона */
+      font-weight: 600;
+    }
+
+    /* Эффект при наведении на кнопку */  
+    .login-btn:hover {
+      background-color: #2E2138; /* Цвет фона */
+    }
+
+    /* Ссылка на регистрацию */
+    .register {
+      color: #111111; /* Цвет текста */
+      text-align: center; /* Выравнивание по центру */
+      font-size: 12px; /* Размер шрифта */
+      font-weight: 200; /* Толщина шрифта */
+    } 
+
+    /* Стили для ссылки */
+    .register a {
+      text-decoration: none; /* Убираем подчеркивание */  
+      color: #111111; /* Цвет текста */
+    }
+
+    /* Эффект при наведении на ссылку */
+    .register a:hover {
+      text-decoration: underline; /* Подчеркивание */
+    }
+
+    .terms-of-use {
+      display: flex; /* Размещаем элементы в строку */
+      align-items: center; /* Выравниваем по вертикали по центру */
+      justify-content: center; /* Центрируем по горизонтали */
+      font-size: 14px; /* Размер шрифта */
+      color: #444; /* Цвет текста */
+      cursor: pointer; /* Курсор-указатель при наведении */
+      white-space: nowrap; /* Запрещаем перенос строк */
+    }
+
+    .terms-of-use input[type="checkbox"] {
+      margin: 0 5px 0 0; /* Отступ только справа от чекбокса */
+    }
+
+    .terms-of-use a {
+      text-decoration: none; /* Убираем подчеркивание */
+      margin-left: 3px; /* Небольшой отступ после текста */
+    }
+
+    .terms-of-use a:hover {
+      text-decoration: underline; /* Подчеркивание при наведении */
+    }
+
+    .error {
+      border-color: #ff0000 !important;
+      box-shadow: 0 0 5px rgba(255, 0, 0, 0.3);
+    }
