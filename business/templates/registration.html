@@ -9,218 +9,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap" rel="stylesheet">
   <link rel="icon", type="image/png", href="{{ url_for('static', filename='favicon.png') }}">
   <title>Бизнес‑Мост | Регистрация</title>
-  <style>
-    body, html {
-      height: 100%;
-      margin: 0;
-      font-family: 'Unbounded', sans-serif;
-    }
-
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background-image: url("{{ url_for('static', filename='authorization.png') }}");
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-    }
-
-    
-    /* ====== ФОРМА АВТОРИЗАЦИИ ================================================================================ */
-    /* Контейнер для формы авторизации */
-    .auth-container {
-      flex: 1; /* Занимает все доступное пространство */
-      display: flex; /* Flexbox */
-      justify-content: center; /* Центрирование по горизонтали */
-      align-items: center; /* Центрирование по вертикали */
-      width: 100%; /* На всю ширину */
-      padding: 0px 16px; /* Внутренние отступы */
-      flex-wrap: wrap; /* Перенос на новую строку */
-      align-content: flex-start; /* Выравнивание содержимого */
-    }
-
-    /* Контейнер для формы входа */
-    .container-login {
-      width: 650px; /* Ширина контейнера */
-    }
-
-    /* Блок формы авторизации */
-    .auth-box {
-      background-color: #ffffff; /* Цвет фона */
-      color: #000000; /* Цвет текста */
-      border-radius: 35px; /* Закругление углов */
-      padding: 40px 30px; /* Внутренние отступы */
-      width: 100%; /* На всю ширину */
-      max-width: 550px; /* Максимальная ширина */
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2); /* Тень */
-      margin-bottom: 45px;
-    }
-
-    /* Заголовок формы */
-    .auth-box h2 {
-      text-align: center; /* Выравнивание по центру */
-      font-size: 28px; /* Размер шрифта */
-      font-weight: 600; /* Толщина шрифта */
-      margin-bottom: 24px; /* Отступ снизу */
-    }
-
-    /* Переключатель типа формы */
-    .auth-toggle {
-      display: flex; /* Flexbox */
-      justify-content: center; /* Центрирование по горизонтали */
-      margin-bottom: 24px; /* Отступ снизу */
-      gap: 30px; /* Расстояние между элементами */
-    }
-
-    /* Кнопки переключателя */
-    .auth-toggle button {
-      padding: 10px 20px; /* Внутренние отступы */
-      border: 2px solid #ccc; /* Граница */
-      background-color: #635c6c; /* Прозрачный фон */
-      border-radius: 15px; /* Закругление углов */
-      font-size: 16px; /* Размер шрифта */
-      cursor: pointer; /* Курсор-указатель */
-      transition: all 0.3s ease; /* Плавные переходы */
-      color: #ffffff; /* Цвет текста */
-      width: 170px;
-      font-weight: 600;
-    }
-
-    /* Активная кнопка переключателя */
-    .auth-toggle button.active,
-    .auth-toggle button:hover {
-      background-color: #2E2138; /* Цвет фона */
-      color: #fff; /* Цвет текста */
-      border-color: #2E2138; /* Цвет границы */
-    }
-
-    /* ====== ФОРМА ============================================================================================ */
-    /* Общие стили формы */
-    .auth-form {
-      display: flex; /* Flexbox */
-      flex-direction: column; /* Колоночная направленность */
-      gap: 16px; /* Расстояние между элементами */
-    }
-
-    /* Группа полей ввода */
-    .input-group {
-      position: relative; /* Относительное позиционирование */
-    }
-
-    /* Иконка в поле ввода */
-    .input-group .icon {
-      position: absolute; /* Абсолютное позиционирование */
-      top: 50%; /* Позиционирование сверху */
-      left: 12px; /* Позиционирование слева */
-      transform: translateY(-50%); /* Центрирование по вертикали */
-      width: 20px; /* Ширина */
-      height: 20px; /* Высота */
-      opacity: 0.7; /* Прозрачность */
-    }
-
-    /* Поле ввода */
-    .input-group input {
-      width: 100%; /* На всю ширину */
-      padding: 12px 12px 12px 12px; /* Внутренние отступы */
-      border: 1px solid #bfbfbf; /* Граница */
-      border-radius: 8px; /* Закругление углов */
-      font-size: 15px; /* Размер шрифта */
-      font-weight: 300;
-    }
-
-    /* Стили для строки с ФИО */
-    .input-group.row {
-      display: flex;
-      gap: 10px; /* Расстояние между полями */
-      justify-content: space-between;
-    }
-
-    .input-group.row .FIO {
-      flex: 1; /* Равномерное распределение пространства */
-    }
-
-    .input-group.row input {
-      width: 100%;
-      padding: 12px; /* Убираем левый отступ, так как иконок нет */
-    }
-
-    /* Чекбокс "Запомнить меня" */
-    .save-login {
-      display: flex; /* Flexbox */
-      gap: 8px; /* Расстояние между элементами */
-      font-size: 14px; /* Размер шрифта */
-      color: #444; /* Цвет текста */
-      justify-content: center;
-    }
-
-    /* Кнопка отправки формы */
-    .login-btn {
-      background-color: #2E2138; /* Цвет фона */
-      color: #fff; /* Цвет текста */
-      font-size: 16px; /* Размер шрифта */
-      padding: 12px; /* Внутренние отступы */
-      border: none; /* Убираем границу */
-      border-radius: 15px; /* Закругление углов */
-      cursor: pointer; /* Курсор-указатель */
-      transition: background 0.3s ease; /* Плавное изменение фона */
-      font-weight: 600;
-    }
-
-    /* Эффект при наведении на кнопку */  
-    .login-btn:hover {
-      background-color: #2E2138; /* Цвет фона */
-    }
-
-    /* Ссылка на регистрацию */
-    .register {
-      color: #111111; /* Цвет текста */
-      text-align: center; /* Выравнивание по центру */
-      font-size: 12px; /* Размер шрифта */
-      font-weight: 200; /* Толщина шрифта */
-    } 
-
-    /* Стили для ссылки */
-    .register a {
-      text-decoration: none; /* Убираем подчеркивание */  
-      color: #111111; /* Цвет текста */
-    }
-
-    /* Эффект при наведении на ссылку */
-    .register a:hover {
-      text-decoration: underline; /* Подчеркивание */
-    }
-
-    .terms-of-use {
-      display: flex; /* Размещаем элементы в строку */
-      align-items: center; /* Выравниваем по вертикали по центру */
-      justify-content: center; /* Центрируем по горизонтали */
-      font-size: 14px; /* Размер шрифта */
-      color: #444; /* Цвет текста */
-      cursor: pointer; /* Курсор-указатель при наведении */
-      white-space: nowrap; /* Запрещаем перенос строк */
-    }
-
-    .terms-of-use input[type="checkbox"] {
-      margin: 0 5px 0 0; /* Отступ только справа от чекбокса */
-    }
-
-    .terms-of-use a {
-      text-decoration: none; /* Убираем подчеркивание */
-      margin-left: 3px; /* Небольшой отступ после текста */
-    }
-
-    .terms-of-use a:hover {
-      text-decoration: underline; /* Подчеркивание при наведении */
-    }
-
-    .error {
-      border-color: #ff0000 !important;
-      box-shadow: 0 0 5px rgba(255, 0, 0, 0.3);
-    }
-  </style>
 </head>
-<body>
+<body class="registration-page">
   <div class="container-login">
     <header class="logo">
       <a class="logo" href="index">
@@ -231,8 +21,8 @@
     <div class="auth-container">
       <div class="auth-box">
         <h2>Регистрация</h2>
-        <form class="auth-form">
-          <div class="input-group row">
+        <form class="auth-form-registration">
+          <div class="input-group-registration row">
             <div class="FIO">
               <input type="text" placeholder="Фамилия" required />
             </div>
@@ -244,35 +34,35 @@
             </div>
           </div>
           
-          <div class="input-group">
+          <div class="input-group-registration">
             <input type="tel" id="phoneInput" placeholder="Телефон" required />
             <div class="error-message" id="phoneError"></div>
           </div>
           
-          <div class="input-group">
+          <div class="input-group-registration">
             <input type="email" placeholder="Электронная почта" required />
           </div>
           
-          <div class="input-group row">
-            <div class="input-group">
+          <div class="input-group-registration row">
+            <div class="input-group-registration">
               <input type="password" id="passwordInput" placeholder="Придумайте пароль" required />
               <div class="error-message" id="passwordError"></div>
             </div>
-            <div class="input-group">
+            <div class="input-group-registration">
               <input type="password" id="confirmPasswordInput" placeholder="Подтвердите пароль" required />
               <div class="error-message" id="confirmPasswordError"></div>
             </div>
           </div>
             
-          <div class="input-group" style="display: flex; justify-content: center;">
+          <div class="input-group-registration" style="display: flex; justify-content: center;">
             <label class="terms-of-use">
               <input type="checkbox" required />
               Я соглашаюсь с <a href="#">условиями использования</a>
             </label>
           </div>
   
-          <button type="submit" class="login-btn">Зарегистрироваться</button>
-          <p class="register">Уже есть аккаунт? <a href="login">Войти</a></p>
+          <button type="submit" class="registration-btn">Зарегистрироваться</button>
+          <p class="login">Уже есть аккаунт? <a href="login">Войти</a></p>
         </form>
       </div>
     </div>
