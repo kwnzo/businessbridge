@@ -1,7 +1,15 @@
 import aiomysql
 import asyncio
 import logging
+import json
 
+with open('data/config.json', 'r') as f:
+    config = json.load(f)
+
+password = config['password']
+user = config['user']
+db = config['db']
+host = config['host']
 
 logger = logging.getLogger(__name__)
 loop = asyncio.get_event_loop()
@@ -9,10 +17,10 @@ loop = asyncio.get_event_loop()
 async def init_db():
     try:
         conn = await aiomysql.connect(
-            user = 'root',
-            password='t7Er3kOQkid2D!',
-            db = 'business',
-            host = '127.0.0.1'
+            user = user,
+            password=password,
+            db = db,
+            host = host
             )
         logging.info('database were successfully connected')
         async with conn.cursor() as cursor:
