@@ -283,7 +283,7 @@ header.logo {
 }
 
 /* ====== РЕГИСТРАЦИЯ/ВХОД ===================================================================================== */
-
+.confirm-page,
 .login-page,
 .registration-page {
   display: flex;
@@ -437,7 +437,7 @@ header.logo {
     .auth-box {
       background-color: #ffffff; /* Цвет фона */
       color: #000000; /* Цвет текста */
-      border-radius: 35px; /* Закругление углов */
+      border-radius: 25px; /* Закругление углов */
       padding: 40px 30px; /* Внутренние отступы */
       width: 100%; /* На всю ширину */
       max-width: 550px; /* Максимальная ширина */
@@ -506,9 +506,135 @@ header.logo {
       text-decoration: underline; /* Подчеркивание при наведении */
     }
 
+    
+
     .error {
       border-color: #ff0000 !important;
       box-shadow: 0 0 5px rgba(255, 0, 0, 0.3);
+    }
+
+
+    .error-message {
+      color: #ff0000;
+      font-size: 0.8em;
+      margin-top: 5px;
+    }
+    
+    .input-group-registration .error {
+        border-color: #ff0000;
+    }
+    .custom-modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .modal-content {
+      background-color: #fefefe;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      overflow: hidden;
+    }
+    
+    .modal-body {
+      padding: 30px 20px;
+      text-align: center;
+    }
+    
+    #modal-message {
+      margin: 0;
+      font-size: 16px;
+      color: #333;
+      line-height: 1.5;
+    }
+    
+    .modal-footer {
+      padding: 15px;
+      text-align: center;
+      border-top: 1px solid #eee;
+    }
+    
+    .modal-close-btn {
+      background-color: #2E2138;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.3s;
+    }
+    
+    .modal-close-btn:hover {
+      background-color: #2E2138;
+    }
+    
+    /* Анимация появления */
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .custom-modal.show {
+      display: flex;
+      animation: modalFadeIn 0.3s ease-out;
+    }
+
+
+    /* ====== Подтверждение регистрации ===================================================================================== */
+    .confirm-page {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      text-align: center;
+    }
+    
+    .confirmation-container {
+      background-color: white;
+      padding: 40px;
+      border-radius: 25px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      max-width: 500px;
+      width: 90%;
+    }
+    
+    .confirmation-container h1 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+    
+    .confirmation-container p {
+      color: #666;
+      margin-bottom: 30px;
+      line-height: 1.6;
+    }
+    
+    .countdown {
+      color: #2E2138;
+      font-weight: bold;
+    }
+    
+    .btn {
+      background-color: #2E2138;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 15px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s;
+      text-decoration: none;
+      display: inline-block;
     }
     
 

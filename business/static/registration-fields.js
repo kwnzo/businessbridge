@@ -1,9 +1,52 @@
 document.addEventListener('DOMContentLoaded', function() {
+  // Создаем модальное окно
+  const modal = document.createElement('div');
+  modal.className = 'custom-modal';
+  modal.innerHTML = `
+    <div class="modal-content">
+      <div class="modal-body">
+        <p id="modal-message"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-close-btn">OK</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  // Элементы формы
   const registrationForm = document.getElementById('registrationForm');
   const phoneInput = document.getElementById('phoneInput');
   const passwordInput = document.getElementById('passwordInput');
   const confirmPasswordInput = document.getElementById('confirmPasswordInput');
+  const termsCheckbox = document.getElementById('termsCheckbox');
   const registerBtn = document.getElementById('registerBtn');
+  const modalCloseBtn = document.querySelector('.modal-close-btn');
+
+  /* ========== МОДАЛЬНЫЕ ОКНА ========== */
+  function showModal(message) {
+    const modalMessage = document.getElementById('modal-message');
+    modalMessage.textContent = message;
+    modal.style.display = 'flex'; // Используем flex для центрирования
+    
+    // Центрируем текст сообщения
+    modalMessage.style.textAlign = 'center';
+  }
+
+  // Закрытие модального окна
+  function closeModal() {
+    modal.style.display = 'none';
+  }
+
+  modalCloseBtn.addEventListener('click', closeModal);
+  
+  // Закрытие при клике вне модального окна
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) {
+      closeModal();
+    }
+  });
+
 
   /* ========== МАСКА ТЕЛЕФОНА ========== */
   function applyPhoneMask(input) {
@@ -51,7 +94,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   applyPhoneMask(phoneInput);
 
-  /* ========== ВАЛИДАЦИЯ ПАРОЛЯ (8-20 СИМВОЛОВ) ========== */
+  /* ========== ВАЛИДАЦИЯ ПОЛЕЙ ========== */
   function validatePassword(password) {
     const errorElement = document.getElementById('passwordError');
     
@@ -67,7 +110,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  /* ========== ПРОВЕРКА СОВПАДЕНИЯ ПАРОЛЕЙ ========== */
   function checkPasswordsMatch() {
     const password = passwordInput.value;
     const confirmPassword = confirmPasswordInput.value;
@@ -82,7 +124,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  /* ========== ПРОВЕРКА ТЕЛЕФОНА ========== */
   function validatePhone() {
     const phoneValue = phoneInput.value.replace(/\D/g, '');
     const errorElement = document.getElementById('phoneError');
@@ -96,65 +137,55 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  /* ========== ПРОВЕРКА ВСЕХ ПОЛЕЙ ========== */
   function validateAllFields() {
-    let allValid = true;
-    
     // Проверка ФИО
     const nameFields = ['lastName', 'firstName', 'middleName'];
-    nameFields.forEach(id => {
+    for (const id of nameFields) {
       const field = document.getElementById(id);
       if (!field.value.trim()) {
-        allValid = false;
+        showModal('Пожалуйста, заполните все обязательные поля правильно');
         field.classList.add('error');
-      } else {
-        field.classList.remove('error');
+        return false;
       }
-    });
+    }
 
     // Проверка email
     const email = document.getElementById('email');
     if (!email.value.trim()) {
-      allValid = false;
+      showModal('Пожалуйста, заполните все обязательные поля правильно');
       email.classList.add('error');
-    } else {
-      email.classList.remove('error');
+      return false;
     }
 
     // Проверка телефона
     if (!validatePhone()) {
-      allValid = false;
+      showModal('Пожалуйста, заполните все обязательные поля правильно');
       phoneInput.classList.add('error');
-    } else {
-      phoneInput.classList.remove('error');
+      return false;
     }
 
     // Проверка пароля
     if (!validatePassword(passwordInput.value)) {
-      allValid = false;
+      showModal('Пожалуйста, заполните все обязательные поля правильно');
       passwordInput.classList.add('error');
-    } else {
-      passwordInput.classList.remove('error');
+      return false;
     }
 
     // Проверка подтверждения пароля
     if (!checkPasswordsMatch()) {
-      allValid = false;
+      showModal('Пожалуйста, заполните все обязательные поля правильно');
       confirmPasswordInput.classList.add('error');
-    } else {
-      confirmPasswordInput.classList.remove('error');
+      return false;
     }
 
     // Проверка чекбокса
-    const termsCheckbox = document.getElementById('termsCheckbox');
     if (!termsCheckbox.checked) {
-      allValid = false;
+      showModal('Необходимо принять условия использования');
       termsCheckbox.classList.add('error');
-    } else {
-      termsCheckbox.classList.remove('error');
+      return false;
     }
 
-    return allValid;
+    return true;
   }
 
   /* ========== ОБРАБОТЧИКИ СОБЫТИЙ ========== */
@@ -167,27 +198,33 @@ document.addEventListener('DOMContentLoaded', function() {
   confirmPasswordInput.addEventListener('input', checkPasswordsMatch);
   phoneInput.addEventListener('input', validatePhone);
 
-  // Обработка клика по кнопке регистрации
-  registerBtn.addEventListener('click', function(e) {
-    e.preventDefault();
-    
-    if (validateAllFields()) {
-      // Все поля валидны - перенаправляем
-      window.location.href = 'registration/confirm';
-    } else {
-      // Показываем общее сообщение об ошибке
-      alert('Пожалуйста, заполните все обязательные поля правильно.');
-    }
+  // Очистка ошибок при фокусе
+  const allInputs = registrationForm.querySelectorAll('input');
+  allInputs.forEach(input => {
+    input.addEventListener('focus', function() {
+      this.classList.remove('error');
+      const errorElement = this.nextElementSibling;
+      if (errorElement && errorElement.classList.contains('error-message')) {
+        errorElement.textContent = '';
+      }
+    });
   });
 
-  // Обработка отправки формы (на случай, если пользователь нажмет Enter)
+  // Обработка отправки формы
   registrationForm.addEventListener('submit', function(e) {
     e.preventDefault();
     
     if (validateAllFields()) {
       window.location.href = 'registration/confirm';
-    } else {
-      alert('Пожалуйста, заполните все обязательные поля правильно.');
+    }
+  });
+
+  // Обработка клика по кнопке
+  registerBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    
+    if (validateAllFields()) {
+      window.location.href = 'registration/confirm';
     }
   });
 });
