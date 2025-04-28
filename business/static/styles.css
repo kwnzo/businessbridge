@@ -106,7 +106,6 @@ header.logo {
 /* Эффект при наведении на кнопку */
 .login-button:hover {
   background: #ff337a; /* Изменение цвета фона */
-  transform: translateY(-2px); /* Сдвиг вверх */
 }
 
 /* Эффект при нажатии на кнопку */

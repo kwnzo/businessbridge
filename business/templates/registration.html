@@ -9,6 +9,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap" rel="stylesheet">
   <link rel="icon", type="image/png", href="{{ url_for('static', filename='favicon.png') }}">
   <title>Бизнес‑Мост | Регистрация</title>
+  <style>
+.error-message {
+    color: #ff0000;
+    font-size: 0.8em;
+    margin-top: 5px;
+}
+
+.input-group-registration .error {
+    border-color: #ff0000;
+}
+  </style>
 </head>
 <body class="registration-page">
   <div class="container-login">
@@ -21,16 +32,16 @@
     <div class="auth-container">
       <div class="auth-box">
         <h2>Регистрация</h2>
-        <form class="auth-form-registration">
+        <form class="auth-form-registration" id="registrationForm">
           <div class="input-group-registration row">
             <div class="FIO">
-              <input type="text" placeholder="Фамилия" required />
+              <input type="text" id="lastName" placeholder="Фамилия" required />
             </div>
             <div class="FIO">
-              <input type="text" placeholder="Имя" required />
+              <input type="text" id="firstName" placeholder="Имя" required />
             </div>
             <div class="FIO">
-              <input type="text" placeholder="Отчество" required />
+              <input type="text" id="middleName" placeholder="Отчество" required />
             </div>
           </div>
           
@@ -40,11 +51,12 @@
           </div>
           
           <div class="input-group-registration">
-            <input type="email" placeholder="Электронная почта" required />
+            <input type="email" id="email" placeholder="Электронная почта" required />
           </div>
           
           <div class="input-group-registration row">
             <div class="input-group-registration">
+              
               <input type="password" id="passwordInput" placeholder="Придумайте пароль" required />
               <div class="error-message" id="passwordError"></div>
             </div>
@@ -56,12 +68,12 @@
             
           <div class="input-group-registration" style="display: flex; justify-content: center;">
             <label class="terms-of-use">
-              <input type="checkbox" required />
+              <input type="checkbox" id="termsCheckbox" required />
               Я соглашаюсь с <a href="#">условиями использования</a>
             </label>
           </div>
   
-          <button type="submit" class="registration-btn">Зарегистрироваться</button>
+          <button type="submit" class="registration-btn" id="registerBtn">Зарегистрироваться</button>
           <p class="login">Уже есть аккаунт? <a href="login">Войти</a></p>
         </form>
       </div>
@@ -70,7 +82,6 @@
 
   <script src=" {{ url_for('static', filename='registration-fields.js') }} "></script>
   <script src=" {{ url_for('static', filename='registration-json.js') }} "></script>
-      
+  
 </body>
 </html>
-  
