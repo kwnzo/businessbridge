@@ -21,7 +21,8 @@
     <div class="auth-container">
       <div class="auth-box">
         <h2>Регистрация</h2>
-        <form class="auth-form-registration" id="registrationForm">
+        <form class="auth-form-registration" id="registrationForm" method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="input-group-registration row">
             <div class="FIO">
               <input type="text" id="lastName" name="lastNames" placeholder="Фамилия" required /> <!-- Добавлено name -->
@@ -68,7 +69,6 @@
     </div>
   </div> 
 
-  <script src=" {{ url_for('static', filename='registration-fields.js') }} "></script>
   <script src=" {{ url_for('static', filename='registration-json.js') }} "></script>
   
 </body>

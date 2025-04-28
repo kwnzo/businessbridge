@@ -1,26 +1,36 @@
+
+from werkzeug.security import generate_password_hash
+import re
+from passlib.hash import bcrypt
 import aiomysql
 import asyncio
 import logging
 import json
+import random
 
-with open('data/config.json', 'r') as f:
+with open('data/config.json', 'r')  as f:
     config = json.load(f)
 
-password = config['password']
+dbpassword = config['password']
 user = config['user']
 db = config['db']
 host = config['host']
+port = config['port']
+print(dbpassword, user, db, host, port)
 
-logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 loop = asyncio.get_event_loop()
 
+
 async def init_db():
+
     try:
         conn = await aiomysql.connect(
             user = user,
-            password=password,
+            password=dbpassword,
             db = db,
-            host = host
+            host = host,
+            port = port
             )
         logging.info('database were successfully connected')
         async with conn.cursor() as cursor:
@@ -33,7 +43,7 @@ async def init_db():
                 user_like_creator BIGINT NOT NULL DEFAULT 0,
                 user_phone VARCHAR(20) NOT NULL UNIQUE, 
                 user_email VARCHAR(100) NOT NULL UNIQUE,
-                user_passport VARCHAR(50) UNIQUE,
+                user_passport VARCHAR(50) UNIQUE DEFAULT 0,
                 user_password VARBINARY(255) NOT NULL,
                 user_publics INT DEFAULT 0,
                 user_status INT NOT NULL,
@@ -87,3 +97,57 @@ async def init_db():
 
     finally:
         return True
+    
+
+async def insert_into_users(username, usersurname, userdaddy, phone, email, password):
+    # Очищаем номер телефона
+    cleaned_phone = re.sub(r'\D', '', phone)
+
+    
+    # Хешируем пароль
+    hashed_password = bcrypt.hash(password)
+    
+    # Генерируем случайное число
+    user_like_creator = random.randint(0, 425152)
+    user_status = 1
+    
+    try:
+        conn = await aiomysql.connect(
+            user=user,        
+            password=dbpassword, 
+            db=db,            
+            host=host,
+            port = port
+        )
+        async with conn.cursor() as cursor:
+            await cursor.execute("""
+                INSERT INTO users (
+                    user_name, 
+                    user_surname, 
+                    user_daddy, 
+                    user_like_creator,  
+                    user_phone, 
+                    user_email, 
+                    user_password,
+                    user_status
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                """, (
+                    username,
+                    usersurname,
+                    userdaddy,
+                    user_like_creator,
+                    cleaned_phone,  # Используем очищенный номер
+                    email,
+                    hashed_password,  # Используем хеш пароля
+                    user_status
+                ))
+            await conn.commit()
+        return "INSERTED"
+        
+    except Exception as e:
+        logging.error(f'Exception while insert into users: {e}')
+        raise  # Перебрасываем исключение для отладки
+        
+    finally:
+        if 'conn' in locals():
+            conn.close()  # Всегда закрывайте соединение!

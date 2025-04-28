@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function() {
     e.preventDefault();
     
     if (validateAllFields()) {
-      window.location.href = 'registration/confirm';
+      window.location.href = 'reg/confirm';
     }
   });
 
@@ -224,7 +224,7 @@ document.addEventListener('DOMContentLoaded', function() {
     e.preventDefault();
     
     if (validateAllFields()) {
-      window.location.href = 'registration/confirm';
+      window.location.href = 'reg/confirm';
     }
   });
 });

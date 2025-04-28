@@ -25,7 +25,7 @@
           <button id="phoneBtn" class="active">Телефон</button>
           <button id="emailBtn">Почта</button>
         </div>
-        <form class="auth-form-login" id="loginForm">
+        <form class="auth-form-login" id="loginForm" method="post">
           <div class="input-group-login">
             <img src="{{ url_for('static', filename='phone.png') }}" alt="icon" class="icon" id="inputIcon" />
             <input type="tel" id="phoneInput" placeholder="Номер телефона" required />
@@ -41,7 +41,7 @@
             Сохранить вход
           </label>
           <button type="submit" class="login-btn">Войти</button>
-          <p class="registration">Нет аккаунта? <a href="registration">Регистрация</a></p>
+          <p class="registration">Нет аккаунта? <a href="/reg">Регистрация</a></p>
         </form>
       </div>
     </div>
