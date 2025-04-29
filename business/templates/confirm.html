@@ -19,10 +19,11 @@
       </header>
     <div class="confirmation-container">
         <h1>Регистрация успешно завершена!</h1>
-        <p>Спасибо за регистрацию в системе.<br> Вы будете автоматически перенаправлены на главную страницу через <span class="countdown">5</span> секунд.</p>
-        <a href="/index" class="btn">Перейти сейчас</a>
+        <p>Спасибо за регистрацию в системе Бизнес‑Мост.</p>
+        <div class="confirm-buttons">
+          <a href="/index" class="confirm-btn">На главную</a>
+          <a href="/login" class="confirm-btn">Войти</a>
+        </div>
     </div>
-    
-    <script src=" {{ url_for('static', filename='confirm.js') }} "></script>
 </body>
 </html>
