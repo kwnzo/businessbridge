@@ -9,114 +9,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap" rel="stylesheet">
   <link rel="icon", type="image/png", href="{{ url_for('static', filename='favicon.png') }}">
   <title>Бизнес‑Мост | Профиль</title>
-  <style>
-   
-   .profile-outer-frame {
-        background: #2E2138; /* Фиолетовая рамка */
-        border-radius: 15px;
-        padding: 8px;
-        margin: 30px auto;
-        width: 90%;
-        max-width: 1400px;
-    }
-
-    .profile-inner-container {
-        background: white; /* Сам контейнер белый */
-        border-radius: 10px;
-        padding: 0px 30px 30px 30px;
-    }
-
-
-    .profile-title-wrapper {
-        text-align: center; /* Центруем обёртку */
-        margin-bottom: 30px;
-    }
-
-    .profile-title {
-        display: inline-block; /* Фон только по ширине текста */
-        background: #2E2138;
-        color: white;
-        padding: 0px 20px 10px;
-        border-radius: 0px 0px 25px 25px;
-        font-size: 25px;
-        margin: 0;
-    }
-
-    .profile-main {
-        display: flex;
-        align-items: center;
-        gap: 40px;
-        padding: 20px 0;
-    }
-
-    .profile-avatar img {
-        width: 175px;
-        height: 175px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 4px solid #2E2138; /* Рамка вокруг аватарки */
-    }
-    
-    .profile-info h2 {
-        color: #111111;
-    }
-
-    .profile-info p {
-        font-size: 15px;
-        margin: 8px 0;
-        color: #2E2138;
-    }
-
-    .profile-buttons {
-        display: flex;
-        gap: 30px;
-        align-items: center;
-    }
-
-    .profile-buttons a {
-        display: inline-block;
-        font-size: 16px;
-        font-weight: bold;
-        border-radius: 40px;
-        text-decoration: none;
-        transition: background-color 0.3s;
-        white-space: nowrap; /* Чтобы текст не переносился */
-    }
-
-    /* Кнопка "Редактировать данные" */
-    .edit-button {
-        background-color: #2E2138;
-        color: white;
-        padding: 20px 30px;
-        border: 2px solid #2E2138;
-    }
-
-    /* Кнопка "Подтверждение аккаунта" */
-    .confirm-button {
-        background-color: #ffffff;
-        color: #2E2138;
-        border: 2px solid #2E2138;
-        padding: 10px 16px;
-    }
-
-    .confirm-button span {
-        display: block;
-        font-size: 12px;
-        font-weight: normal;
-        margin-top: 3px;
-    }
-
-    /* Hover эффекты */
-    .edit-button:hover {
-        background-color: #46305e;
-    }
-
-    .confirm-button:hover {
-        background-color: #2E2138;
-        color: white;
-    }
-
-  </style>
 </head>
 <body>
     <!-- ======= Header ======= -->
@@ -155,11 +47,21 @@
                 </div>
             </div>
             <div class="profile-buttons">
-                <a href="" class="edit-button">Редактировать данные</a>
-                <a href="" class="confirm-button">
-                    Подтверждение аккаунта<br><span>Не подтверждён</span>
+                <a href="" class="edit-profile-button">Редактировать данные</a>
+                <a href="" class="confirm-profile-button">
+                    <img src="{{ url_for('static', filename='confirm-profile.png') }}" alt="icon" class="icon-confirm-profile" id="inputIcon" />
+                    <div>Подтверждение аккаунта<br><span>Не подтверждён</span></div>
                 </a>
             </div>
+            <div class="profile-publications">
+                <h1 class="publications-title">Ваши публикации</h1>
+                <div class="publications-divider"></div>
+            </div>
+            <div class="article-card add-article-card">
+                <a href="#">
+                  <div class="add-article-plus">+</div>
+                </a>
+              </div>
         </div>   
     </div>
 </body>
