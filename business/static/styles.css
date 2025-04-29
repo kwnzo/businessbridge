@@ -623,7 +623,8 @@ header.logo {
       color: #2E2138;
       font-weight: bold;
     }
-    
+
+    .confirm-btn,
     .btn {
       background-color: #2E2138;
       color: white;
@@ -635,6 +636,18 @@ header.logo {
       transition: background-color 0.3s;
       text-decoration: none;
       display: inline-block;
+    }
+
+    .confirm-btn {
+      width: 180px;
+      height: 45px;
+      font-weight: 600;
+    }
+
+    .confirm-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;  
     }
     
 
