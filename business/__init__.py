@@ -34,8 +34,8 @@ def confirm():
 def account(name = None):
     return render_template('account.html')
 
-@app.route('/create-publication')
-def publications(name = None):
+@app.route('/profile/create-publication', methods = ('GET', 'POST'))
+def publications():
     return render_template('create-publication.html')
 
 @app.route('/reg', methods=('GET','POST'))

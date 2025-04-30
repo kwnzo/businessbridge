@@ -44,9 +44,7 @@ body {
 
 /* Внутренняя часть шапки */
 .header-inner {
-  max-width: 1320px; /* Максимальная ширина */
-  margin: 0 auto; /* Центрирование */
-  padding: 6px 24px; /* Внутренние отступы */
+  padding: 6px 200px; /* Внутренние отступы */
   display: flex; /* Flexbox для выравнивания элементов */
   align-items: center; /* Выравнивание по центру */
   justify-content: space-between; /* Распределение пространства */
@@ -78,6 +76,7 @@ header.logo {
   display: flex; /* Flexbox для элементов навигации */
   align-items: center; /* Выравнивание по центру */
   gap: 30px; /* Расстояние между элементами */
+  font-size: medium;
 }
 
 /* Ссылки в навигации */
@@ -870,4 +869,170 @@ header.logo {
 .article-card.add-article-card:hover {
   background-color: #e0dceb;
   transform: scale(1.05, 1.05);
+}
+
+
+
+
+
+
+
+
+
+
+/* ====== Создание статьи ===================================================================================== */
+
+
+.writing-an-article {
+  background-image: url("create-publication.jpeg");
+  background-size: cover; /* Изображение охватывает весь экран */ 
+  position: absolute; 
+  width: 100%; 
+  height: auto;
+  color: var(--primary-color);
+  margin: 30px 0;
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  --primary-color: #2E2138;
+  --secondary-color: #46305e;
+  --background-color: #f2f2f2;
+  --white: #ffffff;
+  --border-color: #ccc;
+
+  
+}
+
+.new-article-container {
+  width: 90%;
+  max-width: 700px;
+  background-color: var(--white);
+  border-radius: 15px;
+  padding: 30px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+  font-size: medium;
+}
+
+.header-wrapper {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.back-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  margin-right: 15px;
+  display: flex;
+  align-items: center;
+}
+
+.back-button svg {
+  width: 24px;
+  height: 24px;
+  fill: var(--primary-color);
+}
+
+.back-button:hover svg {
+  fill: var(--secondary-color);
+}
+
+.header-article {
+  text-align: center;
+  margin: 0;
+  font-weight: 600;
+  flex-grow: 1;
+  margin-right: 45px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.form-input {
+  width: 100%;
+  padding: 15px;
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+#content {
+  resize: none;
+  height: 300px;
+  min-height: 300px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.file-input-wrapper {
+  position: relative;
+  overflow: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+.file-input-button {
+  width: 100%;
+  padding: 15px;
+  background-color: var(--white);
+  border: 2px dashed var(--border-color);
+  border-radius: 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.file-input-button:hover {
+  border-color: var(--primary-color);
+}
+
+#image {
+  position: absolute;
+  font-size: 100px;
+  opacity: 0;
+  right: 0;
+  top: 0;
+  cursor: pointer;
+}
+
+.submit-btn {
+  background-color: var(--primary-color);
+  color: var(--white);
+  padding: 15px 30px;
+  font-size: 16px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  display: block;
+  margin: 30px auto 0;
+  width: 100%;
+  max-width: 200px;
+  transition: background-color 0.3s;
+}
+
+.submit-btn:hover {
+  background-color: var(--secondary-color);
+}
+
+.file-name {
+  margin-top: 5px;
+  font-size: 14px;
+  color: #666;
 }

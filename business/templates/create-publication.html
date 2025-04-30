@@ -10,100 +10,54 @@
   <link rel="icon", type="image/png", href="{{ url_for('static', filename='favicon.png') }}">
   <title>Бизнес‑Мост | Создание публикации</title>
   <style>
-    body {
-      font-family: 'Unbounded', sans-serif;
-      background-color: #f2f2f2;
-      padding: 40px;
-      color: #2E2138;
-    }
 
-    .new-article-container {
-      max-width: 700px;
-      margin: auto;
-      background-color: white;
-      border-radius: 15px;
-      padding: 30px;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-    }
+    
 
-    h1 {
-      text-align: center;
-      margin-bottom: 30px;
-    }
 
-    input[type="text"],
-    textarea {
-      width: 100%;
-      padding: 15px;
-      border: 2px solid #ccc;
-      border-radius: 10px;
-      margin-bottom: 20px;
-      font-size: 16px;
-    }
-
-    input[type="file"] {
-      margin-bottom: 20px;
-    }
-
-    button {
-      background-color: #2E2138;
-      color: white;
-      padding: 15px 30px;
-      font-size: 16px;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      display: block;
-      margin: 20px auto 0;
-    }
-
-    button:hover {
-      background-color: #46305e;
-    }
   </style>
 </head>
-<body>
+<body class="writing-an-article">
+  <header class="logo">
+    <a class="logo" href="index">
+      <img src=" {{ url_for('static', filename='logo.png') }} " alt="logo" width="65" height="65" />
+      Бизнес‑Мост
+    </a>
+  </header>
   <div class="new-article-container">
-    <h1>Создание статьи</h1>
-    <input type="text" id="title" placeholder="Заголовок статьи">
-    <textarea id="content" rows="10" placeholder="Текст статьи..."></textarea>
-    <input type="file" id="image" accept="image/*">
-    <button onclick="submitArticle()">Опубликовать</button>
+    <div class="header-wrapper">
+      <button class="back-button" onclick="window.location.href='/profile'">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+        </svg>
+      </button>
+      <h1 class="header-article">Создание статьи</h1>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Изображение</label>
+      <div class="file-input-wrapper">
+        <div class="file-input-button" id="file-label">Выберите изображение</div>
+        <input type="file" id="image" accept="image/*">
+        <div class="file-name" id="file-name"></div>
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <label for="title" class="form-label">Заголовок статьи</label>
+      <input type="text" id="title" class="form-input" placeholder="Введите заголовок">
+    </div>
+    
+    <div class="form-group">
+      <label for="content" class="form-label">Текст статьи</label>
+      <textarea id="content" class="form-input" placeholder="Напишите содержание статьи..."></textarea>
+    </div>
+
+    <button class="submit-btn" onclick="submitArticle()">Опубликовать</button>
   </div>
 
-  <script>
-    async function submitArticle() {
-      const title = document.getElementById('title').value;
-      const content = document.getElementById('content').value;
-      const imageFile = document.getElementById('image').files[0];
+  <script src="{{ url_for('static', filename='html-size.js') }}"></script>
 
-      if (!title || !content || !imageFile) {
-        alert('Пожалуйста, заполните все поля');
-        return;
-      }
+  <script src="{{ url_for('static', filename='create-publication.js') }}"></script>
 
-      const formData = new FormData();
-      formData.append('title', title);
-      formData.append('content', content);
-      formData.append('image', imageFile);
-
-      try {
-        const response = await fetch('/api/articles', {
-          method: 'POST',
-          body: formData
-        });
-
-        if (response.ok) {
-          alert('Статья опубликована!');
-          window.location.href = '/profile'; // или куда нужно
-        } else {
-          alert('Ошибка при публикации');
-        }
-      } catch (error) {
-        console.error(error);
-        alert('Сетевая ошибка');
-      }
-    }
-  </script>
 </body>
 </html>
