@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap" rel="stylesheet">
+  <link rel="icon", type="image/png", href="{{ url_for('static', filename='favicon.png') }}">
+  <title>Бизнес‑Мост | Создание публикации</title>
+  <style>
+    body {
+      font-family: 'Unbounded', sans-serif;
+      background-color: #f2f2f2;
+      padding: 40px;
+      color: #2E2138;
+    }
+
+    .new-article-container {
+      max-width: 700px;
+      margin: auto;
+      background-color: white;
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    input[type="text"],
+    textarea {
+      width: 100%;
+      padding: 15px;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      font-size: 16px;
+    }
+
+    input[type="file"] {
+      margin-bottom: 20px;
+    }
+
+    button {
+      background-color: #2E2138;
+      color: white;
+      padding: 15px 30px;
+      font-size: 16px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      display: block;
+      margin: 20px auto 0;
+    }
+
+    button:hover {
+      background-color: #46305e;
+    }
+  </style>
+</head>
+<body>
+  <div class="new-article-container">
+    <h1>Создание статьи</h1>
+    <input type="text" id="title" placeholder="Заголовок статьи">
+    <textarea id="content" rows="10" placeholder="Текст статьи..."></textarea>
+    <input type="file" id="image" accept="image/*">
+    <button onclick="submitArticle()">Опубликовать</button>
+  </div>
+
+  <script>
+    async function submitArticle() {
+      const title = document.getElementById('title').value;
+      const content = document.getElementById('content').value;
+      const imageFile = document.getElementById('image').files[0];
+
+      if (!title || !content || !imageFile) {
+        alert('Пожалуйста, заполните все поля');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('content', content);
+      formData.append('image', imageFile);
+
+      try {
+        const response = await fetch('/api/articles', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (response.ok) {
+          alert('Статья опубликована!');
+          window.location.href = '/profile'; // или куда нужно
+        } else {
+          alert('Ошибка при публикации');
+        }
+      } catch (error) {
+        console.error(error);
+        alert('Сетевая ошибка');
+      }
+    }
+  </script>
+</body>
+</html>

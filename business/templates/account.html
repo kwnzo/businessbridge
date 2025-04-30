@@ -7,63 +7,101 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap" rel="stylesheet">
-  <link rel="icon", type="image/png", href="{{ url_for('static', filename='favicon.png') }}">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
   <title>Бизнес‑Мост | Профиль</title>
 </head>
 <body>
-    <!-- ======= Header ======= -->
-<header class="header">
+  <!-- ======= Header ======= -->
+  <header class="header">
     <div class="header-inner">
-        <!-- logo -->
-        <a class="logo" href="index">
+      <a class="logo" href="index">
         <img src="{{ url_for('static', filename='logo.png')}}" alt="logo" width="65" height="65">
         Бизнес‑Мост
-        </a>
-
-        <!-- Навигация -->
-        <nav class="header-nav">
+      </a>
+      <nav class="header-nav">
         <a href="index">Главная</a>
         <a href="#">Чат</a>
         <a href="#">Эксперты</a>
         <a href="login" class="login-button" id="login-btn">Вход</a>
-        </nav>
+      </nav>
     </div>
-</header>
-<body>
-    <div class="profile-outer-frame">
-        <div class="profile-inner-container">
-            <div class="profile-title-wrapper">
-                <h3 class="profile-title">Ваш профиль</h3>
+  </header>
+
+  <!-- ======= Profile Content ======= -->
+  <div class="profile-outer-frame">
+    <div class="profile-inner-container">
+      <div class="profile-title-wrapper">
+        <h3 class="profile-title">Ваш профиль</h3>
+      </div>
+      <div class="profile-main">
+        <div class="profile-avatar">
+          <img src="{{ url_for('static', filename='avatar.jpg') }}" alt="Аватар пользователя">
+        </div>
+        <div class="profile-info">
+          <h2>Иванов Иван Иванович</h2>
+          <p>+7 (999) 123-45-67</p>
+          <p>ivan@example.com</p>
+          <p>01.01.1990</p>
+        </div>
+      </div>
+      <div class="profile-buttons">
+        <a href="#" class="edit-profile-button">Редактировать данные</a>
+        <a href="#" class="confirm-profile-button">
+          <img src="{{ url_for('static', filename='confirm-profile.png') }}" alt="icon" class="icon-confirm-profile" />
+          <div>Подтверждение аккаунта<br><span>Не подтверждён</span></div>
+        </a>
+      </div>
+
+      <!-- ======= Публикации ======= -->
+      <div class="profile-publications-wrapper">
+
+        <div class="profile-publications">
+          <h1 class="publications-title">Ваши публикации</h1>
+          <div class="publications-divider"></div>
+        </div>
+
+        <div class="articles-grid">
+            <a href="create-publication" class="article-card add-article-card">
+                +
+            </a>
+            
+            <div class="article">
+                <div class="article-card"></div>         
+                <h3>Заголовок</h3>
+                <p>Краткое описание...</p>
             </div>
-            <div class="profile-main">
-                <div class="profile-avatar">
-                    <img src="{{ url_for('static', filename='avatar.jpg') }}" alt="Аватар пользователя">
-                </div>
-                <div class="profile-info">
-                    <p><h2>Иванов Иван Иванович</h2></p>
-                    <p>+7 (999) 123-45-67</p>
-                    <p>ivan@example.com</p>
-                    <p>01.01.1990</p>
-                </div>
+            
+            <div class="article">
+                <div class="article-card"></div>         
+                <h3>Заголовок</h3>
+                <p>Краткое описание...</p>
             </div>
-            <div class="profile-buttons">
-                <a href="" class="edit-profile-button">Редактировать данные</a>
-                <a href="" class="confirm-profile-button">
-                    <img src="{{ url_for('static', filename='confirm-profile.png') }}" alt="icon" class="icon-confirm-profile" id="inputIcon" />
-                    <div>Подтверждение аккаунта<br><span>Не подтверждён</span></div>
-                </a>
+
+            <div class="article">
+                <div class="article-card"></div>         
+                <h3>Заголовок</h3>
+                <p>Краткое описание...</p>
             </div>
-            <div class="profile-publications">
-                <h1 class="publications-title">Ваши публикации</h1>
-                <div class="publications-divider"></div>
+
+            <div class="article">
+                <div class="article-card"></div>         
+                <h3>Заголовок</h3>
+                <p>Краткое описание...</p>
             </div>
-            <div class="article-card add-article-card">
-                <a href="#">
-                  <div class="add-article-plus">+</div>
-                </a>
-              </div>
-        </div>   
+            
+            <div class="article">
+                <div class="article-card"></div>         
+                <h3>Заголовок</h3>
+                <p>Краткое описание...</p>
+            </div>
+            
+            
+
+          </div>
+
+
+      </div>
     </div>
+  </div>
 </body>
 </html>
-
