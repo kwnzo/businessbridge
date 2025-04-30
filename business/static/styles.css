@@ -688,7 +688,7 @@ header.logo {
   background: #2E2138; /* Фиолетовая рамка */
   border-radius: 15px;
   padding: 8px;
-  margin: 30px auto 0px;
+  margin: 20px auto 0px;
   width: 90%;
   max-width: 1400px;
   color: #111111;
@@ -793,66 +793,81 @@ header.logo {
   width: 30px;
 }
 
+.profile-publications-wrapper {
+  margin-top: 35px;
+}
+
 .profile-publications {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 35px;
+  margin-bottom: 20px;
 }
 
 .publications-title {
   color: #2E2138;
   margin: 0;
+  font-size: 24px;
 }
 
 .publications-divider {
   flex-grow: 1;
   height: 5px;
   background-color: #2E2138;
-  margin: 5px -35px 0px 30px;
-  border-radius: 5px 0px 0px 5px;
+  margin-left: 30px;
+  margin-right: -35px;
+  border-radius: 5px 0 0 5px;
 }
-
 .articles-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 20px;
+  justify-content: space-between; /* Изменено с flex-start */
+  margin: 0 auto; /* Центрирование контейнера */
+  max-width: 1280px; /* Ограничение максимальной ширины */
+  padding: 0 10px; /* Отступы по бокам */
 }
 
-/* Общий стиль для карточек */
+/* Общий стиль карточки */
+.article {
+  width: calc(25% - 20px); /* 4 карточки в ряд с учетом gap */
+  margin-bottom: 20px;
+}
+.articles-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: flex-start; /* Можно оставить или заменить на space-between */
+}
+
+/* Общий стиль для всех карточек (включая кнопку +) */
 .article-card {
-  width: 275px;
+  width: 300px;
   height: 150px;
   background-color: #f8f8f8;
   border-radius: 10px;
   overflow: hidden;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
 }
 
-/* Кнопка "+" */
+/* Специфичный стиль только для кнопки + */
 .article-card.add-article-card {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #f2f2f2;
-  font-weight: 500;
+  background-color: #f0f0f0;
   color: #2E2138;
-  cursor: pointer;
-  transition: background-color 0.3s;
-  margin-top: 30px;
-}
-
-.article-card.add-article-card a {
-  text-decoration: none;
-  color: #2E2138; /* Цвет символа "+" */
   font-size: 80px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
 }
-
-
+.article-card:hover,
 .article-card.add-article-card:hover {
   background-color: #e0dceb;
+  transform: scale(1.05, 1.05);
 }
