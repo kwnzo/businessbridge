@@ -288,7 +288,7 @@ header.logo {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-image: url("authorization.png");
+  background-image: url("img/authorization.png");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -662,7 +662,7 @@ header.logo {
 
 /* Внутренняя часть подвала */
 .footer-bg {
-  background-image: url("footer.jpeg"); 
+  background-image: url("img/footer.jpeg"); 
   background-size: cover; /* Изображение охватывает весь экран */ 
   position: absolute; 
   width: 100%; 
@@ -884,7 +884,7 @@ header.logo {
 
 
 .writing-an-article {
-  background-image: url("create-publication.jpeg");
+  background-image: url("img/create-publication.jpeg");
   background-size: cover; /* Изображение охватывает весь экран */ 
   position: absolute; 
   width: 100%; 

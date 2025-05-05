@@ -7,14 +7,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap" rel="stylesheet">
-  <link rel="icon", type="image/png", href="{{ url_for('static', filename='favicon.png') }}">
+  <link rel="icon", type="image/png", href="{{ url_for('static', filename='img/favicon.png') }}">
   <title>Бизнес‑Мост | Вход</title>
 </head>
 <body class="login-page">
   <div class="container-login">
     <header class="logo">
       <a class="logo" href="index">
-        <img src="{{ url_for('static', filename='logo.png') }}" alt="logo" width="65" height="65" />
+        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="logo" width="65" height="65" />
         Бизнес‑Мост
       </a>
     </header>
@@ -26,14 +26,17 @@
           <button id="emailBtn">Почта</button>
         </div>
         <form class="auth-form-login" id="loginForm" method="post">
+
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
           <div class="input-group-login">
-            <img src="{{ url_for('static', filename='phone.png') }}" alt="icon" class="icon" id="inputIcon" />
-            <input type="tel" id="phoneInput" placeholder="Номер телефона" required />
+            <img src="{{ url_for('static', filename='img/phone.png') }}" alt="icon" class="icon" id="inputIcon" />
+            <input type="tel" id="phoneInput" name="login" placeholder="Номер телефона" required />
             <div class="error-message" id="phoneError"></div>
           </div>
           <div class="input-group-login">
-            <img src="{{ url_for('static', filename='password.png') }}" alt="icon" class="icon" id="inputIcon" />
-            <input type="password" id="passwordInput" placeholder="Пароль" required />
+            <img src="{{ url_for('static', filename='img/password.png') }}" alt="icon" class="icon" />
+            <input type="password" id="passwordInput" name="password" placeholder="Пароль" required minlength="8" maxlength="20" />
             <div class="error-message" id="passwordError"></div>
           </div>
           <label class="save-login">
@@ -47,7 +50,7 @@
     </div>
   </div>
 
-  <script src="{{ url_for('static', filename='login.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/login.js') }}"></script>
 
 </body>
 </html>
