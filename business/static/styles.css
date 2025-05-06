@@ -114,7 +114,7 @@ header.logo {
 
 /* ====== ГЛАВНЫЙ БАННЕР ================================================================================== */
 .join-us {
-  background: #2F1E60; /* Цвет фона */
+  background: linear-gradient(135deg, #28175c 0%, #4e3c83 100%);
   text-align: center; /* Выравнивание текста по центру */
   padding: 64px 16px; /* Внутренние отступы */
 }
@@ -136,11 +136,13 @@ header.logo {
   color: #ffffff; /* Цвет текста */
 }
 
+
 /* ====== БЛОК "О НАС" ===================================================================================== */
 .about-us {
   text-align: left; /* Выравнивание текста по левому краю */
   padding: 40px 200px; /* Внутренние отступы */
-  background: #F4F4F4; /* Цвет фона */
+  background: linear-gradient(135deg, #F4F4F4 0%, #f9f9f9 100%);
+
 }
 
 /* Заголовок блока */
@@ -359,7 +361,7 @@ header.logo {
     /* Кнопка отправки формы */
     .login-btn,
     .registration-btn {
-      background-color: #2E2138; /* Цвет фона */
+      background: linear-gradient(135deg, #2E2138 0%, #2E2138 100%);
       color: #fff; /* Цвет текста */
       font-size: 16px; /* Размер шрифта */
       padding: 12px; /* Внутренние отступы */
@@ -596,6 +598,7 @@ header.logo {
       align-items: center;
       height: 100vh;
       text-align: center;
+      margin-top: -20px;
     }
     
     .confirmation-container {
@@ -649,6 +652,7 @@ header.logo {
       justify-content: center;  
     }
     
+    
 
 /* ====== ПОДВАЛ САЙТА ===================================================================================== */
 .footer {
@@ -686,7 +690,7 @@ header.logo {
 .profile-outer-frame {
   background: #2E2138; /* Фиолетовая рамка */
   border-radius: 15px;
-  padding: 8px;
+  padding: 5px;
   margin: 20px auto 0px;
   width: 90%;
   max-width: 1400px;
@@ -715,7 +719,7 @@ header.logo {
   border-radius: 0px 0px 25px 25px;
   font-size: 25px;
   margin: 0;
-}
+} 
 
 .profile-main {
   display: flex;

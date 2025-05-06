@@ -34,21 +34,32 @@
         <h3 class="profile-title">Ваш профиль</h3>
       </div>
       <div class="profile-main">
-        <div class="profile-avatar">
-          <img src="{{ url_for('static', filename='img/avatar.jpg') }}" alt="Аватар пользователя">
+        <div class="profile-avatar" draggable="false" oncontextmenu="return false;">
+          {% if user.user_avatar %}
+            <img src="{{ url_for('user_avatar', user_id=user.id) }}" alt="Аватар пользователя" draggable="false">
+          {% else %}
+            <img src="{{ url_for('static', filename='img/avatar.jpg') }}" alt="Аватар пользователя" draggable="false">
+          {% endif %}
         </div>
         <div class="profile-info">
-          <h2>Иванов Иван Иванович</h2>
-          <p>+7 (999) 123-45-67</p>
-          <p>ivan@example.com</p>
-          <p>01.01.1990</p>
+          <h2>{{ user.user_surname }} {{ user.user_name }} {{ user.user_daddy }}</h2>
+          <p>{{ user.user_phone | format_phone }}</p>
+          <p>{{ user.user_email }}</p>
         </div>
       </div>
       <div class="profile-buttons">
         <a href="#" class="edit-profile-button">Редактировать данные</a>
         <a href="#" class="confirm-profile-button">
           <img src="{{ url_for('static', filename='img/confirm-profile.png') }}" alt="icon" class="icon-confirm-profile" />
-          <div>Подтверждение аккаунта<br><span>Не подтверждён</span></div>
+          <div>Подтверждение аккаунта<br>
+            <span>
+              {% if user.account_status == 'verified' %}
+                Подтверждён
+              {% else %}
+                Не подтверждён
+              {% endif %}
+            </span>
+          </div>
         </a>
       </div>
 

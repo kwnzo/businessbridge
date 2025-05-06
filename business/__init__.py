@@ -1,8 +1,9 @@
 from flask import Flask, render_template, url_for, request, jsonify, json, after_this_request, send_file, redirect, session
-from utils.db import init_db, insert_into_users, get_user_by_login
+from utils.db import init_db, insert_into_users, get_user_by_login, get_user_by_id
 from flask_limiter import Limiter
 from flask_wtf.csrf import CSRFProtect, generate_csrf, validate_csrf
 from wtforms import ValidationError
+from io import BytesIO  
 import hashlib
 import time
 from functools import wraps
@@ -45,27 +46,61 @@ csrf = CSRFProtect(app)  # Затем инициализируйте CSRF
 def home():
     return render_template('index.html')
 
+# ======================================================================================== ГЛАВНАЯ 
 @app.route('/index')
 def index(name = None):
     return render_template('index.html', person = name)
 
+# ======================================================================================== ПОДТВЕРЖДЕНИЕ РЕГИСТРАЦИИ 
 @app.route('/reg/confirm', methods = ('GET', 'POST'))
 def confirm():
     return render_template('confirm.html')
 
+
+
+# ======================================================================================== ПРОФИЛЬ 
 @app.route('/profile')
 @login_required
-def account(name = None):
-    return render_template('account.html')
+def account():
+    user_id = session['user_id']  
+    try:
+        user = asyncio.run(get_user_by_id(user_id))
+        if not user:
+            raise ValueError("User not found")
+        if hasattr(user, 'phone'):
+            user.formatted_phone = format_phone(user.phone)
+        return render_template('account.html', user=user)
+    except Exception as e:
+        session.clear()
+        return redirect(url_for('login'))
+def format_phone(phone):
+    if not phone:
+        return ""
+    phone = str(phone)
+    return f"+7 ({phone[1:4]}) {phone[4:7]}-{phone[7:9]}-{phone[9:11]}"
+# фильтр для шаблона (если нужно будет использовать в других местах)
+app.template_filter('format_phone')(format_phone)
 
+@app.route('/profile/avatar/<int:user_id>')
+def user_avatar(user_id):
+    user = asyncio.run(get_user_by_id(user_id))
+    if user and user.get('user_avatar'):
+        return send_file(BytesIO(user['user_avatar']), mimetype='image/jpeg')
+    return send_file('static/img/avatar.jpg')
+
+
+# ======================================================================================== СОЗДАНИЕ СТАТЬИ 
 @app.route('/profile/create-publication', methods = ('GET', 'POST'))
 def publications():
     return render_template('create-publication.html')
 
+
+# ======================================================================================== ОШИБКА 404
 @app.route('/error')
 def error():
     return render_template('404.html')
 
+# ======================================================================================== РЕГИСТРАЦИЯ
 @app.route('/reg', methods=('GET','POST'))
 def registration():
     if request.method == "POST":
@@ -107,6 +142,8 @@ def registration():
     
     return render_template('registration.html')
 
+
+# ======================================================================================== ЛОГИН
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'GET':

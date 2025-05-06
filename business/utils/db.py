@@ -95,3 +95,20 @@ async def insert_into_users(username, usersurname, userdaddy, phone, email, pass
     finally:
         if 'conn' in locals():
             conn.close()  # Всегда закрывайте соединение!
+
+async def get_user_by_id(user_id: int) -> Optional[dict]:
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+            ) as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute("""
+                SELECT * FROM users 
+                WHERE id = %s
+                LIMIT 1
+            """, (user_id,))
+            return await cur.fetchone()
+        
