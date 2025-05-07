@@ -25,6 +25,10 @@ body {
   min-height: 100vh; /* Минимальная высота - весь экран */
 }
 
+.index-page, .account-page, .writing-an-article, .editor-page, .reading-page {
+  zoom: 80%
+}
+
 /* ====== ОСНОВНАЯ СТРУКТУРА ЛАЙАУТА ======================================================================= */
 /* Обертка для основного контента страницы */
 .page-wrapper {
@@ -1232,4 +1236,91 @@ header.logo {
 
 .cancel-btn-editor:hover {
   background-color: #e0e0e0;
+}
+
+
+
+/* ====== ИКОНКА АККАУНТА ===================================================================================== */
+.account-button-if-login {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-weight: 400;
+  transition: all 0.3s ease;
+}
+
+
+.avatar-icon-if-login {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.account-name-if-login {
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.account-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.account-dropdown-content {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 100%;
+  background-color: #fff;
+  min-width: 200px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1);
+  z-index: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 5px;
+}
+
+.account-dropdown-content.show {
+  display: block;
+}
+
+.account-dropdown-item  {
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+  color: #030303 !important;
+  transition: background-color 0.2s;
+}
+
+.account-dropdown-item:hover {
+  background-color: #f5f5f5;
+}
+
+.account-dropdown-divider {
+  height: 1px;
+  background-color: #e0e0e0;
+  margin: 0;
+}
+
+
+/* Стили для стрелки */
+.dropdown-arrow {
+  color: white; /* Цвет стрелки */
+  transition: transform 0.2s ease;
+}
+
+/* Анимация стрелки при открытии */
+.account-dropdown-content.show ~ .account-button-if-login .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+/* Дополнительные стили для выравнивания */
+.account-button-if-login {
+  display: flex;
+  align-items: center;
 }

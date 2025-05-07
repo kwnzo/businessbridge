@@ -10,7 +10,7 @@
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
     <title>Бизнес‑Мост | Редактирование профиля</title>
 </head>
-<body>
+<body class="editor-page">
     <!-- ======= Header ======= -->
     <header class="header">
         <div class="header-inner">
@@ -20,23 +20,26 @@
             </a>
             <nav class="header-nav">
                 <a href="index">Главная</a>
-                <a href="#">Чат</a>
                 <a href="#">Эксперты</a>
                 {% if current_user %}
-                  <a href="/profile" class="account-button-if-login">
-                    <img src="{{ url_for('user_avatar', user_id=current_user.id) }}" 
-                         alt="Аватар" 
-                         class="avatar-icon-if-login js-avatar"
-                         data-fallback="{{ url_for('static', filename='img/avatar-placeholder.png') }}">
-                    <span class="account-name-if-login">
-                      {{ current_user.user_surname }} {{ current_user.user_name[0] }}.
-                      {% if current_user.user_daddy %}{{ current_user.user_daddy[0] }}.{% endif %}
-                    </span>
-                  </a>
+                    <div class="account-dropdown">
+                        <a href="#" class="account-button-if-login">
+                            <img src="{{ url_for('user_avatar', user_id=current_user.id) }}" 
+                                alt="Аватар" 
+                                class="avatar-icon-if-login js-avatar"
+                                data-fallback="{{ url_for('static', filename='img/avatar-placeholder.png') }}">
+                            <svg class="dropdown-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+                                <path d="M7 10l5 5 5-5"/>
+                            </svg>
+                        </a>
+                        <div class="account-dropdown-content">
+                            <a href="/logout" class="account-dropdown-item">Выйти</a>
+                        </div>
+                    </div>
                 {% else %}
-                  <a href="login" class="login-button" id="login-btn">Вход</a>
+                    <a href="login" class="login-button" id="login-btn">Вход</a>
                 {% endif %}
-              </nav>
+            </nav>
         </div>
     </header>
 
@@ -157,8 +160,8 @@
     </div>
   
 
-    <script src="{{ url_for('static', filename='js/html-size.js') }}"></script>
     <script src="{{ url_for('static', filename='js/edit-profile.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/account-dropdown.js') }}"></script>
 
       
   

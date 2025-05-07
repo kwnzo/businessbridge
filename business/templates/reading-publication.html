@@ -10,7 +10,7 @@
   <link rel="icon", type="image/png", href="{{ url_for('static', filename='favicon.png') }}">
   <title>Бизнес‑Мост | Создание публикации</title>
 </head>
-<body>
+<body class="reading-page">
     <header class="header">
         <div class="header-inner">
             <!-- logo -->
@@ -22,7 +22,6 @@
             <!-- Навигация -->
             <nav class="header-nav">
                 <a href="index">Главная</a>
-                <a href="#">Чат</a>
                 <a href="#">Эксперты</a>
                 {% if current_user %}
                   <a href="/profile" class="account-button-if-login">
@@ -42,6 +41,5 @@
         </div>
     </header>
       
-  <script src="{{ url_for('static', filename='html-size.js') }}"></script>
 </body>
 </html>
