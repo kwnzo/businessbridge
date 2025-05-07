@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+    <title>Бизнес‑Мост | Редактирование профиля</title>
+</head>
+<body>
+    <!-- ======= Header ======= -->
+    <header class="header">
+        <div class="header-inner">
+            <a class="logo" href="/index">
+                <img src="{{ url_for('static', filename='img/logo.png')}}" alt="logo" width="65" height="65">
+                Бизнес‑Мост
+            </a>
+            <nav class="header-nav">
+                <a href="/index">Главная</a>
+                <a href="#">Чат</a>
+                <a href="#">Эксперты</a>
+                <a href="login" class="login-button" id="login-btn">Вход</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- ======= Profile Content ======= -->
+    <div class="profile-outer-frame">
+        <div class="profile-inner-container">
+            <div class="profile-title-wrapper">
+                <h3 class="profile-title">Редактировать профиль</h3>
+            </div>
+
+            <form id="editProfileForm" enctype="multipart/form-data" data-action="{{ url_for('edit_profile') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+                <!-- Аватарка -->
+                <div class="avatar-section">
+                    <div class="avatar-preview">
+                        {% if user.user_avatar %}
+                            <img src="{{ url_for('user_avatar', user_id=user.id) }}" alt="Аватар" id="avatarPreview">
+                        {% else %}
+                            <img src="{{ url_for('static', filename='img/avatar.jpg') }}" alt="Аватар" id="avatarPreview">
+                        {% endif %}
+                    </div>
+                    <div class="avatar-controls">
+                        <label for="avatarUpload" class="avatar-upload-btn">
+                            <input type="file" id="avatarUpload" name="avatar" accept="image/*" style="display: none;">
+                            Сменить фото
+                        </label>
+                        {% if user.user_avatar %}
+                            <button type="button" id="removeAvatarBtn" class="avatar-remove-btn" data-default-avatar="{{ url_for('static', filename='img/avatar.jpg') }}">
+                                Удалить фото
+                            </button>
+                            <input type="hidden" id="removeAvatar" name="remove_avatar" value="false">
+                        {% endif %}
+                    </div>
+                </div>
+
+            <!-- Основная информация -->
+            <div class="form-section-editor">
+                <h4>Основная информация</h4>
+                <div class="form-row-editor">
+                    <div class="form-group-editor">
+                        <label for="username">Имя</label>
+                        <input type="text" id="username" name="username" value="{{ user.user_name }}" required>
+                    </div>
+                    <div class="form-group-editor">
+                        <label for="usersurname">Фамилия</label>
+                        <input type="text" id="usersurname" name="usersurname" value="{{ user.user_surname }}" required>
+                    </div>
+                </div>
+                <div class="form-group-editor">
+                    <label for="userdaddy">Отчество</label>
+                    <input type="text" id="userdaddy" name="userdaddy" value="{{ user.user_daddy if user.user_daddy else '' }}">
+                </div>
+            </div>
+
+            <!-- Контактная информация -->
+            <div class="form-section-editor">
+                <h4>Контактная информация</h4>
+                <div class="form-group-editor">
+                    <label for="phone">Телефон</label>
+                    <input type="tel" id="phone" name="phone" value="{{ user.user_phone | format_phone }}" required>
+                </div>
+                <div class="form-group-editor">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" value="{{ user.user_email }}" required>
+                </div>
+            </div>
+
+            <!-- Смена пароля -->
+            <div class="form-section-editor">
+                <h4>Смена пароля</h4>
+                <div class="form-group-editor">
+                    <label for="current_password">Текущий пароль</label>
+                    <input type="password" id="current_password" name="current_password">
+                </div>
+                <div class="form-group-editor">
+                    <label for="new_password">Новый пароль</label>
+                    <input type="password" id="new_password" name="new_password">
+                    <small>Оставьте пустым, если не хотите менять</small>
+                </div>
+                <div class="form-group-editor">
+                    <label for="confirm_password">Подтвердите новый пароль</label>
+                    <input type="password" id="confirm_password" name="confirm_password">
+                </div>
+            </div>
+
+                <div class="form-actions-editor">
+                <button type="submit" class="save-btn-editor">Сохранить изменения</button>
+                <a href="{{ url_for('account') }}" class="cancel-btn-editor">Отмена</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальное окно -->
+    <div class="custom-modal" id="resultModal">
+        <div class="modal-content">
+            <div class="modal-body">
+                <p id="modal-message"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-close-btn" id="modalCloseBtn">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно подтверждения удаления аватара -->
+    <div class="custom-modal" id="confirmDeleteModal">
+        <div class="modal-content">
+            <div class="modal-body">
+                <p class="modal-editor">Вы уверены, что хотите удалить аватар?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-close-btn" id="confirmDeleteYes">Да</button>
+                <button class="modal-close-btn" id="confirmDeleteNo">Нет</button>
+            </div>
+        </div>
+    </div>
+  
+
+    <script src="{{ url_for('static', filename='js/html-size.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/edit-profile.js') }}"></script>
+
+      
+  
+</body>
+</html>

@@ -8,59 +8,14 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
-    <title>404 — Страница не найдена</title>
-    <style>
-    
-    .error-404 {
-        background: linear-gradient(135deg, #351e46 0%, #2F1E60 100%);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        margin: 0;
-        color: #ffffff;
-        text-align: center;
-    }
-    .container {
-        max-width: 500px;
-        padding: 2rem;
-    }
-    h1 {
-        font-size: 6rem;
-        font-weight: 500;
-        margin: 0;
-        animation: glitch 0.5s ease-in-out;
-    }
-    p {
-        font-size: 1.2rem;
-        opacity: 0.8;
-        margin-bottom: 2rem;
-    }
-    .btn {
-        background: #2E2138;
-        color: white;
-        border: none;
-        padding: 12px 24px;
-        border-radius: 50px;
-        font-size: 1rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-    .btn:hover {
-        background: #2E2138;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-
-  </style>
+    <title>Страница не найдена</title>
 </head>
 <body class="error-404">
-    <div class="container">
-        <h1>404</h1>
-        <p>Страница не найдена</p>
-        <p>Возможно, её переместили или удалили. Попробуйте начать с главной.</p>
-        <button class="btn" onclick="window.location.href='/'">На главную</button>
+    <div class="container-error">
+        <h1 class="h1-error">404</h1>
+        <p class="p-error">Страница не найдена</p>
+        <p class="p-error">Возможно, её переместили или удалили. Попробуйте начать с главной.</p>
+        <button class="btn-in-error" onclick="window.location.href='/'">На главную</button>
     </div>
-
-   
 </body>
 </html>

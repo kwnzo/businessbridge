@@ -1,11 +1,12 @@
 from flask import Flask, render_template, url_for, request, jsonify, json, after_this_request, send_file, redirect, session
-from utils.db import init_db, insert_into_users, get_user_by_login, get_user_by_id
+from utils.db import init_db, insert_into_users, get_user_by_login, get_user_by_id, update_user_profile, update_user_avatar, delete_user_avatar
 from flask_limiter import Limiter
 from flask_wtf.csrf import CSRFProtect, generate_csrf, validate_csrf
 from wtforms import ValidationError
 from io import BytesIO  
 import hashlib
 import time
+import re
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 import asyncio
@@ -87,6 +88,111 @@ def user_avatar(user_id):
     if user and user.get('user_avatar'):
         return send_file(BytesIO(user['user_avatar']), mimetype='image/jpeg')
     return send_file('static/img/avatar.jpg')
+
+# ======================================================================================== РЕДАКТИРОВАНИЕ ПРОФИЛЯ
+@app.route('/profile/edit-profile', methods=['GET', 'POST'])
+@login_required
+def edit_profile():
+    if request.method == 'GET':
+        try:
+            user_id = session['user_id']
+            user = asyncio.run(get_user_by_id(user_id))
+            if not user:
+                raise ValueError("User not found")
+                
+            # Генерируем CSRF токен
+            csrf_token = generate_csrf()
+            
+            return render_template('edit-profile.html', 
+                                user=user,
+                                csrf_token=csrf_token)  # Передаем как строку
+                                
+        except Exception as e:
+            logging.error(f"Error loading edit profile: {str(e)}", exc_info=True)
+            return redirect(url_for('account'))
+
+    # Обработка POST запроса
+    try:
+        user_id = session['user_id']
+        form_data = request.form
+        files = request.files
+        
+        update_data = {}
+        
+        # Проверяем и обновляем основные данные
+        if form_data.get('username'):
+            update_data['user_name'] = form_data['username']
+        if form_data.get('usersurname'):
+            update_data['user_surname'] = form_data['usersurname']
+        if form_data.get('userdaddy'):
+            update_data['user_daddy'] = form_data['userdaddy']
+        
+        # Обработка телефона
+        if form_data.get('phone'):
+            cleaned_phone = re.sub(r'\D', '', form_data['phone'])
+            if len(cleaned_phone) != 11:
+                raise ValueError("Номер телефона должен содержать 11 цифр")
+            update_data['user_phone'] = cleaned_phone
+        
+        # Обработка email
+        if form_data.get('email'):
+            if not re.match(r"[^@]+@[^@]+\.[^@]+", form_data['email']):
+                raise ValueError("Неверный формат email")
+            update_data['user_email'] = form_data['email']
+        
+        # Обработка пароля
+        if form_data.get('new_password'):
+            if len(form_data['new_password']) < 8:
+                raise ValueError("Пароль должен содержать минимум 8 символов")
+            if form_data['new_password'] != form_data['confirm_password']:
+                raise ValueError("Пароли не совпадают")
+            
+            # Проверяем старый пароль
+            user = asyncio.run(get_user_by_id(user_id))
+            if not check_password_hash(user['user_password'], form_data['current_password']):
+                raise ValueError("Неверный текущий пароль")
+            
+            update_data['user_password'] = generate_password_hash(form_data['new_password'])
+        
+        # Обновляем данные в БД, если есть что обновлять
+        if update_data:
+            success = asyncio.run(update_user_profile(user_id, update_data))
+            if not success:
+                raise ValueError("Не удалось обновить данные")
+        
+        # Обработка аватарки
+        if 'avatar' in files and files['avatar'].filename:
+            avatar_file = files['avatar']
+            if avatar_file.content_length > 2 * 1024 * 1024:  # 2MB limit
+                raise ValueError("Размер файла не должен превышать 2MB")
+            
+            allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
+            if '.' in avatar_file.filename and avatar_file.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
+                raise ValueError("Недопустимый формат изображения")
+            
+            avatar_data = avatar_file.read()
+            success = asyncio.run(update_user_avatar(user_id, avatar_data))
+            if not success:
+                raise ValueError("Не удалось обновить аватар")
+        
+        # Удаление аватарки
+        if form_data.get('remove_avatar') == 'true':
+            success = asyncio.run(delete_user_avatar(user_id))
+            if not success:
+                raise ValueError("Не удалось удалить аватар")
+        
+        return jsonify({
+            "success": True,
+            "message": "Данные успешно обновлены",
+            "redirect": url_for('account')
+        })
+        
+    except Exception as e:
+        logging.error(f"Error updating profile: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 400
 
 
 # ======================================================================================== СОЗДАНИЕ СТАТЬИ 

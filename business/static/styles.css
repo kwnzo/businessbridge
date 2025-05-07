@@ -550,13 +550,14 @@ header.logo {
       padding: 30px 20px;
       text-align: center;
     }
-    
+    .modal-editor,
     #modal-message {
       margin: 0;
       font-size: 16px;
       color: #333;
       line-height: 1.5;
     }
+    
     
     .modal-footer {
       padding: 15px;
@@ -1039,4 +1040,196 @@ header.logo {
   margin-top: 5px;
   font-size: 14px;
   color: #666;
+}
+
+
+/* ====== ERROR 404 ===================================================================================== */
+
+.error-404 {
+  background: linear-gradient(135deg, #351e46 0%, #2F1E60 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+  color: #ffffff;
+  text-align: center;
+}
+.container-error {
+  max-width: 500px;
+  padding: 2rem;
+}
+.h1-error {
+  font-size: 6rem;
+  font-weight: 500;
+  margin: 0;
+  animation: glitch 0.5s ease-in-out;
+}
+.p-error {
+  font-size: 1.2rem;
+  opacity: 0.8;
+  margin-bottom: 2rem;
+}
+.btn-in-error {
+  background: #2E2138;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 50px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.btn-in-error:hover {
+  background: #2E2138;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+
+/* ====== РЕДАКТИРОВАНИЕ ПРОФИЛЯ ===================================================================================== */
+.avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.avatar-preview {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-bottom: 15px;
+  border: 4px solid #2E2138;
+}
+
+.avatar-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.avatar-upload-btn, .avatar-remove-btn {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.avatar-upload-btn {
+  background-color: #2E2138;
+  color: white;
+  border: none;
+}
+
+.avatar-upload-btn:hover {
+  background-color: #46305e;
+}
+
+.avatar-remove-btn {
+  background-color: transparent;
+  color: #ff4c8d;
+  border: 1px solid #ff4c8d;
+}
+
+.avatar-remove-btn:hover {
+  background-color: rgba(255, 76, 141, 0.1);
+}
+
+.form-section-editor {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.form-section-editor h4 {
+  color: #2E2138;
+  margin-bottom: 20px;
+  font-size: 18px;
+}
+
+.form-row-editor {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 15px;
+}
+
+.form-row-editor .form-group-editor {
+  flex: 1;
+}
+
+.form-group-editor {
+  margin-bottom: 15px;
+}
+
+.form-group-editor label {
+  display: block;
+  margin-bottom: 8px;
+  color: #2E2138;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.form-group-editor input {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 15px;
+  transition: border-color 0.3s;
+}
+
+.form-group-editor input:focus {
+  border-color: #2E2138;
+  outline: none;
+}
+
+.form-group-editor small {
+  display: block;
+  margin-top: 5px;
+  font-size: 12px;
+  color: #777;
+}
+
+.form-actions-editor {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  margin-top: 30px;
+}
+
+.save-btn-editor {
+  background-color: #2E2138;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.save-btn-editor:hover {
+  background-color: #46305e;
+}
+
+.cancel-btn-editor {
+  display: inline-block;
+  padding: 12px 24px;
+  background-color: #f5f5f5;
+  color: #2E2138;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 16px;
+  transition: background-color 0.3s;
+}
+
+.cancel-btn-editor:hover {
+  background-color: #e0e0e0;
 }
