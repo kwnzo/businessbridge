@@ -22,7 +22,20 @@
         <a href="index">Главная</a>
         <a href="#">Чат</a>
         <a href="#">Эксперты</a>
-        <a href="login" class="login-button" id="login-btn">Вход</a>
+        {% if current_user %}
+          <a href="/profile" class="account-button-if-login">
+            <img src="{{ url_for('user_avatar', user_id=current_user.id) }}" 
+                 alt="Аватар" 
+                 class="avatar-icon-if-login js-avatar"
+                 data-fallback="{{ url_for('static', filename='img/avatar-placeholder.png') }}">
+            <span class="account-name-if-login">
+              {{ current_user.user_surname }} {{ current_user.user_name[0] }}.
+              {% if current_user.user_daddy %}{{ current_user.user_daddy[0] }}.{% endif %}
+            </span>
+          </a>
+        {% else %}
+          <a href="login" class="login-button" id="login-btn">Вход</a>
+        {% endif %}
       </nav>
     </div>
   </header>

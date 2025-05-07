@@ -49,8 +49,11 @@ def home():
 
 # ======================================================================================== ГЛАВНАЯ 
 @app.route('/index')
-def index(name = None):
-    return render_template('index.html', person = name)
+def index(name=None):
+    user = None
+    if 'user_id' in session:
+        user = asyncio.run(get_user_by_id(session['user_id']))
+    return render_template('index.html', current_user=user)
 
 # ======================================================================================== ПОДТВЕРЖДЕНИЕ РЕГИСТРАЦИИ 
 @app.route('/reg/confirm', methods = ('GET', 'POST'))
@@ -68,18 +71,23 @@ def account():
         user = asyncio.run(get_user_by_id(user_id))
         if not user:
             raise ValueError("User not found")
-        if hasattr(user, 'phone'):
-            user.formatted_phone = format_phone(user.phone)
-        return render_template('account.html', user=user)
+        
+        if 'user_phone' in user and user['user_phone']:
+            user['formatted_phone'] = format_phone(user['user_phone'])
+        
+        return render_template('account.html', 
+                            user=user,
+                            current_user=user)
     except Exception as e:
         session.clear()
         return redirect(url_for('login'))
+
 def format_phone(phone):
     if not phone:
         return ""
     phone = str(phone)
     return f"+7 ({phone[1:4]}) {phone[4:7]}-{phone[7:9]}-{phone[9:11]}"
-# фильтр для шаблона (если нужно будет использовать в других местах)
+
 app.template_filter('format_phone')(format_phone)
 
 @app.route('/profile/avatar/<int:user_id>')
@@ -99,19 +107,24 @@ def edit_profile():
             user = asyncio.run(get_user_by_id(user_id))
             if not user:
                 raise ValueError("User not found")
+            
+            # Форматируем телефон для отображения
+            if 'user_phone' in user and user['user_phone']:
+                user['formatted_phone'] = format_phone(user['user_phone'])
                 
             # Генерируем CSRF токен
             csrf_token = generate_csrf()
             
             return render_template('edit-profile.html', 
                                 user=user,
-                                csrf_token=csrf_token)  # Передаем как строку
+                                current_user=user,  # Добавляем current_user
+                                csrf_token=csrf_token)
                                 
         except Exception as e:
             logging.error(f"Error loading edit profile: {str(e)}", exc_info=True)
             return redirect(url_for('account'))
 
-    # Обработка POST запроса
+    # Обработка POST запроса (оставляем без изменений)
     try:
         user_id = session['user_id']
         form_data = request.form
