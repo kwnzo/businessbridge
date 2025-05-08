@@ -1,41 +1,16 @@
 document.addEventListener('DOMContentLoaded', function() {
-  // Элементы формы
   const phoneBtn = document.getElementById('phoneBtn');
   const emailBtn = document.getElementById('emailBtn');
-  let phoneInput = document.getElementById('phoneInput');
+  let phoneInput = document.getElementById('phoneInput'); // Используем let вместо const
   const passwordInput = document.getElementById('passwordInput');
-  const inputIcon = document.querySelector('#inputIcon');
+  const inputIcon = document.querySelectorAll('#inputIcon')[0];
   const loginForm = document.getElementById('loginForm');
-  let isPhoneMode = true;
-
-  // Добавляем модальное окно
-  const modal = document.createElement('div');
-  modal.className = 'custom-modal';
-  modal.innerHTML = `
-    <div class="modal-content">
-      <div class="modal-body">
-        <p id="modal-message"></p>
-      </div>
-      <div class="modal-footer">
-        <button class="modal-close-btn">OK</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(modal);
-
-  // Функции для работы с модальным окном
-  function showModal(message) {
-    const modalMessage = document.getElementById('modal-message');
-    modalMessage.textContent = message;
-    modal.style.display = 'flex';
-  }
-
-  function closeModal() {
-    modal.style.display = 'none';
-  }
-
+  
+  let isPhoneMode = true; // флаг: сейчас телефон или почта
+  
   /* ========== МАСКА ТЕЛЕФОНА ========== */
   function createPhoneMask() {
+    // Удаляем все предыдущие обработчики
     phoneInput.replaceWith(phoneInput.cloneNode(true));
     const newInput = document.getElementById('phoneInput');
     
@@ -50,190 +25,206 @@ document.addEventListener('DOMContentLoaded', function() {
       let formattedValue = '';
       if (value.length > 0) {
         formattedValue = '+7 (';
-        if (value.length > 1) formattedValue += value.substring(1, 4);
-        if (value.length > 4) formattedValue += ') ' + value.substring(4, 7);
-        if (value.length > 7) formattedValue += '-' + value.substring(7, 9);
-        if (value.length > 9) formattedValue += '-' + value.substring(9, 11);
+        if (value.length > 1) {
+          formattedValue += value.substring(1, 4);
+        }
+        if (value.length > 4) {
+          formattedValue += ') ' + value.substring(4, 7);
+        }
+        if (value.length > 7) {
+          formattedValue += '-' + value.substring(7, 9);
+        }
+        if (value.length > 9) {
+          formattedValue += '-' + value.substring(9, 11);
+        }
       }
 
       e.target.value = formattedValue;
     });
 
     newInput.addEventListener('focus', function() {
-      if (this.value === '') this.value = '+7 (';
+      if (this.value === '') {
+        this.value = '+7 (';
+      }
     });
 
     newInput.addEventListener('blur', function() {
-      if (this.value === '+7 (') this.value = '';
+      if (this.value === '+7 (') {
+        this.value = '';
+      }
     });
     
     return newInput;
   }
 
   function removePhoneMask() {
-    const newInput = phoneInput.cloneNode(true);
-    phoneInput.replaceWith(newInput);
-    return newInput;
+    // Просто заменяем input на новый чистый элемент
+    phoneInput.replaceWith(phoneInput.cloneNode(true));
+    return document.getElementById('phoneInput');
   }
 
-  // Инициализация маски
+  // Инициализация маски при загрузке
   phoneInput = createPhoneMask();
-
-
-
+  
   /* ========== ВАЛИДАЦИЯ ПОЛЕЙ ========== */
-  function validatePhone() {
-    // Получаем чистые цифры номера
-    const digits = phoneInput.value.replace(/\D/g, '');
+  function validatePhone(phone) {
+    const digits = phone.replace(/\D/g, '');
     return digits.length === 11;
   }
-
-  function validateEmail() {
-    // Проверяем email только если мы в режиме почты
-    if (!isPhoneMode) {
-      const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      return re.test(phoneInput.value.trim());
-    }
-    return true; // В режиме телефона всегда возвращаем true для email валидации
+  
+  function validateEmail(email) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
   }
-
-  function validatePassword() {
-    return passwordInput.value.length >= 8 && passwordInput.value.length <= 20;
+  
+  function validatePassword(password) {
+    return password.length >= 8 && password.length <= 20;
   }
-
+  
   function validateForm() {
     let isValid = true;
     
     if (isPhoneMode) {
-      if (!validatePhone()) {
+      if (!validatePhone(phoneInput.value)) {
         phoneInput.classList.add('error');
         isValid = false;
+      } else {
+        phoneInput.classList.remove('error');
       }
     } else {
-      if (!validateEmail()) {
+      if (!validateEmail(phoneInput.value)) {
         phoneInput.classList.add('error');
         isValid = false;
+      } else {
+        phoneInput.classList.remove('error');
       }
     }
     
-    if (!validatePassword()) {
+    if (!validatePassword(passwordInput.value)) {
       passwordInput.classList.add('error');
       isValid = false;
+    } else {
+      passwordInput.classList.remove('error');
     }
     
     return isValid;
-}
+  }
 
+  const modal = document.createElement('div');
+  modal.className = 'custom-modal';
+  modal.innerHTML = `
+    <div class="modal-content">
+      <div class="modal-body">
+        <p id="modal-message"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-close-btn">OK</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  function showModal(message) {
+    const modalMessage = document.getElementById('modal-message');
+    modalMessage.textContent = message;
+    modal.style.display = 'flex';
+  }
+  function closeModal() {
+    modal.style.display = 'none';
+  }
 
   /* ========== ОБРАБОТКА ОТПРАВКИ ФОРМЫ ========== */
   loginForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     
-    if (!validateForm()) {
-      showModal('Проверьте правильность введенных данных');
-      return;
-    }
+    if (!validateForm()) return;
   
-    // Получаем элементы формы
-    const usersnumber = document.getElementById('phoneInput');
-    const userspassword = document.getElementById('passwordInput');
-    const csrfToken = document.querySelector('[name="csrf_token"]');
+    // Сбор данных формы
+    const formData = new FormData();
+    const loginValue = isPhoneMode 
+      ? phoneInput.value.replace(/\D/g, '')  // Чистим номер от форматирования
+      : phoneInput.value;
     
-    // Проверяем, что элементы существуют
-    if (!usersnumber || !userspassword || !csrfToken) {
-      showModal('Ошибка формы. Пожалуйста, обновите страницу.');
-      return;
-    }
-  
-    // Создаем formData ТОЛЬКО после проверки всех элементов
-    const formData = new URLSearchParams();
-    formData.append('csrf_token', document.querySelector('[name="csrf_token"]').value);
+    formData.append('login', loginValue);
     formData.append('password', passwordInput.value);
-    
-    if (isPhoneMode) {
-        formData.append('login', phoneInput.value.replace(/\D/g, '')); // Исправлено имя параметра
-    } else {
-        formData.append('login', phoneInput.value.trim()); // Исправлено имя параметра
-    }
+    formData.append('csrf_token', document.querySelector('[name="csrf_token"]').value);
   
     try {
+      // Отправка POST-запроса
       const response = await fetch('/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'X-CSRFToken': document.querySelector('[name="csrf_token"]').value  // Используем значение напрямую
-        },
         body: formData
       });
   
-      // Проверяем статус ответа
-
-      if (!response.ok){
-        const texterror = await response.text()
-        throw new Error(`Произошла ошибка: ${response.statusText}`)
-      }
-  
-      // Пытаемся распарсить JSON
       const data = await response.json();
-  
+      
       if (data.success) {
-        window.location.href = data.redirect || '/';
+        window.location.href = data.redirect; // Перенаправление от сервера
       } else {
         showModal(data.message || 'Ошибка авторизации');
       }
+      
     } catch (error) {
-      console.error('Ошибка:', error);
-      showModal(error.message || 'Произошла ошибка при авторизации');
+      alert('Ошибка соединения с сервером');
     }
   });
   
-
-  /* ========== ДИНАМИЧЕСКАЯ ВАЛИДАЦИЯ ========== */
   phoneInput.addEventListener('input', function() {
-    if (isPhoneMode ? validatePhone() : validateEmail()) {
-      this.classList.remove('error');
+    if (isPhoneMode ? validatePhone(phoneInput.value) : validateEmail(phoneInput.value)) {
+      phoneInput.classList.remove('error');
     }
   });
-
+  
   passwordInput.addEventListener('input', function() {
-    if (validatePassword()) {
-      this.classList.remove('error');
+    if (validatePassword(passwordInput.value)) {
+      passwordInput.classList.remove('error');
     }
   });
 
-  /* ========== ПЕРЕКЛЮЧЕНИЕ РЕЖИМА ========== */
+  /* ========== ПЕРЕКЛЮЧЕНИЕ ТЕЛЕФОН ↔ ПОЧТА ========== */
   phoneBtn.addEventListener('click', function() {
     if (isPhoneMode) return;
-    
+
     isPhoneMode = true;
     phoneBtn.classList.add('active');
     emailBtn.classList.remove('active');
-    
+
+    // Удаляем текущий input и создаем новый с маской
     phoneInput = removePhoneMask();
     phoneInput = createPhoneMask();
-    phoneInput.type = 'tel'; // Явно устанавливаем тип
+    
+    phoneInput.type = 'tel';
     phoneInput.placeholder = 'Номер телефона';
     phoneInput.value = '';
+    phoneInput.classList.remove('error');
+
     inputIcon.src = "static/img/phone.png";
-    phoneInput.classList.remove('error'); // Сбрасываем ошибку
   });
 
   emailBtn.addEventListener('click', function() {
     if (!isPhoneMode) return;
-    
+
     isPhoneMode = false;
     emailBtn.classList.add('active');
     phoneBtn.classList.remove('active');
-    
+
+    // Удаляем маску полностью
     phoneInput = removePhoneMask();
-    phoneInput.type = 'email'; // Явно устанавливаем тип
+    
+    phoneInput.type = 'email';
     phoneInput.placeholder = 'Электронная почта';
     phoneInput.value = '';
-    inputIcon.src = "static/img/mail.png";
-    phoneInput.classList.remove('error'); // Сбрасываем ошибку
-  });
+    phoneInput.classList.remove('error');
 
-  /* ========== ЗАКРЫТИЕ МОДАЛЬНОГО ОКНА ========== */
+    inputIcon.src = "static/img/mail.png";
+    
+    // Добавляем обработчик input для валидации email
+    phoneInput.addEventListener('input', function() {
+      if (validateEmail(phoneInput.value)) {
+        phoneInput.classList.remove('error');
+      }
+    });
+  });
   document.querySelector('.modal-close-btn').addEventListener('click', closeModal);
   modal.addEventListener('click', (e) => e.target === modal && closeModal());
 });

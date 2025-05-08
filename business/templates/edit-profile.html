@@ -100,11 +100,11 @@
                 <h4>Контактная информация</h4>
                 <div class="form-group-editor">
                     <label for="phone">Телефон</label>
-                    <input type="tel" id="phone" name="phone" value="{{ user.user_phone | format_phone }}" required>
+                    <input type="tel" disabled id="phone" name="phone" value="{{ user.user_phone | format_phone }}" required>
                 </div>
                 <div class="form-group-editor">
                     <label for="email">Email</label>
-                    <input type="email" id="email" name="email" value="{{ user.user_email }}" required>
+                    <input type="email" disabled id="email" name="email" value="{{ user.user_email }}" required>
                 </div>
             </div>
 

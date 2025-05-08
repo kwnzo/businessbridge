@@ -213,11 +213,10 @@ def edit_profile():
 def publications():
     return render_template('create-publication.html')
 
-
 # ======================================================================================== ОШИБКА 404
-@app.route('/error')
-def error():
-    return render_template('404.html')
+@app.errorhandler(404)
+def error(error):
+    return render_template('404.html'), 404
 
 # ======================================================================================== РЕГИСТРАЦИЯ
 @app.route('/reg', methods=('GET','POST'))
@@ -248,7 +247,7 @@ def registration():
             return jsonify({
                 "success": True,
                 "redirect": url_for('confirm')  # URL для редиректа
-            })
+            }), 200
 
         except Exception as e:
             # Логирование ошибки
@@ -261,6 +260,20 @@ def registration():
     
     return render_template('registration.html')
 
+
+@app.route('/logout')
+def logout():
+    session.pop('user_id', None)
+    return render_template('index.html')
+
+@app.route('/testing')
+def tests():
+    data = session.clear()
+    if data:
+        return data
+    else:
+        return "none", 200
+    
 
 # ======================================================================================== ЛОГИН
 @app.route('/login', methods=['GET', 'POST'])
@@ -293,7 +306,6 @@ def login():
         password = password.strip()
 
         # Базовые проверки
-        print(login_credential, password)
         if not login_credential or not password:
             logger.warning("Попытка входа с пустыми полями")
             return jsonify({
@@ -303,7 +315,6 @@ def login():
 
         # Поиск пользователя в БД
         user = asyncio.run(get_user_by_login(login_credential))
-        
         if not user:
             logger.warning(f"Попытка входа несуществующего пользователя: {login_credential}")
             return jsonify({
@@ -360,6 +371,7 @@ def login():
             'success': False,
             'message': 'Внутренняя ошибка сервера. Пожалуйста, попробуйте позже'
         }), 500
+
 
 async def main():
     start = None
