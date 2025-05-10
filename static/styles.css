@@ -1,0 +1,1529 @@
+/* ====== ГЛОБАЛЬНЫЕ СТИЛИ ================================================================================= */
+/* Сброс стандартных отступов и использование border-box для всех элементов */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Основные стили для body */
+
+input, button, select, textarea, a {
+  font-family: 'Unbounded', sans-serif;
+}
+
+body {
+  font-family: "Unbounded", sans-serif; /* Основной шрифт */
+  font-optical-sizing: auto; /* Автоматическая оптимизация шрифта */
+  font-weight: 200; /* Толщина шрифта */
+  font-style: normal; /* Стиль шрифта */
+  line-height: 1.4; /* Межстрочный интервал */
+  color: #ffffff; /* Цвет текста по умолчанию */
+  background: #ffffff; /* Цвет фона */
+  display: flex; /* Используем flexbox */
+  flex-direction: column; /* Колоночная направленность */
+  min-height: 100vh; /* Минимальная высота - весь экран */
+}
+
+.index-page, .account-page, .writing-an-article, .editor-page, .reading-page {
+  zoom: 80%
+}
+
+/* ====== ОСНОВНАЯ СТРУКТУРА ЛАЙАУТА ======================================================================= */
+/* Обертка для основного контента страницы */
+.page-wrapper {
+  flex: 1; /* Занимает все доступное пространство */
+}
+
+/* ====== ШАПКА САЙТА ====================================================================================== */
+/* Основные стили шапки */
+.header {
+  background: #2E2138; /* Фон шапки */
+  width: 100%; /* На всю ширину */
+  position: sticky; /* Липкая шапка */
+  top: 0; /* Прилипает к верху */
+  z-index: 1000; /* Поверх других элементов */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .1); /* Тень */
+}
+
+/* Внутренняя часть шапки */
+.header-inner {
+  padding: 6px 200px; /* Внутренние отступы */
+  display: flex; /* Flexbox для выравнивания элементов */
+  align-items: center; /* Выравнивание по центру */
+  justify-content: space-between; /* Распределение пространства */
+}
+
+/* Логотип в шапке */
+.logo {
+  display: flex; /* Flexbox для элементов лого */
+  align-items: center; /* Выравнивание по центру */
+  gap: 12px; /* Расстояние между элементами */
+  text-decoration: none; /* Убираем подчеркивание */
+  font-weight: 600; /* Толщина шрифта */
+  font-size: 20px; /* Размер шрифта */
+  color: #ffffff; /* Цвет текста */
+}
+
+/* Альтернативный вариант логотипа */
+header.logo {
+  font-weight: 600; /* Толщина шрифта */
+  width: 100%; /* На всю ширину */
+  background-color: transparent; /* Прозрачный фон */
+  display: flex; /* Flexbox */
+  justify-content: center; /* Центрирование по горизонтали */
+}
+
+/* ====== НАВИГАЦИЯ ======================================================================================== */
+/* Контейнер навигации */
+.header-nav {
+  display: flex; /* Flexbox для элементов навигации */
+  align-items: center; /* Выравнивание по центру */
+  gap: 30px; /* Расстояние между элементами */
+  font-size: medium;
+}
+
+/* Ссылки в навигации */
+.header-nav a {
+  color: #ffffff; /* Цвет текста */
+  text-decoration: none; /* Убираем подчеркивание */
+  transition: opacity .2s ease; /* Плавное изменение прозрачности */
+}
+
+/* Эффект при наведении на ссылки */
+.header-nav a:hover {
+  opacity: .75; /* Уменьшаем прозрачность */
+}
+
+/* ====== КНОПКА ВХОДА ===================================================================================== */
+.login-button {
+  display: inline-block; /* Строчно-блочный элемент */
+  padding: 8px 24px; /* Внутренние отступы */
+  background: #ff4c8d; /* Цвет фона */
+  border-radius: 8px; /* Закругление углов */
+  color: #ffffff; /* Цвет текста */
+  text-decoration: none; /* Убираем подчеркивание */
+  transition: background .2s ease, transform .15s ease; /* Плавные переходы */
+}
+
+/* Эффект при наведении на кнопку */
+.login-button:hover {
+  background: #ff337a; /* Изменение цвета фона */
+}
+
+/* Эффект при нажатии на кнопку */
+.login-button:active {
+  transform: translateY(0); /* Возвращаем на место */
+}
+
+/* ====== ГЛАВНЫЙ БАННЕР ================================================================================== */
+.join-us {
+  background: linear-gradient(135deg, #28175c 0%, #4e3c83 100%);
+  text-align: center; /* Выравнивание текста по центру */
+  padding: 64px 16px; /* Внутренние отступы */
+}
+
+/* Заголовок баннера */
+.join-us h2 {
+  font-size: 32px; /* Размер шрифта */
+  line-height: 1.2; /* Межстрочный интервал */
+  font-weight: 600; /* Толщина шрифта */
+  color: #ffffff; /* Цвет текста */
+  margin-bottom: 12px; /* Отступ снизу */
+}
+
+/* Текст баннера */
+.join-us p {
+  max-width: 600px; /* Максимальная ширина */
+  margin: 0 auto; /* Центрирование */
+  font-size: 18px; /* Размер шрифта */
+  color: #ffffff; /* Цвет текста */
+}
+
+
+/* ====== БЛОК "О НАС" ===================================================================================== */
+.about-us {
+  text-align: left; /* Выравнивание текста по левому краю */
+  padding: 40px 200px; /* Внутренние отступы */
+  background: linear-gradient(135deg, #F4F4F4 0%, #f9f9f9 100%);
+
+}
+
+/* Заголовок блока */
+.about-us h2 {
+  font-size: 26px; /* Размер шрифта */
+  font-weight: 600; /* Толщина шрифта */
+  color: #111111; /* Цвет текста */
+  margin-bottom: 12px; /* Отступ снизу */
+}
+
+/* Текст блока */
+.about-us p {
+  font-size: 18px; /* Размер шрифта */
+  line-height: 1.5; /* Межстрочный интервал */
+  font-weight: 400; /* Толщина шрифта */
+  color: #111111; /* Цвет текста */
+  padding-left: 55px; /* Отступ слева */
+}
+
+/* ====== БЛОК ПУБЛИКАЦИЙ ================================================================================== */
+.publications {
+  margin: auto 0; /* Вертикальное центрирование */
+  background: white; /* Цвет фона */
+  padding: 40px 200px; /* Внутренние отступы */
+}
+
+/* Заголовок блока публикаций */
+.publications h2 {
+  font-size: 28px; /* Размер шрифта */
+  font-weight: 600; /* Толщина шрифта */
+  color: #111111; /* Цвет текста */
+}
+
+/* Обертка для карточек публикаций */
+.posts-wrapper {
+  display: grid; /* Используем grid */
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Адаптивные колонки */
+  gap: 32px; /* Расстояние между элементами */
+  color: #111111; /* Цвет текста */
+}
+
+/* Карточка публикации */
+.post-card {
+  background: #d9d9d9; /* Цвет фона */
+  border-radius: 12px; /* Закругление углов */
+  min-height: 180px; /* Минимальная высота */
+  display: flex; /* Flexbox */
+  flex-direction: column; /* Колоночная направленность */
+  justify-content: flex-end; /* Выравнивание внизу */
+  padding: 16px; /* Внутренние отступы */
+  transition: box-shadow .2s ease; /* Плавная тень */
+}
+
+/* Эффект при наведении на карточку */
+.post-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .12); /* Тень */
+}
+
+/* Заголовок публикации */
+.post-title {
+  font-size: 18px; /* Размер шрифта */
+  font-weight: 600; /* Толщина шрифта */
+  margin-bottom: 4px; /* Отступ снизу */
+}
+
+/* Краткое описание публикации */
+.post-excerpt {
+  font-size: 15px; /* Размер шрифта */
+  line-height: 1.4; /* Межстрочный интервал */
+  margin-bottom: 8px; /* Отступ снизу */
+}
+
+/* Мета-информация публикации */
+.post-meta {
+  font-size: 14px; /* Размер шрифта */
+  display: flex; /* Flexbox */
+  justify-content: space-between; /* Распределение пространства */
+  align-items: center; /* Выравнивание по центру */
+}
+
+/* Счетчик лайков */
+.post-likes {
+  font-weight: 500; /* Толщина шрифта */
+  color: #ff4c8d; /* Цвет текста */
+}
+
+/* ====== БЛОК ЦИТАТЫ ====================================================================================== */
+.quote {
+  background: #ffffff; /* Цвет фона */
+  text-align: left; /* Выравнивание текста по левому краю */
+}
+
+/* Обертка для цитаты */
+.quote-wrapper {
+  background: #ffffff; /* Цвет фона */
+  max-width: 875px; /* Максимальная ширина */
+  margin: 72px auto; /* Внешние отступы и центрирование */
+  padding: 32px 24px; /* Внутренние отступы */
+  border-radius: 16px; /* Закругление углов */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Тень */
+}
+
+/* Стили для цитаты */
+.quote blockquote {
+  max-width: 720px; /* Максимальная ширина */
+  margin: 0 auto; /* Центрирование */
+  font-size: 20px; /* Размер шрифта */
+  line-height: 1.5; /* Межстрочный интервал */
+  color: #111111; /* Цвет текста */
+  font-weight: 600; /* Толщина шрифта */
+  position: relative; /* Относительное позиционирование */
+}
+
+/* Декоративные кавычки */
+.quote blockquote::before,
+.quote blockquote::after {
+  content: "“"; /* Символ кавычки */
+  font-size: 200px; /* Размер кавычек */
+  color: #2F1E60; /* Цвет кавычек */
+  position: absolute; /* Абсолютное позиционирование */
+  top: -65px; /* Позиционирование сверху */
+  left: -30px; /* Позиционирование слева */
+}
+
+/* Текст цитаты */
+.quote p {
+  font-size: 18px; /* Размер шрифта */
+  margin: 0px 120px; /* Внешние отступы */
+}
+
+/* Автор цитаты */
+.quote cite {
+  display: block; /* Блочный элемент */
+  font-size: 16px; /* Размер шрифта */
+  margin-top: 18px; /* Отступ сверху */
+  font-weight: 200; /* Толщина шрифта */
+  color: #7A7A7A; /* Цвет текста */
+  margin: 15px 0px 0px 120px; /* Внешние отступы */
+}
+
+/* ====== РЕГИСТРАЦИЯ/ВХОД ===================================================================================== */
+.confirm-page,
+.login-page,
+.registration-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-image: url("img/authorization.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  height: 100%;
+  margin: 0;
+  font-family: 'Unbounded', sans-serif;
+}
+
+    /* Общие стили формы */
+    .auth-form-login,
+    .auth-form-registration {
+      display: flex; /* Flexbox */
+      flex-direction: column; /* Колоночная направленность */
+      gap: 16px; /* Расстояние между элементами */
+    }
+
+    .auth-form-login {
+      margin: 0px 60px; /* Отступы по бокам */
+    }
+
+    /* Группа полей ввода */
+    .input-group-login,
+    .input-group-registration {
+      position: relative; /* Относительное позиционирование */
+    }
+
+    
+    /* Иконка в поле ввода */
+    .input-group-login .icon,
+    .input-group-registration .icon {
+      position: absolute; /* Абсолютное позиционирование */
+      top: 50%; /* Позиционирование сверху */
+      left: 12px; /* Позиционирование слева */
+      transform: translateY(-50%); /* Центрирование по вертикали */
+      width: 20px; /* Ширина */
+      height: 20px; /* Высота */
+      opacity: 0.7; /* Прозрачность */
+    }
+
+    /* Поле ввода */
+    .input-group-registration input {
+      width: 100%; /* На всю ширину */
+      padding: 12px 12px 12px 12px; /* Внутренние отступы */
+      border: 1px solid #bfbfbf; /* Граница */
+      border-radius: 8px; /* Закругление углов */
+      font-size: 15px; /* Размер шрифта */
+      font-weight: 300;
+    }
+
+    .input-group-login input {
+      width: 100%; /* На всю ширину */
+      padding: 12px 12px 12px 44px; /* Внутренние отступы */
+      border: 1px solid #bfbfbf; /* Граница */
+      border-radius: 8px; /* Закругление углов */
+      font-size: 15px; /* Размер шрифта */
+      font-weight: 300;
+    }
+
+    /* Чекбокс "Запомнить меня" */
+    .save-login {
+      display: flex; /* Flexbox */
+      gap: 8px; /* Расстояние между элементами */
+      font-size: 14px; /* Размер шрифта */
+      color: #444; /* Цвет текста */
+      justify-content: center;
+    }
+
+    /* Кнопка отправки формы */
+    .login-btn,
+    .registration-btn {
+      background: linear-gradient(135deg, #2E2138 0%, #2E2138 100%);
+      color: #fff; /* Цвет текста */
+      font-size: 16px; /* Размер шрифта */
+      padding: 12px; /* Внутренние отступы */
+      border: none; /* Убираем границу */
+      border-radius: 15px; /* Закругление углов */
+      cursor: pointer; /* Курсор-указатель */
+      transition: background 0.3s ease; /* Плавное изменение фона */
+      font-weight: 600;
+    }
+
+    /* Эффект при наведении на кнопку */  
+    .login-btn:hover,
+    .registration-btn:hover {
+      background-color: #2E2138; /* Цвет фона */
+    }    
+
+
+    /* Стили для строки с ФИО */
+    .input-group-registration.row {
+      display: flex;
+      gap: 10px; /* Расстояние между полями */
+      justify-content: space-between;
+    }
+
+    .input-group-registration.row .FIO {
+      flex: 1; /* Равномерное распределение пространства */
+    }
+
+    .input-group-registration.row input {
+      width: 100%;
+      padding: 12px; /* Убираем левый отступ, так как иконок нет */
+    }
+
+    /* Ссылка на регистрацию и вход */
+    .registration,
+    .login {
+      color: #111111; /* Цвет текста */
+      text-align: center; /* Выравнивание по центру */
+      font-size: 12px; /* Размер шрифта */
+      font-weight: 200; /* Толщина шрифта */
+    } 
+
+    /* Стили для ссылки */
+    .registration a,
+    .login a {
+      text-decoration: none; /* Убираем подчеркивание */  
+      color: #111111; /* Цвет текста */
+    }
+
+    /* Эффект при наведении на ссылку */
+    .registration a:hover,
+    .login a:hover {
+      text-decoration: underline; /* Подчеркивание */
+    }
+
+    /* Контейнер для формы авторизации */
+    .auth-container {
+      flex: 1; /* Занимает все доступное пространство */
+      display: flex; /* Flexbox */
+      justify-content: center; /* Центрирование по горизонтали */
+      align-items: center; /* Центрирование по вертикали */
+      width: 100%; /* На всю ширину */
+      padding: 0px 16px; /* Внутренние отступы */
+      flex-wrap: wrap; /* Перенос на новую строку */
+      align-content: flex-start; /* Выравнивание содержимого */
+    }
+
+    /* Контейнер для формы входа */
+    .container-login {
+      width: 650px; /* Ширина контейнера */
+    }
+    
+    /* Блок формы авторизации */
+    .auth-box {
+      background-color: #ffffff; /* Цвет фона */
+      color: #000000; /* Цвет текста */
+      border-radius: 25px; /* Закругление углов */
+      padding: 40px 30px; /* Внутренние отступы */
+      width: 100%; /* На всю ширину */
+      max-width: 550px; /* Максимальная ширина */
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2); /* Тень */
+      margin-bottom: 45px;
+    }
+
+      /* Заголовок формы */
+    .auth-box h2 {
+      text-align: center; /* Выравнивание по центру */
+      font-size: 28px; /* Размер шрифта */
+      font-weight: 600; /* Толщина шрифта */
+      margin-bottom: 24px; /* Отступ снизу */
+    }
+
+    /* Переключатель типа формы */
+    .auth-toggle {
+      display: flex; /* Flexbox */
+      justify-content: center; /* Центрирование по горизонтали */
+      margin-bottom: 24px; /* Отступ снизу */
+      gap: 30px; /* Расстояние между элементами */
+    }
+
+    /* Кнопки переключателя */
+    .auth-toggle button {
+      padding: 10px 20px; /* Внутренние отступы */
+      border: 2px solid #ccc; /* Граница */
+      background-color: #635c6c; /* Прозрачный фон */
+      border-radius: 15px; /* Закругление углов */
+      font-size: 16px; /* Размер шрифта */
+      cursor: pointer; /* Курсор-указатель */
+      transition: all 0.3s ease; /* Плавные переходы */
+      color: #ffffff; /* Цвет текста */
+      width: 170px;
+      font-weight: 600;
+    }
+
+    /* Активная кнопка переключателя */
+    .auth-toggle button.active,
+    .auth-toggle button:hover {
+      background-color: #2E2138; /* Цвет фона */
+      color: #fff; /* Цвет текста */
+      border-color: #2E2138; /* Цвет границы */
+    }
+
+    .terms-of-use {
+      display: flex; /* Размещаем элементы в строку */
+      align-items: center; /* Выравниваем по вертикали по центру */
+      justify-content: center; /* Центрируем по горизонтали */
+      font-size: 14px; /* Размер шрифта */
+      color: #444; /* Цвет текста */
+      cursor: pointer; /* Курсор-указатель при наведении */
+      white-space: nowrap; /* Запрещаем перенос строк */
+    }
+
+    .terms-of-use input[type="checkbox"] {
+      margin: 0 5px 0 0; /* Отступ только справа от чекбокса */
+    }
+
+    .terms-of-use a {
+      text-decoration: none; /* Убираем подчеркивание */
+      margin-left: 3px; /* Небольшой отступ после текста */
+    }
+
+    .terms-of-use a:hover {
+      text-decoration: underline; /* Подчеркивание при наведении */
+    }
+
+    
+
+    .error {
+      border-color: #ff0000 !important;
+      box-shadow: 0 0 5px rgba(255, 0, 0, 0.3);
+    }
+
+
+    .error-message {
+      color: #ff0000;
+      font-size: 0.8em;
+      margin-top: 5px;
+    }
+    
+    .input-group-registration .error {
+        border-color: #ff0000;
+    }
+    .custom-modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .modal-content {
+      background-color: #fefefe;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      overflow: hidden;
+    }
+    
+    .modal-body {
+      padding: 30px 20px;
+      text-align: center;
+    }
+    .modal-editor,
+    #modal-message {
+      margin: 0;
+      font-size: 16px;
+      color: #333;
+      line-height: 1.5;
+    }
+    
+    
+    .modal-footer {
+      padding: 15px;
+      text-align: center;
+      border-top: 1px solid #eee;
+    }
+    
+    .modal-close-btn {
+      background-color: #2E2138;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.3s;
+    }
+    
+    .modal-close-btn:hover {
+      background-color: #2E2138;
+    }
+    
+    /* Анимация появления */
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .custom-modal.show {
+      display: flex;
+      animation: modalFadeIn 0.3s ease-out;
+    }
+
+
+    /* ====== Подтверждение регистрации ===================================================================================== */
+    .confirm-page {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      text-align: center;
+      margin-top: -20px;
+    }
+    
+    .confirmation-container {
+      background-color: white;
+      padding: 40px;
+      border-radius: 25px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      max-width: 500px;
+      width: 90%;
+    }
+    
+    .confirmation-container h1 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+    
+    .confirmation-container p {
+      color: #666;
+      margin-bottom: 30px;
+      line-height: 1.6;
+    }
+    
+    .countdown {
+      color: #2E2138;
+      font-weight: bold;
+    }
+
+    .confirm-btn,
+    .btn {
+      background-color: #2E2138;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 15px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .confirm-btn {
+      width: 180px;
+      height: 45px;
+      font-weight: 600;
+    }
+
+    .confirm-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;  
+    }
+    
+    
+
+/* ====== ПОДВАЛ САЙТА ===================================================================================== */
+.footer {
+  background-size: cover; /* Размер фона */
+  background-position: center; /* Позиция фона */
+  color: #dadada; /* Цвет текста */
+  text-align: center; /* Выравнивание по центру */
+  margin-top: auto; /* Прижимаем к низу */
+  width: 100%; /* На всю ширину */
+}
+
+/* Внутренняя часть подвала */
+.footer-bg {
+  background-image: url("img/footer.jpeg"); 
+  background-size: cover; /* Изображение охватывает весь экран */ 
+  position: absolute; 
+  width: 100%; 
+  height: auto;
+}
+
+
+/* Текст копирайта */
+.copyright {
+  margin-top: 20px; /* Отступ сверху */
+  font-size: 14px; /* Размер шрифта */
+}
+
+
+
+
+
+
+
+/* ====== Аккаунт ===================================================================================== */
+.profile-outer-frame {
+  background: #2E2138; /* Фиолетовая рамка */
+  border-radius: 15px;
+  padding: 5px;
+  margin: 20px auto 30px;
+  width: 90%;
+  max-width: 1400px;
+  color: #111111;
+}
+
+.profile-inner-container {
+  background: white; /* Сам контейнер белый */
+  border-radius: 10px;
+  padding: 0px 30px 30px 30px;
+}
+
+
+
+
+.profile-title-wrapper {
+  text-align: center; /* Центруем обёртку */
+  margin-bottom: 30px;
+}
+
+.profile-title {
+  display: inline-block; /* Фон только по ширине текста */
+  background: #2E2138;
+  color: white;
+  padding: 0px 20px 10px;
+  border-radius: 0px 0px 25px 25px;
+  font-size: 25px;
+  margin: 0;
+} 
+
+.profile-main {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  padding-bottom: 20px;
+}
+
+.profile-avatar img {
+  width: 175px;
+  height: 175px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #2E2138; /* Рамка вокруг аватарки */
+}
+
+.profile-info p {
+  font-size: 15px;
+  margin: 8px 0;
+  color: #2E2138;
+}
+
+.profile-buttons {
+  display: flex;
+  gap: 30px;
+  align-items: center;
+}
+
+.profile-buttons a {
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 40px;
+  text-decoration: none;
+  transition: background-color 0.3s;
+  white-space: nowrap; /* Чтобы текст не переносился */
+}
+
+/* Кнопка "Редактировать данные" */
+.edit-profile-button {
+  background-color: #2E2138;
+  color: white;
+  padding: 20px 50px;
+  border: 2px solid #2E2138;
+}
+
+/* Кнопка "Подтверждение аккаунта" */
+.confirm-profile-button {
+  background-color: #ffffff;
+  color: #2E2138;
+  border: 2px solid #2E2138;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.confirm-profile-button span {
+  display: block;
+  font-size: 12px;
+  font-weight: normal;
+  margin-top: 3px;
+}
+
+/* Hover эффекты */
+.edit-profile-button:hover {
+  background-color: #46305e;
+}
+
+.confirm-profile-button:hover {
+  background-color: #D9D9D9;
+}
+
+.icon-confirm-profile{
+  width: 30px;
+}
+
+.profile-publications-wrapper {
+  margin-top: 35px;
+}
+
+.profile-publications {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.publications-title {
+  color: #2E2138;
+  margin: 0;
+  font-size: 24px;
+}
+
+.publications-divider {
+  flex-grow: 1;
+  height: 5px;
+  background-color: #2E2138;
+  margin-left: 30px;
+  margin-right: -35px;
+  border-radius: 5px 0 0 5px;
+}
+.articles-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: space-between; /* Изменено с flex-start */
+  margin: 0 auto; /* Центрирование контейнера */
+  max-width: 1280px; /* Ограничение максимальной ширины */
+  padding: 0 10px; /* Отступы по бокам */
+}
+
+/* Общий стиль карточки */
+.article {
+  width: calc(25% - 15px); /* 4 карточки в ряд с учетом gap */
+  margin-bottom: 20px;
+}
+.articles-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: flex-start; /* Можно оставить или заменить на space-between */
+}
+
+/* Общий стиль для всех карточек (включая кнопку +) */
+.article-card {
+  width: 300px;
+  height: 150px;
+  background-color: #f8f8f8;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+  margin-bottom: 15px;
+}
+
+/* Специфичный стиль только для кнопки + */
+.article-card.add-article-card {
+  background-color: #f0f0f0;
+  color: #2E2138;
+  font-size: 80px;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+.article-card-img:hover,
+.article-card:hover,
+.article-card.add-article-card:hover {
+  background-color: #e0dceb;
+  transform: scale(1.05, 1.05);
+}
+
+.article h3 {
+  margin-top: 10px;
+  color: #2E2138;
+  padding: 0 10px;
+  text-align: center;
+  text-decoration: none;
+}
+
+
+.article-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+
+.author-info-link,
+.articles-grid a {
+  text-decoration: none !important;
+}
+
+
+
+/* ====== Создание статьи ===================================================================================== */
+
+
+.writing-an-article {
+  background-image: url("img/create-publication.jpeg");
+  background-size: cover; /* Изображение охватывает весь экран */ 
+  position: absolute; 
+  width: 100%; 
+  height: auto;
+  color: var(--primary-color);
+  margin: 30px 0;
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  --primary-color: #2E2138;
+  --secondary-color: #46305e;
+  --background-color: #f2f2f2;
+  --white: #ffffff;
+  --border-color: #ccc;
+
+  
+}
+
+.new-article-container {
+  width: 90%;
+  max-width: 700px;
+  background-color: var(--white);
+  border-radius: 15px;
+  padding: 30px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+  font-size: medium;
+}
+
+.header-wrapper {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.back-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  margin-right: 15px;
+  display: flex;
+  align-items: center;
+}
+
+.back-button svg {
+  width: 24px;
+  height: 24px;
+  fill: var(--primary-color);
+}
+
+.back-button:hover svg {
+  fill: var(--secondary-color);
+}
+
+.header-article {
+  text-align: center;
+  margin: 0;
+  font-weight: 600;
+  flex-grow: 1;
+  margin-right: 45px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.form-input {
+  width: 100%;
+  padding: 15px;
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+#content {
+  resize: none;
+  height: 300px;
+  min-height: 300px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.file-input-wrapper {
+  position: relative;
+  overflow: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+.file-input-button {
+  width: 100%;
+  padding: 15px;
+  background-color: var(--white);
+  border: 2px dashed var(--border-color);
+  border-radius: 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.file-input-button:hover {
+  border-color: var(--primary-color);
+}
+
+#image {
+  position: absolute;
+  font-size: 100px;
+  opacity: 0;
+  right: 0;
+  top: 0;
+  cursor: pointer;
+}
+
+.submit-btn {
+  background-color: var(--primary-color);
+  color: var(--white);
+  padding: 15px 30px;
+  font-size: 16px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  display: block;
+  margin: 30px auto 0;
+  width: 100%;
+  max-width: 200px;
+  transition: background-color 0.3s;
+}
+
+.submit-btn:hover {
+  background-color: var(--secondary-color);
+}
+
+.file-name {
+  margin-top: 5px;
+  font-size: 14px;
+  color: #666;
+}
+
+.required-field {
+  color: red;
+  margin-left: 4px;
+}
+
+
+/* ====== ERROR 404 ===================================================================================== */
+
+.error-404 {
+  background: linear-gradient(135deg, #351e46 0%, #2F1E60 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+  color: #ffffff;
+  text-align: center;
+}
+.container-error {
+  max-width: 500px;
+  padding: 2rem;
+}
+.h1-error {
+  font-size: 6rem;
+  font-weight: 500;
+  margin: 0;
+  animation: glitch 0.5s ease-in-out;
+}
+.p-error {
+  font-size: 1.2rem;
+  opacity: 0.8;
+  margin-bottom: 2rem;
+}
+.btn-in-error {
+  background: #2E2138;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 50px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.btn-in-error:hover {
+  background: #2E2138;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+
+/* ====== РЕДАКТИРОВАНИЕ ПРОФИЛЯ ===================================================================================== */
+.avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.avatar-preview {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-bottom: 15px;
+  border: 4px solid #2E2138;
+}
+
+.avatar-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.avatar-upload-btn, .avatar-remove-btn {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.avatar-upload-btn {
+  background-color: #2E2138;
+  color: white;
+  border: none;
+}
+
+.avatar-upload-btn:hover {
+  background-color: #46305e;
+}
+
+.avatar-remove-btn {
+  background-color: transparent;
+  color: #ff4c8d;
+  border: 1px solid #ff4c8d;
+}
+
+.avatar-remove-btn:hover {
+  background-color: rgba(255, 76, 141, 0.1);
+}
+
+.form-section-editor {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.form-section-editor h4 {
+  color: #2E2138;
+  margin-bottom: 20px;
+  font-size: 18px;
+}
+
+.form-row-editor {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 15px;
+}
+
+.form-row-editor .form-group-editor {
+  flex: 1;
+}
+
+.form-group-editor {
+  margin-bottom: 15px;
+}
+
+.form-group-editor label {
+  display: block;
+  margin-bottom: 8px;
+  color: #2E2138;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.form-group-editor input {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 15px;
+  transition: border-color 0.3s;
+}
+
+.form-group-editor input:focus {
+  border-color: #2E2138;
+  outline: none;
+}
+
+.form-group-editor small {
+  display: block;
+  margin-top: 5px;
+  font-size: 12px;
+  color: #777;
+}
+
+.form-actions-editor {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  margin-top: 30px;
+}
+
+.save-btn-editor {
+  background-color: #2E2138;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.save-btn-editor:hover {
+  background-color: #46305e;
+}
+
+.cancel-btn-editor {
+  display: inline-block;
+  padding: 12px 24px;
+  background-color: #f5f5f5;
+  color: #2E2138;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 16px;
+  transition: background-color 0.3s;
+}
+
+.cancel-btn-editor:hover {
+  background-color: #e0e0e0;
+}
+
+
+
+/* ====== ИКОНКА АККАУНТА ===================================================================================== */
+.account-button-if-login {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-weight: 400;
+  transition: all 0.3s ease;
+}
+
+
+.avatar-icon-if-login {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.account-name-if-login {
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.account-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.account-dropdown-content {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 100%;
+  background-color: #fff;
+  min-width: 200px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1);
+  z-index: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 5px;
+}
+
+.account-dropdown-content.show {
+  display: block;
+}
+
+.account-dropdown-item  {
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+  color: #030303 !important;
+  transition: background-color 0.2s;
+}
+
+.account-dropdown-item:hover {
+  background-color: #f5f5f5;
+}
+
+.account-dropdown-divider {
+  height: 1px;
+  background-color: #e0e0e0;
+  margin: 0;
+}
+
+
+/* Стили для стрелки */
+.dropdown-arrow {
+  color: white; /* Цвет стрелки */
+  transition: transform 0.2s ease;
+}
+
+/* Анимация стрелки при открытии */
+.account-dropdown-content.show ~ .account-button-if-login .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+/* Дополнительные стили для выравнивания */
+.account-button-if-login {
+  display: flex;
+  align-items: center;
+}
+
+
+
+
+.article-image {
+    background-size: cover;
+    background-image: var(--image-url);
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+
+
+
+
+
+
+.reading-page {
+  background-color: #f9f9f9;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.article-container {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 30px;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  flex: 1;
+}
+
+.article-header {
+  margin-bottom: 30px;
+}
+
+.article-title {
+  font-size: 32px;
+  color: #2E2138;
+  margin-bottom: 20px;
+  line-height: 1.3;
+}
+
+.article-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.author-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.author-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #2E2138;
+}
+
+.author-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.author-name {
+  font-weight: 600;
+  color: #2E2138;
+}
+
+.article-date {
+  font-size: 14px;
+  color: #777;
+}
+
+.article-stats {
+  display: flex;
+  gap: 20px;
+  color: #111111;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
+}
+
+.stat-item img {
+  width: 20px;
+  height: 20px;
+}
+
+.article-image-wrapper {
+  margin: 30px 0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.article-image {
+  width: 100%;
+  max-height: 500px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.article-content {
+  line-height: 1.8;
+  font-size: 16px;
+  color: #333;
+  margin-bottom: 40px;
+}
+
+.article-content p {
+  margin-bottom: 20px;
+}
+
+.article-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+.article-actions {
+  display: flex;
+  gap: 15px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+
+
+.like-button, .comment-button, .share-button {
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s;
+}
+
+.like-button {
+  background-color: #2E2138;
+  color: white;
+  border: none;
+}
+
+.like-button:hover {
+  background-color: #46305e;
+}
+
+.comment-button, .share-button {
+  background-color: white;
+  color: #2E2138;
+  border: 1px solid #2E2138;
+}
+
+.comment-button:hover, .share-button:hover {
+  background-color: #f0f0f0;
+}
+
+.like-mark{
+  width: 20px;
+  height: 20px;
+}
+
+.footer-in-reading {
+  background-color: #2E2138;
+  color: white;
+  padding: 20px;
+  text-align: center;
+  margin-top: auto;
+  font-size: 14px;
+}

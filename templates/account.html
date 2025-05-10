@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+  <title>Бизнес‑Мост | Профиль</title>
+</head>
+<body class="account-page">
+  <!-- ======= Header ======= -->
+  <header class="header">
+    <div class="header-inner">
+      <a class="logo" href="index">
+        <img src="{{ url_for('static', filename='img/logo.png')}}" alt="logo" width="65" height="65">
+        Бизнес‑Мост
+      </a>
+      <nav class="header-nav">
+        <a href="index">Главная</a>
+        <a href="#">Эксперты</a>
+        {% if current_user %}
+          <div class="account-dropdown">
+            <a href="#" class="account-button-if-login">
+              <img src="{{ url_for('user_avatar', user_id=current_user.id) }}" 
+                  alt="Аватар" 
+                  class="avatar-icon-if-login js-avatar"
+                  data-fallback="{{ url_for('static', filename='img/avatar-placeholder.png') }}">
+              <svg class="dropdown-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+                <path d="M7 10l5 5 5-5"/>
+              </svg>
+            </a>
+            <div class="account-dropdown-content">
+              <a href="/logout" class="account-dropdown-item">Выйти</a>
+            </div>
+          </div>
+        {% else %}
+          <a href="login" class="login-button" id="login-btn">Вход</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <!-- ======= Profile Content ======= -->
+  <div class="profile-outer-frame">
+    <div class="profile-inner-container">
+      <div class="profile-title-wrapper">
+        <h3 class="profile-title">Ваш профиль</h3>
+      </div>
+      <div class="profile-main">
+        <div class="profile-avatar" draggable="false" oncontextmenu="return false;">
+          {% if user.user_avatar %}
+            <img src="{{ url_for('user_avatar', user_id=user.id) }}" alt="Аватар пользователя" draggable="false">
+          {% else %}
+            <img src="{{ url_for('static', filename='img/avatar.jpg') }}" alt="Аватар пользователя" draggable="false">
+          {% endif %}
+        </div>
+        <div class="profile-info">
+          <h2>{{ user.user_surname }} {{ user.user_name }} {{ user.user_daddy }}</h2>
+          <p>{{ user.user_phone | format_phone }}</p>
+          <p>{{ user.user_email }}</p>
+        </div>
+      </div>
+      <div class="profile-buttons">
+        <a href="/profile/edit-profile" class="edit-profile-button">Редактировать данные</a>
+        <a href="#" class="confirm-profile-button">
+          <img src="{{ url_for('static', filename='img/confirm-profile.png') }}" alt="icon" class="icon-confirm-profile" />
+          <div>Подтверждение аккаунта<br>
+            <span>
+              {% if user.account_status == 'verified' %}
+                Подтверждён
+              {% else %}
+                Не подтверждён
+              {% endif %}
+            </span>
+          </div>
+        </a>
+      </div>
+
+      <!-- ======= Публикации ======= -->
+      <div class="profile-publications-wrapper">
+
+        <div class="profile-publications">
+          <h1 class="publications-title">Ваши публикации</h1>
+          <div class="publications-divider"></div>
+        </div>
+
+        <div class="articles-grid">
+          <a href="/profile/create-publication" class="article-card add-article-card">
+            +
+          </a>
+          
+          {% for article in user_articles %}
+          <a href="{{ url_for('view_article', article_id=article.id, article_slug=article.topic_name_en) }}" class="article-link">
+            <div class="article">
+              {% if article.preview_image %}
+                <img src="{{ url_for('article_image', article_id=article.id) }}" class="article-card" alt="Превью статьи">
+              {% else %}
+                <div class="article-card"></div>
+              {% endif %}
+              <h3>{{ article.topic_name }}</h3>
+            </div>
+          </a>
+          {% endfor %}
+        </div>
+
+
+      </div>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/account-dropdown.js') }}"></script>
+
+</body>
+</html>

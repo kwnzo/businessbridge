@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+  <title>Бизнес‑Мост | {{ article.topic_name }}</title>
+</head>
+<body class="reading-page">
+  <header class="header">
+    <div class="header-inner">
+      <a class="logo" href="{{ url_for('index') }}">
+        <img src="{{ url_for('static', filename='img/logo.png')}}" alt="logo" width="65" height="65">
+        Бизнес‑Мост
+      </a>
+      <nav class="header-nav">
+        <a href="{{ url_for('index') }}">Главная</a>
+        <a href="#">Эксперты</a>
+        {% if current_user %}
+          <a href="/profile" class="account-button-if-login">
+            <img src="{{ url_for('user_avatar', user_id=current_user.id) }}" 
+                 alt="Аватар" 
+                 class="avatar-icon-if-login js-avatar"
+                 data-fallback="{{ url_for('static', filename='img/avatar-placeholder.png') }}">
+            <span class="account-name-if-login">
+              {{ current_user.user_surname }} {{ current_user.user_name[0] }}.
+              {% if current_user.user_daddy %}{{ current_user.user_daddy[0] }}.{% endif %}
+            </span>
+          </a>
+        {% else %}
+          <a href="{{ url_for('login') }}" class="login-button" id="login-btn">Вход</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <main class="article-container">
+    <!-- Заголовок статьи -->
+    <div class="article-header">
+      <h1 class="article-title">{{ article.topic_name }}</h1>
+      
+      <!-- Информация об авторе и дате -->
+      <div class="article-meta">
+        <a href="{{ url_for('user_profile', user_id=author.id) }}" class="author-info-link">
+          <div class="author-info">
+            <img src="{{ url_for('user_avatar', user_id=author.id) }}" 
+                alt="Аватар автора" 
+                class="author-avatar">
+            <div class="author-details">
+              <span class="author-name">{{ author.user_surname }} {{ author.user_name }}</span>
+              <span class="article-date">
+                {{ article.created_at.strftime('%d.%m.%Y в %H:%M') }}
+              </span>
+            </div>
+          </div>
+        </a>
+        
+        <!-- Статистика статьи -->
+        <div class="article-stats">
+          <div class="stat-item">
+            <img src="{{ url_for('static', filename='img/eye-icon.png') }}" alt="Просмотры">
+            <span>{{ article.views or 0 }}</span>
+          </div>
+          <div class="stat-item">
+            <img src="{{ url_for('static', filename='img/comment-icon.png') }}" alt="Комментарии">
+            <span>{{ article.comments or 0 }}</span>
+          </div>
+          <div class="stat-item">
+            <img src="{{ url_for('static', filename='img/like-icon-1.png') }}" alt="Лайки">
+            <span>{{ article.likes or 0 }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Изображение статьи -->
+    {% if article.preview_image %}
+    <div class="article-image-wrapper">
+      <img src="{{ url_for('article_image', article_id=article.id) }}" 
+           alt="Изображение статьи" 
+           class="article-image">
+    </div>
+    {% endif %}
+    
+    <!-- Текст статьи -->
+    <div class="article-content">
+      {{ article.topic_text|safe }}
+    </div>
+    
+    <!-- Кнопки взаимодействия -->
+    <div class="article-actions">
+      <button class="like-button" data-article-id="{{ article.id }}">
+        <img src="{{ url_for('static', filename='img/like-icon-2.png') }}" alt="Лайк" class="like-mark">
+        Нравится
+      </button>
+    </div>
+  </main>
+
+  <!-- Подвал -->
+  <footer class="footer-in-reading">
+    <div class="footer-content">
+      <p>© 2025 Бизнес‑Мост. Все права защищены.</p>
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/article.js') }}"></script>
+</body>
+</html>
