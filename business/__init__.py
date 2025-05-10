@@ -1,5 +1,5 @@
 from flask import Flask, render_template, url_for, request, jsonify, json, after_this_request, send_file, redirect, session
-from utils.db import init_db, insert_into_users, get_user_by_login, get_user_by_id, update_user_profile, update_user_avatar, delete_user_avatar
+from utils.db import init_db, insert_into_users, get_user_by_login, get_user_by_id, update_user_profile, update_user_avatar, delete_user_avatar, create_publication, get_user_articles, get_article_by_id
 from flask_limiter import Limiter
 from flask_wtf.csrf import CSRFProtect, generate_csrf, validate_csrf
 from wtforms import ValidationError
@@ -72,12 +72,16 @@ def account():
         if not user:
             raise ValueError("User not found")
         
+        # Получаем статьи пользователя
+        user_articles = asyncio.run(get_user_articles(user_id))
+        
         if 'user_phone' in user and user['user_phone']:
             user['formatted_phone'] = format_phone(user['user_phone'])
         
         return render_template('account.html', 
                             user=user,
-                            current_user=user)
+                            current_user=user,
+                            user_articles=user_articles)
     except Exception as e:
         session.clear()
         return redirect(url_for('login'))
@@ -209,9 +213,142 @@ def edit_profile():
 
 
 # ======================================================================================== СОЗДАНИЕ СТАТЬИ 
-@app.route('/profile/create-publication', methods = ('GET', 'POST'))
-def publications():
-    return render_template('create-publication.html')
+@app.route('/profile/create-publication', methods=['GET', 'POST'])
+@login_required
+def create_publication_route():  # Изменили имя, чтобы избежать конфликта
+    if request.method == 'GET':
+        csrf_token = generate_csrf()
+        return render_template('create-publication.html', csrf_token=csrf_token)
+    
+    if request.method == 'POST':
+        try:
+            # Проверка CSRF токена
+            validate_csrf(request.form.get('csrf_token'))
+            
+            # Получение данных из формы
+            title = request.form.get('title')
+            content = request.form.get('content')
+            image = request.files.get('image')
+            
+            # Валидация данных
+            if not title or not content:
+                return jsonify({
+                    "success": False,
+                    "message": "Заголовок и текст статьи обязательны"
+                }), 400
+                
+            # Обработка изображения
+            image_data = None
+            if image and image.filename:
+                # Проверка размера изображения
+                if image.content_length > 5 * 1024 * 1024:  # 5MB limit
+                    return jsonify({
+                        "success": False,
+                        "message": "Размер изображения не должен превышать 5MB"
+                    }), 400
+                
+                # Проверка типа изображения
+                allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
+                if '.' in image.filename and image.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
+                    return jsonify({
+                        "success": False,
+                        "message": "Недопустимый формат изображения"
+                    }), 400
+                
+                image_data = image.read()
+            
+            # Сохранение в базу данных
+            publication_id = asyncio.run(
+                create_publication(
+                    user_id=session['user_id'],
+                    title=title,
+                    content=content,
+                    image_data=image_data
+                )
+            )
+            
+            return jsonify({
+                "success": True,
+                "message": "Статья успешно создана",
+                "publication_id": publication_id,
+                "redirect": "/profile"
+            })
+            
+        except ValidationError as e:
+            return jsonify({
+                "success": False,
+                "message": "Ошибка безопасности. Обновите страницу и попробуйте снова"
+            }), 403
+            
+        except Exception as e:
+            logging.error(f"Ошибка при создании статьи: {str(e)}")
+            return jsonify({
+                "success": False,
+                "message": "Произошла ошибка при создании статьи"
+            }), 500
+        
+
+
+# ======================================================================================== ПРОСМОТР СТАТЬИ
+@app.route('/article-image/<int:article_id>')
+def article_image(article_id):
+    article = asyncio.run(get_article_by_id(article_id))
+    if article and article.get('preview_image'):
+        return send_file(BytesIO(article['preview_image']), mimetype='image/jpeg')
+    return send_file('static/img/article-placeholder.png')
+
+@app.route('/article/<int:article_id>/<article_slug>')
+def view_article(article_id, article_slug):
+    try:
+        article = asyncio.run(get_article_by_id(article_id))
+        if not article:
+            return render_template('404.html'), 404
+        
+        # Проверка соответствия slug
+        if article_slug != article['topic_name_en']:
+            return redirect(url_for('view_article', 
+                                 article_id=article_id,
+                                 article_slug=article['topic_name_en']))
+        
+        # Получаем автора
+        author = asyncio.run(get_user_by_id(article['public_creator']))
+        
+        return render_template(
+            'reading-publication.html',
+            article=article,
+            author=author,
+            current_user=asyncio.run(get_user_by_id(session['user_id'])) if 'user_id' in session else None
+        )
+    except Exception as e:
+        logging.error(f"Error viewing article: {str(e)}")
+        return render_template('404.html'), 
+
+
+# ======================================================================================== ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ
+@app.route('/user/<int:user_id>')
+def user_profile(user_id):
+    try:
+        user = asyncio.run(get_user_by_id(user_id))
+        if not user:
+            return render_template('404.html'), 404
+        
+        # Получаем статьи пользователя
+        user_articles = asyncio.run(get_user_articles(user_id))
+        
+        if 'user_phone' in user and user['user_phone']:
+            user['formatted_phone'] = format_phone(user['user_phone'])
+        
+        return render_template(
+            'account.html',  # Используем тот же шаблон, что и для личного кабинета
+            user=user,
+            current_user=asyncio.run(get_user_by_id(session['user_id'])) if 'user_id' in session else None,
+            user_articles=user_articles,
+            is_own_profile=(session.get('user_id') == user_id)  # Добавляем флаг, свой ли это профиль
+        )
+    except Exception as e:
+        logging.error(f"Error viewing user profile: {str(e)}")
+        return render_template('404.html'), 404
+    
 
 # ======================================================================================== ОШИБКА 404
 @app.errorhandler(404)

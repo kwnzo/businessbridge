@@ -173,3 +173,63 @@ async def delete_user_avatar(user_id: int):
             )
             await conn.commit()
             return cur.rowcount > 0
+
+async def create_publication(user_id: int, title: str, content: str, image_data: bytes = None) -> int:
+    """Создает новую публикацию и возвращает её ID"""
+    try:
+        async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+        ) as conn:
+            async with conn.cursor() as cur:
+                await cur.execute("""
+                    INSERT INTO publics (
+                        public_creator,
+                        topic_name,
+                        topic_text,
+                        preview_image
+                    ) VALUES (%s, %s, %s, %s)
+                """, (user_id, title, content, image_data))
+                await conn.commit()
+                return cur.lastrowid
+    except Exception as e:
+        logging.error(f'Ошибка при создании публикации: {e}')
+        raise
+
+async def get_user_articles(user_id: int) -> list:
+    """Получает все статьи пользователя"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute("""
+                SELECT id, topic_name, topic_name_en, topic_text, preview_image, created_at 
+                FROM publics 
+                WHERE public_creator = %s 
+                ORDER BY created_at DESC
+            """, (user_id,))
+            return await cur.fetchall()
+
+async def get_article_by_id(article_id: int) -> Optional[dict]:
+    """Получает статью по ID"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute("""
+                SELECT * FROM publics 
+                WHERE id = %s
+                LIMIT 1
+            """, (article_id,))
+            return await cur.fetchone()

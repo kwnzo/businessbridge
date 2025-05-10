@@ -88,41 +88,23 @@
         </div>
 
         <div class="articles-grid">
-            <a href="/profile/create-publication" class="article-card add-article-card">
-                +
-            </a>
-            
+          <a href="/profile/create-publication" class="article-card add-article-card">
+            +
+          </a>
+          
+          {% for article in user_articles %}
+          <a href="{{ url_for('view_article', article_id=article.id, article_slug=article.topic_name_en) }}" class="article-link">
             <div class="article">
-                <div class="article-card"></div>         
-                <h3>Заголовок</h3>
-                <p>Краткое описание...</p>
+              {% if article.preview_image %}
+                <img src="{{ url_for('article_image', article_id=article.id) }}" class="article-card" alt="Превью статьи">
+              {% else %}
+                <div class="article-card"></div>
+              {% endif %}
+              <h3>{{ article.topic_name }}</h3>
             </div>
-            
-            <div class="article">
-                <div class="article-card"></div>         
-                <h3>Заголовок</h3>
-                <p>Краткое описание...</p>
-            </div>
-
-            <div class="article">
-                <div class="article-card"></div>         
-                <h3>Заголовок</h3>
-                <p>Краткое описание...</p>
-            </div>
-
-            <div class="article">
-                <div class="article-card"></div>         
-                <h3>Заголовок</h3>
-                <p>Краткое описание...</p>
-            </div>
-            
-            <div class="article">
-                <div class="article-card"></div>         
-                <h3>Заголовок</h3>
-                <p>Краткое описание...</p>
-            </div>
-            
-          </div>
+          </a>
+          {% endfor %}
+        </div>
 
 
       </div>
