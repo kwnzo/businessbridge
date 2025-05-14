@@ -63,7 +63,7 @@
         <div class="article-stats">
           <div class="stat-item">
             <img src="{{ url_for('static', filename='img/eye-icon.png') }}" alt="Просмотры">
-            <span>{{ article.views or 0 }}</span>
+            <span>{{ article_views }}</span>
           </div>
           <div class="stat-item">
             <img src="{{ url_for('static', filename='img/comment-icon.png') }}" alt="Комментарии">

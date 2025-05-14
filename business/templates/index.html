@@ -24,7 +24,7 @@
     <!-- Навигация -->
     <nav class="header-nav">
       <a href="index">Главная</a>
-      <a href="#">Эксперты</a>
+      <a href="experts">Эксперты</a>
       {% if current_user %}
         <div class="account-dropdown">
           <a href="#" class="account-button-if-login">
@@ -67,13 +67,18 @@
   <!-- ======= Публикации ======= -->
   <section class="publications" aria-labelledby="publications-title">
     <h2 id="publications-title">Публикации</h2>
-
     <!-- Контейнер, куда будут добавляться карточки из БД -->
     <div id="posts-wrapper" class="posts-wrapper">
-      
+      {% for i in data %}
+        {% if i.data %}
+          <div>...</div>  <!-- Ваш контент для случая с данными -->
+        {% else %}
+          <div> СТАТЕЙ НЕТ </div>
+        {% endif %}
+      {% endfor %}
     </div>
   </section>
-</div>  
+</div>
 
 
 <!-- ======= Footer ======= -->

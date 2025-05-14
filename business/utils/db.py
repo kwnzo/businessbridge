@@ -233,3 +233,77 @@ async def get_article_by_id(article_id: int) -> Optional[dict]:
                 LIMIT 1
             """, (article_id,))
             return await cur.fetchone()
+        
+
+async def record_view(public_id: int, user_id: int):
+    async with aiomysql.create_pool(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor() as cursor:
+                try:
+                    await cursor.execute(
+                        "INSERT INTO views (public_id, user_id) "
+                        "VALUES (%s, %s) "
+                        "ON DUPLICATE KEY UPDATE created_at = NOW()",
+                        (public_id, user_id)
+                    )
+                    await conn.commit()
+                except Exception as e:
+                    await conn.rollback()
+                    raise e
+                
+async def get_views(public_id: int):
+    async with aiomysql.create_pool(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor() as cursor:
+                try:
+                    await cursor.execute(
+                        'SELECT views FROM publication_stats WHERE public_id = %s',
+                        (public_id,)
+                    )
+                    data = await cursor.fetchone()
+                    # Extract the first value from the tuple (e.g., 24)
+                    conn.close()
+                    return data[0] if data else 0  # Return 0 if no rows found
+                except Exception as e:
+                    logging.error(f"Database error: {e}")
+                    return 0  # Fallback value
+                finally:
+                    if 'conn' in locals():
+                        conn.close()
+
+async def get_publics():
+    async with aiomysql.create_pool(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor() as cursor:
+                try:
+                    await cursor.execute('SELECT topic_name FROM publics')
+                    data = await cursor.fetchall()
+                    print(data)
+                    return data
+                except Exception as e:
+                    logging.error(f'Index error: {e}')
+                finally:
+                    if 'conn' in locals():
+                        try:
+                            conn.close()
+                            logging.info('conn closed after index')
+                        except Exception as e2:
+                            logging.error(f'Error at closing conn: {e}')

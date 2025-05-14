@@ -32,12 +32,13 @@ document.getElementById('article-form').addEventListener('submit', async functio
   formData.append('title', title);
   formData.append('content', content);
   formData.append('image', imageFile);
+  formData.append('csrf_token', document.querySelector('input[name="csrf_token"]').value)
   
   try {
     const response = await fetch('/profile/create-publication', {
       method: 'POST',
       body: formData
-    });
+  });
     
     const result = await response.json();
     

@@ -1,11 +1,13 @@
 from flask import Flask, render_template, url_for, request, jsonify, json, after_this_request, send_file, redirect, session
-from utils.db import init_db, insert_into_users, get_user_by_login, get_user_by_id, update_user_profile, update_user_avatar, delete_user_avatar, create_publication, get_user_articles, get_article_by_id
+from utils.db import init_db,get_views, get_publics, record_view, insert_into_users, get_user_by_login, get_user_by_id, update_user_profile, update_user_avatar, delete_user_avatar, create_publication, get_user_articles, get_article_by_id
 from flask_limiter import Limiter
+from flask_mysqldb import MySQL
 from flask_wtf.csrf import CSRFProtect, generate_csrf, validate_csrf
 from wtforms import ValidationError
 from io import BytesIO  
 import hashlib
 import time
+import aiomysql
 import re
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -45,15 +47,17 @@ csrf = CSRFProtect(app)  # Затем инициализируйте CSRF
 
 @app.route('/')
 def home():
-    return render_template('index.html')
+    data = asyncio.run(get_publics())
+    return render_template('index.html', data = data)
 
 # ======================================================================================== ГЛАВНАЯ 
 @app.route('/index')
 def index(name=None):
     user = None
+    data = asyncio.run(get_publics())
     if 'user_id' in session:
         user = asyncio.run(get_user_by_id(session['user_id']))
-    return render_template('index.html', current_user=user)
+    return render_template('index.html', current_user=user, data = data)
 
 # ======================================================================================== ПОДТВЕРЖДЕНИЕ РЕГИСТРАЦИИ 
 @app.route('/reg/confirm', methods = ('GET', 'POST'))
@@ -223,13 +227,14 @@ def create_publication_route():  # Изменили имя, чтобы избе�
     if request.method == 'POST':
         try:
             # Проверка CSRF токена
+            csrf_token = request.form.get('csrf_token') or request.headers.get('X-CSRFToken')
             validate_csrf(request.form.get('csrf_token'))
             
             # Получение данных из формы
             title = request.form.get('title')
             content = request.form.get('content')
             image = request.files.get('image')
-            
+            print(title, content,image)
             # Валидация данных
             if not title or not content:
                 return jsonify({
@@ -286,7 +291,13 @@ def create_publication_route():  # Изменили имя, чтобы избе�
                 "success": False,
                 "message": "Произошла ошибка при создании статьи"
             }), 500
-        
+
+
+@app.route('/experts')
+def experts():
+    if request.method == "GET":
+        print(session['user_id'] if session['user_id'] != None else None, '\n',session)
+    return render_template('experts.html')
 
 
 # ======================================================================================== ПРОСМОТР СТАТЬИ
@@ -299,29 +310,36 @@ def article_image(article_id):
 
 @app.route('/article/<int:article_id>/<article_slug>')
 def view_article(article_id, article_slug):
-    try:
-        article = asyncio.run(get_article_by_id(article_id))
-        if not article:
+    if request.method == 'GET':
+        # Record the view
+        asyncio.run(record_view(article_id, session['user_id']))
+        
+        # Get the view count (now an integer)
+        article_views = asyncio.run(get_views(article_id))
+        try:
+            article = asyncio.run(get_article_by_id(article_id))
+            if not article:
+                return render_template('404.html'), 404
+            
+            # Validate the slug
+            if article_slug != article['topic_name_en']:
+                return redirect(url_for('view_article', 
+                                      article_id=article_id,
+                                      article_slug=article['topic_name_en']))
+            
+            # Fetch author details
+            author = asyncio.run(get_user_by_id(article['public_creator']))
+            
+            return render_template(
+                'reading-publication.html',
+                article=article,
+                author=author,
+                current_user=asyncio.run(get_user_by_id(session['user_id'])) if 'user_id' in session else None,
+                article_views=article_views  # Pass the integer directly
+            )
+        except Exception as e:
+            logging.error(f"Error viewing article: {str(e)}")
             return render_template('404.html'), 404
-        
-        # Проверка соответствия slug
-        if article_slug != article['topic_name_en']:
-            return redirect(url_for('view_article', 
-                                 article_id=article_id,
-                                 article_slug=article['topic_name_en']))
-        
-        # Получаем автора
-        author = asyncio.run(get_user_by_id(article['public_creator']))
-        
-        return render_template(
-            'reading-publication.html',
-            article=article,
-            author=author,
-            current_user=asyncio.run(get_user_by_id(session['user_id'])) if 'user_id' in session else None
-        )
-    except Exception as e:
-        logging.error(f"Error viewing article: {str(e)}")
-        return render_template('404.html'), 
 
 
 # ======================================================================================== ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ
@@ -460,7 +478,7 @@ def login():
             }), 404
             
         # Проверка пароля
-        if not check_password_hash(user['user_password'], password):
+        if not check_password_hash(user['user_password'].decode('utf-8'), password):
             logger.warning(f"Неверный пароль для пользователя: {user['id']}")
             return jsonify({
                 'success': False,

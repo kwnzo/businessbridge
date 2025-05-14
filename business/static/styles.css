@@ -25,7 +25,7 @@ body {
   min-height: 100vh; /* Минимальная высота - весь экран */
 }
 
-.index-page, .account-page, .writing-an-article, .editor-page, .reading-page {
+.index-page, .account-page, .writing-an-article, .editor-page, .reading-page, .experts-page {
   zoom: 80%
 }
 
@@ -171,6 +171,7 @@ header.logo {
   margin: auto 0; /* Вертикальное центрирование */
   background: white; /* Цвет фона */
   padding: 40px 200px; /* Внутренние отступы */
+  color: #111111
 }
 
 /* Заголовок блока публикаций */
@@ -1527,3 +1528,162 @@ header.logo {
   margin-top: auto;
   font-size: 14px;
 }
+
+
+
+.experts-welcome {
+  background: linear-gradient(135deg, #28175c 0%, #4e3c83 100%);
+  text-align: center; /* Выравнивание текста по центру */
+  padding: 30px 16px; /* Внутренние отступы */
+  margin-bottom: 20px;
+}
+
+/* Заголовок баннера */
+.experts-welcome h2 {
+  font-size: 27px; /* Размер шрифта */
+  line-height: 1.2; /* Межстрочный интервал */
+  font-weight: 600; /* Толщина шрифта */
+  color: #ffffff; /* Цвет текста */
+  margin-bottom: 12px; /* Отступ снизу */
+}
+
+
+.expert-list {
+      color: #111111;
+      margin: 0 auto;
+      width: 100%;
+      padding: 0 200px;
+      box-sizing: border-box;
+    }
+
+    .expert {
+      background: white;
+      border-radius: 20px;
+      margin-bottom: 20px;
+      padding: 20px;
+      cursor: pointer;
+      transition: 0.3s;
+      position: relative;
+    }
+
+    .expert:hover {
+      background: #f0eef0;
+    }
+
+    .expert-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .expert-info {
+      display: flex;
+      align-items: center;
+    }
+
+    .avatar-expert {
+      width: 60px;
+      height: 60px;
+      background: #ccc;
+      border-radius: 50%;
+      margin-right: 20px;
+      background-size: cover;
+      background-position: center;
+    }
+
+    /* Стили для контейнера статей */
+    .articles-wrapper {
+      position: relative;
+      margin-top: 20px;
+    }
+
+    .articles-scroll {
+      display: flex;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+      gap: 16px;
+      padding: 10px 0;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .articles-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* Стили для заголовка статьи */
+    .article-card h3 {
+    position: relative; /* Позиционируем поверх изображения */
+    z-index: 1; /* Над изображением */
+    background: rgba(46, 33, 56, 0.7); /* Полупрозрачный фон */
+    width: 100%; /* На всю ширину */
+    padding: 10px; /* Отступы */
+    margin: 0; /* Убираем отступы */
+    color: white; /* Цвет текста */
+    }
+
+
+    /* Стили для кнопок прокрутки */
+    .scroll-btn {
+      position: absolute;
+      top: 35%;
+      transform: translateY(-50%);
+      background: rgba(255, 255, 255, 0.9);
+      color: #2E2138;
+      border: none;
+      width: 36px;
+      height: 36px;
+      margin-left: 30px;
+      margin-right: 30px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      z-index: 2;
+      opacity: 0;
+    }
+
+    .articles-wrapper:hover .scroll-btn {
+      opacity: 1;
+    }
+
+    .scroll-btn.hidden {
+      display: none;
+    }
+
+    .scroll-btn.left {
+      left: -18px;
+    }
+
+    .scroll-btn.right {
+      right: -18px;
+    }
+
+    .scroll-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Анимация раскрытия */
+    .articles-wrapper {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease-out;
+    }
+    
+    .expert.expanded .articles-wrapper {
+      max-height: 500px;
+      transition: max-height 0.3s ease-in;
+    }
+
+    .dropdown-arrow-experts {
+      color: #111111;
+      transition: transform 0.3s ease;
+    }
+
+    .expert.expanded .dropdown-arrow-experts {
+      transform: rotate(180deg);
+    }
