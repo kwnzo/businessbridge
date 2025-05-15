@@ -322,3 +322,191 @@ async def get_image_data(article_id):
                     (article_id,))
                 result = await cursor.fetchone()
                 return await cursor.fetchall()
+
+
+
+async def get_users_count() -> int:
+    """Возвращает общее количество пользователей"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("SELECT COUNT(*) FROM users")
+            result = await cur.fetchone()
+            return result[0] if result else 0
+
+async def get_articles_count() -> int:
+    """Возвращает общее количество статей"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("SELECT COUNT(*) FROM publics")
+            result = await cur.fetchone()
+            return result[0] if result else 0
+
+async def get_experts_count() -> int:
+    """Возвращает количество экспертов"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("SELECT COUNT(*) FROM users WHERE user_role = 'expert'")
+            result = await cur.fetchone()
+            return result[0] if result else 0
+        
+
+async def get_all_users(limit: int = 10, offset: int = 0) -> list:
+    """Получает список всех пользователей с пагинацией"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute("""
+                SELECT id, user_name, user_surname, user_email, 
+                       user_role, account_status, created_at
+                FROM users
+                ORDER BY created_at DESC
+                LIMIT %s OFFSET %s
+            """, (limit, offset))
+            return await cur.fetchall()
+
+async def update_user_role(user_id: int, new_role: str) -> bool:
+    """Обновляет роль пользователя"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "UPDATE users SET user_role = %s WHERE id = %s",
+                (new_role, user_id))
+            await conn.commit()
+            return cur.rowcount > 0
+
+async def delete_user(user_id: int) -> bool:
+    """Удаляет пользователя"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
+            await conn.commit()
+            return cur.rowcount > 0
+        
+async def search_users(query: str, limit: int = 10, offset: int = 0) -> list:
+    """Поиск пользователей по имени, фамилии или email"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            search_pattern = f"%{query}%"
+            await cur.execute("""
+                SELECT id, user_name, user_surname, user_email, 
+                       user_role, account_status, created_at
+                FROM users
+                WHERE user_name LIKE %s OR user_surname LIKE %s OR user_email LIKE %s
+                ORDER BY created_at DESC
+                LIMIT %s OFFSET %s
+            """, (search_pattern, search_pattern, search_pattern, limit, offset))
+            return await cur.fetchall()
+
+async def get_all_articles(limit: int = 10, offset: int = 0) -> list:
+    """Получает список всех статей с пагинацией"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute("""
+                SELECT 
+                    p.id, 
+                    p.topic_name, 
+                    p.topic_name_en,
+                    p.created_at,
+                    u.id as user_id,
+                    u.user_name,
+                    u.user_surname
+                FROM publics p
+                JOIN users u ON p.public_creator = u.id
+                ORDER BY p.created_at DESC
+                LIMIT %s OFFSET %s
+            """, (limit, offset))
+            return await cur.fetchall()
+        
+async def search_articles(query: str, limit: int = 10, offset: int = 0) -> list:
+    """Поиск статей по названию или автору"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            search_pattern = f"%{query}%"
+            await cur.execute("""
+                SELECT 
+                    p.id, 
+                    p.topic_name, 
+                    p.topic_name_en,
+                    p.created_at,
+                    u.id as user_id,
+                    u.user_name,
+                    u.user_surname
+                FROM publics p
+                JOIN users u ON p.public_creator = u.id
+                WHERE p.topic_name LIKE %s OR u.user_name LIKE %s OR u.user_surname LIKE %s
+                ORDER BY p.created_at DESC
+                LIMIT %s OFFSET %s
+            """, (search_pattern, search_pattern, search_pattern, limit, offset))
+            return await cur.fetchall()
+        
+async def delete_article(article_id: int) -> bool:
+    """Удаляет статью из базы данных"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            try:
+                await cur.execute("DELETE FROM publics WHERE id = %s", (article_id,))
+                await conn.commit()
+                return cur.rowcount > 0
+            except Exception as e:
+                await conn.rollback()
+                logging.error(f"Error deleting article: {str(e)}")
+                return False

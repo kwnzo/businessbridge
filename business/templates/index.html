@@ -9,8 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap" rel="stylesheet">
   <link rel="icon", type="image/png", href="{{ url_for('static', filename='img/favicon.png') }}">
   <title>Бизнес‑Мост</title>
-</head>
-<style>
+  <style>
 .articles-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -56,6 +55,7 @@
   color: #888;
 }
 </style>
+</head>
 <body class="index-page">
 
 <!-- ======= Header ======= -->
@@ -84,6 +84,10 @@
           </a>
           <div class="account-dropdown-content">
             <a href="/profile" class="account-dropdown-item">Мой профиль</a>
+            {% if current_user.user_role == 'admin' %}
+              <hr class="account-dropdown-divider">
+              <a href="/admin" class="account-dropdown-item">Админ-панель</a>
+            {% endif %}
             <hr class="account-dropdown-divider">
             <a href="/logout" class="account-dropdown-item">Выйти</a>
           </div>
@@ -138,7 +142,7 @@
             {% endfor %}
         {% endif %}
     </div>
-</section>
+  </section>
 </div>
 
 

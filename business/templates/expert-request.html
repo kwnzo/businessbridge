@@ -9,149 +9,37 @@
   <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap" rel="stylesheet">
   <link rel="icon", type="image/png", href="{{ url_for('static', filename='img/favicon.png') }}">
   <title>Бизнес-Мост | Заявка эксперта</title>
-  <style>
-    .expert-application-page {
-      background-image: url("{{ url_for('static', filename='img/authorization.png') }}");
-      background-size: cover;
-      background-position: center;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 40px 20px;
-    }
-
-    .application-container {
-      background-color: white;
-      border-radius: 25px;
-      padding: 40px;
-      width: 100%;
-      max-width: 600px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-    }
-
-    .application-title {
-      text-align: center;
-      font-size: 28px;
-      font-weight: 600;
-      margin-bottom: 30px;
-      color: #2E2138;
-    }
-
-    .application-form {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .form-group {
-      margin-bottom: 15px;
-    }
-
-    .form-label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 500;
-      color: #2E2138;
-    }
-
-    .form-input {
-      width: 100%;
-      padding: 12px 15px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      font-size: 15px;
-      transition: border-color 0.3s;
-    }
-
-    .form-input:focus {
-      border-color: #2E2138;
-      outline: none;
-    }
-
-    .form-select {
-      width: 100%;
-      padding: 12px 15px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      font-size: 15px;
-      appearance: none;
-      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-      background-repeat: no-repeat;
-      background-position: right 10px center;
-      background-size: 16px;
-    }
-
-    .form-select:focus {
-      border-color: #2E2138;
-      outline: none;
-    }
-
-    .submit-btn {
-      background-color: #2E2138;
-      color: white;
-      padding: 15px;
-      font-size: 16px;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: background-color 0.3s;
-      font-weight: 600;
-      margin-top: 10px;
-    }
-
-    .submit-btn:hover {
-      background-color: #46305e;
-    }
-
-    .user-info {
-      background-color: #f5f5f5;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-    }
-
-    .user-info p {
-      margin: 5px 0;
-      color: #333;
-    }
-
-    .required-field {
-      color: #ff4c8d;
-      margin-left: 4px;
-    }
-  </style>
 </head>
 <body class="expert-application-page">
-  <div class="application-container">
-    <h1 class="application-title">Заявка на вступление в эксперты</h1>
+  <div class="expert-application-container">
+    <h1 class="expert-application-title">Заявка на вступление в эксперты</h1>
     
-    <div class="user-info">
+    <div class="expert-user-info">
       <p><strong>Ваши данные:</strong></p>
-      <p>ФИО: <span id="user-fullname">{{ current_user.full_name }}</span></p>
-      <p>Email: {{ current_user.email }}</p>
+      <p>ФИО: <span id="user-fullname">{{ current_user.user_surname }} {{ current_user.user_name }} {{ current_user.user_daddy }}</span></p>
+      <p>Email: {{ current_user.user_email }}</p>
     </div>
 
-    <form class="application-form" id="expertApplicationForm">
-      <div class="form-group">
-        <label for="company" class="form-label">
-          Название предприятия/бизнеса <span class="required-field">*</span>
+    <form class="expert-application-form" id="expertApplicationForm">
+      <div class="expert-form-group">
+        <label for="company" class="expert-form-label">
+          Название предприятия/бизнеса <span class="expert-required-field">*</span>
         </label>
-        <input type="text" id="company" class="form-input" required placeholder="ООО 'Пример'">
+        <input type="text" id="company" class="expert-form-input" required placeholder="ООО 'Пример'">
       </div>
 
-      <div class="form-group">
-        <label for="position" class="form-label">
-          Ваша роль в предприятии <span class="required-field">*</span>
+      <div class="expert-form-group">
+        <label for="position" class="expert-form-label">
+          Ваша роль в предприятии <span class="expert-required-field">*</span>
         </label>
-        <input type="text" id="position" class="form-input" required placeholder="Директор/Основатель/Менеджер и т.д.">
+        <input type="text" id="position" class="expert-form-input" required placeholder="Директор/Основатель/Менеджер и т.д.">
       </div>
 
-      <div class="form-group">
-        <label for="expertise" class="form-label">
-          Область экспертизы <span class="required-field">*</span>
+      <div class="expert-form-group">
+        <label for="expertise" class="expert-form-label">
+          Область экспертизы <span class="expert-required-field">*</span>
         </label>
-        <select id="expertise" class="form-select" required>
+        <select id="expertise" class="expert-form-select" required>
           <option value="" disabled selected>Выберите область</option>
           <option value="marketing">Маркетинг и продажи</option>
           <option value="management">Управление бизнесом</option>
@@ -164,67 +52,30 @@
         </select>
       </div>
 
-      <div class="form-group" id="otherFieldContainer" style="display: none;">
-        <label for="otherExpertise" class="form-label">Укажите вашу область экспертизы</label>
-        <input type="text" id="otherExpertise" class="form-input" placeholder="Ваша специализация">
+      <div class="expert-form-group" id="otherFieldContainer" style="display: none;">
+        <label for="otherExpertise" class="expert-form-label">Укажите вашу область экспертизы</label>
+        <input type="text" id="otherExpertise" class="expert-form-input" placeholder="Ваша специализация">
       </div>
 
-      <div class="form-group">
-        <label for="experience" class="form-label">
-          Опыт работы в данной области (лет) <span class="required-field">*</span>
+      <div class="expert-form-group">
+        <label for="experience" class="expert-form-label">
+          Опыт работы в данной области (лет) <span class="expert-required-field">*</span>
         </label>
-        <input type="number" id="experience" class="form-input" required min="1" max="50" placeholder="5">
+        <input type="number" id="experience" class="expert-form-input" required min="1" max="50" placeholder="5">
       </div>
 
-      <div class="form-group">
-        <label for="description" class="form-label">
-          Краткое описание вашей экспертизы <span class="required-field">*</span>
+      <div class="expert-form-group">
+        <label for="description" class="expert-form-label">
+          Краткое описание вашей экспертизы <span class="expert-required-field">*</span>
         </label>
-        <textarea id="description" class="form-input" rows="4" required placeholder="Опишите ваш опыт, достижения и компетенции"></textarea>
+        <textarea id="description" class="expert-form-input" rows="4" required placeholder="Опишите ваш опыт, достижения и компетенции"></textarea>
       </div>
 
-      <button type="submit" class="submit-btn">Отправить заявку</button>
+      <button type="submit" class="expert-submit-btn">Отправить заявку</button>
     </form>
   </div>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      // Показываем/скрываем поле "Другое" при выборе соответствующего варианта
-      const expertiseSelect = document.getElementById('expertise');
-      const otherFieldContainer = document.getElementById('otherFieldContainer');
-      
-      expertiseSelect.addEventListener('change', function() {
-        if (this.value === 'other') {
-          otherFieldContainer.style.display = 'block';
-        } else {
-          otherFieldContainer.style.display = 'none';
-        }
-      });
+  <script src="{{ url_for('static', filename='js/expert-request.js') }}"></script>
 
-      // Обработка отправки формы
-      const form = document.getElementById('expertApplicationForm');
-      form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        // Собираем данные формы
-        const formData = {
-          fullName: document.getElementById('user-fullname').textContent,
-          company: document.getElementById('company').value,
-          position: document.getElementById('position').value,
-          expertise: document.getElementById('expertise').value,
-          otherExpertise: document.getElementById('otherExpertise').value,
-          experience: document.getElementById('experience').value,
-          description: document.getElementById('description').value
-        };
-
-        // Здесь можно добавить отправку данных на сервер
-        console.log('Отправка данных:', formData);
-        
-        // Показываем уведомление об успешной отправке
-        alert('Ваша заявка успешно отправлена! Мы рассмотрим её в ближайшее время.');
-        form.reset();
-      });
-    });
-  </script>
 </body>
 </html>

@@ -13,6 +13,7 @@ from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 import asyncio
 import logging
+from admin import admin_bp
 
 loop = asyncio.new_event_loop()
 asyncio.set_event_loop(loop)
@@ -44,6 +45,9 @@ with open('data/config.json', 'r')  as f:
 
 app.secret_key = config['secret-key']  # Сначала установите ключ
 csrf = CSRFProtect(app)  # Затем инициализируйте CSRF
+
+app.register_blueprint(admin_bp)
+
 
 @app.route('/')
 def home():
@@ -90,6 +94,8 @@ def article_images(article_id):
 def confirm():
     return render_template('confirm.html')
 
+
+
 # ======================================================================================== ПРОФИЛЬ 
 @app.route('/profile')
 @login_required
@@ -128,7 +134,7 @@ def user_avatar(user_id):
     if user and user.get('user_avatar'):
         return send_file(BytesIO(user['user_avatar']), mimetype='image/jpeg')
     return send_file('static/img/avatar.jpg')
-
+    
 # ======================================================================================== РЕДАКТИРОВАНИЕ ПРОФИЛЯ
 @app.route('/profile/edit-profile', methods=['GET', 'POST'])
 @login_required
@@ -392,6 +398,16 @@ def user_profile(user_id):
         return render_template('404.html'), 404
     
 
+# ======================================================================================== ЭКСПЕРТЫ
+@app.route('/expert-request')
+@login_required
+def expert_request():
+    user = asyncio.run(get_user_by_id(session['user_id']))
+    if user['account_status'] != 'verified':
+        return redirect(url_for('account'))
+    return render_template('expert-request.html', current_user=user)
+    
+
 # ======================================================================================== ОШИБКА 404
 @app.errorhandler(404)
 def error(error):
@@ -502,7 +518,7 @@ def login():
             }), 404
             
         # Проверка пароля
-        if not check_password_hash(user['user_password'].decode('utf-8'), password):
+        if not check_password_hash(user['user_password'], password):
             logger.warning(f"Неверный пароль для пользователя: {user['id']}")
             return jsonify({
                 'success': False,

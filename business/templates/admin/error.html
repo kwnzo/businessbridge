@@ -1,0 +1,9 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="admin-error">
+  <h2>Ошибка</h2>
+  <p>{{ message }}</p>
+  <a href="{{ url_for('admin_bp.dashboard') }}" class="admin-button">На главную</a>
+</div>
+{% endblock %}

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Админ-панель | Бизнес‑Мост{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="icon", type="image/png", href="{{ url_for('static', filename='img/favicon.png') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap" rel="stylesheet">
+</head>
+<body class="admin-page">
+    <div class="admin-container">
+        <aside class="admin-sidebar">
+            <div class="admin-logo">
+                <img src="{{ url_for('static', filename='img/logo.png')}}" alt="logo" width="40" height="40">
+                <span>Админ-панель</span>
+            </div>
+            <nav class="admin-nav">
+                <a href="{{ url_for('admin_bp.dashboard') }}" class="admin-nav-item">
+                    <span>Главная</span>
+                </a>
+                <a href="{{ url_for('admin_bp.users_management') }}" class="admin-nav-item">
+                    <span>Пользователи</span>
+                </a>
+                <a href="{{ url_for('admin_bp.articles_management') }}" class="admin-nav-item">
+                    <span>Статьи</span>
+                </a>
+                <a href="{{ url_for('account') }}" class="admin-nav-item">
+                    <span>Вернуться на сайт</span>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="admin-content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</body>
+</html>

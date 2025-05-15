@@ -1,0 +1,67 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+  <div class="admin-header">
+    <h1>Управление пользователями</h1>
+    <div class="admin-actions">
+      <input type="text" placeholder="Поиск пользователей..." class="admin-search" id="user-search">
+    </div>
+  </div>
+
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>ФИО</th>
+        <th>Email</th>
+        <th>Роль</th>
+        <th>Статус</th>
+        <th>Дата регистрации</th>
+        <th>Действия</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+      <tr>
+        <td>{{ user.id }}</td>
+        <td>
+          <a href="{{ url_for('user_profile', user_id=user.id) }}" class="user-link">
+            {{ user.user_surname }} {{ user.user_name }}
+          </a>
+        </td>
+        <td>{{ user.user_email }}</td>
+        <td>
+          <select class="role-select" data-user-id="{{ user.id }}">
+            <option value="user" {% if user.user_role == 'user' %}selected{% endif %}>Пользователь</option>
+            <option value="expert" {% if user.user_role == 'expert' %}selected{% endif %}>Эксперт</option>
+            <option value="admin" {% if user.user_role == 'admin' %}selected{% endif %}>Админ</option>
+          </select>
+        </td>
+        <td>
+          <span class="status-badge {% if user.account_status == 'verified' %}verified{% else %}unverified{% endif %}">
+            {{ 'Подтвержден' if user.account_status == 'verified' else 'Не подтвержден' }}
+          </span>
+        </td>
+        <td>{{ user.created_at.strftime('%d.%m.%Y') }}</td>
+        <td>
+          <button class="delete-user" data-user-id="{{ user.id }}">Удалить</button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if total_pages > 1 %}
+  <div class="admin-pagination">
+    {% for page_num in range(1, total_pages + 1) %}
+      <a href="{{ url_for('admin.manage_users', page=page_num) }}"
+         class="{% if page_num == current_page %}active{% endif %}">
+        {{ page_num }}
+      </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+    <meta name="csrf-token" content="{{ csrf_token_value }}">
+    <script src="{{ url_for('static', filename='js/admin-users.js') }}"></script>
+{% endblock %}

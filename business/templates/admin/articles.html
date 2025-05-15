@@ -1,0 +1,66 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="admin-header">
+    <h1>Управление статьями</h1>
+    <div class="admin-actions">
+        <form method="get" action="{{ url_for('admin_bp.articles_management') }}" class="search-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
+            <input type="text" 
+                   name="q" 
+                   value="{{ search_query }}"
+                   placeholder="Поиск по названию или автору..." 
+                   class="admin-search">
+            <button type="submit">Найти</button>
+            {% if search_query %}
+                <a href="{{ url_for('admin_bp.articles_management') }}" class="clear-search">Сбросить</a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+
+<table class="admin-table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Название</th>
+            <th>Автор</th>
+            <th>Дата</th>
+            <th>Действия</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for article in articles %}
+        <tr>
+            <td>{{ article.id }}</td>
+            <td>{{ article.topic_name }}</td>
+            <td>
+                <a href="{{ url_for('user_profile', user_id=article.user_id) }}">
+                    {{ article.user_surname }} {{ article.user_name }}
+                </a>
+            </td>
+            <td>{{ article.created_at.strftime('%d.%m.%Y') }}</td>
+            <td>
+                <a href="{{ url_for('view_article', article_id=article.id, article_slug=article.topic_name_en) }}" 
+                   class="btn-view" target="_blank">Просмотр</a>
+                <button class="delete-article" data-article-id="{{ article.id }}">Удалить</button>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% if total_pages > 1 %}
+<div class="admin-pagination">
+    {% for page_num in range(1, total_pages + 1) %}
+        <a href="{{ url_for('admin_bp.articles_management', page=page_num, q=search_query) }}"
+           class="{% if page_num == current_page %}active{% endif %}">
+            {{ page_num }}
+        </a>
+    {% endfor %}
+</div>
+{% endif %}
+
+<script src="{{ url_for('static', filename='js/admin-articles.js') }}"></script>
+{% endblock %}
