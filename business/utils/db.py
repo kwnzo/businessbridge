@@ -292,18 +292,33 @@ async def get_publics():
             port=port
     ) as pool:
         async with pool.acquire() as conn:
-            async with conn.cursor() as cursor:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:  # Используем DictCursor
                 try:
-                    await cursor.execute('SELECT topic_name FROM publics')
-                    data = await cursor.fetchall()
-                    print(data)
-                    return data
+                    await cursor.execute('''
+                        SELECT 
+                            id, 
+                            topic_name, 
+                            topic_name_en, 
+                            preview_image 
+                        FROM publics
+                    ''')
+                    return await cursor.fetchall()
                 except Exception as e:
-                    logging.error(f'Index error: {e}')
-                finally:
-                    if 'conn' in locals():
-                        try:
-                            conn.close()
-                            logging.info('conn closed after index')
-                        except Exception as e2:
-                            logging.error(f'Error at closing conn: {e}')
+                    logging.error(f'Error getting articles: {e}')
+                    return []
+                
+async def get_image_data(article_id):
+    async with aiomysql.create_pool(
+        user=user,
+        password=dbpassword,
+        db=db,
+        host=host,
+        port=port
+    ) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor() as cursor:
+                await cursor.execute(
+                    'SELECT preview_image, image_type FROM publics WHERE id = %s',
+                    (article_id,))
+                result = await cursor.fetchone()
+                return await cursor.fetchall()

@@ -10,6 +10,52 @@
   <link rel="icon", type="image/png", href="{{ url_for('static', filename='img/favicon.png') }}">
   <title>Бизнес‑Мост</title>
 </head>
+<style>
+.articles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+  padding: 20px;
+}
+
+.article-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.article-card {
+  height: 200px;
+  background-color: #f5f5f5;
+  border-radius: 10px;
+  background-size: cover;
+  background-position: center;
+  transition: transform 0.3s ease;
+}
+
+.article-card.no-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #e0e0e0;
+  color: #666;
+}
+
+.article-card:hover {
+  transform: scale(1.03);
+}
+
+.article h3 {
+  margin-top: 10px;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.no-articles {
+  text-align: center;
+  padding: 40px;
+  color: #888;
+}
+</style>
 <body class="index-page">
 
 <!-- ======= Header ======= -->
@@ -67,17 +113,32 @@
   <!-- ======= Публикации ======= -->
   <section class="publications" aria-labelledby="publications-title">
     <h2 id="publications-title">Публикации</h2>
-    <!-- Контейнер, куда будут добавляться карточки из БД -->
-    <div id="posts-wrapper" class="posts-wrapper">
-      {% for i in data %}
-        {% if i.data %}
-          <div>...</div>  <!-- Ваш контент для случая с данными -->
+    
+    <div class="articles-grid">
+        {% if not data %}
+            <div class="no-articles">Нет доступных публикаций</div>
         {% else %}
-          <div> СТАТЕЙ НЕТ </div>
+            {% for article in data %}
+            <a href="{{ url_for('view_article', 
+            article_id=article.id, 
+            article_slug=article.topic_name_en) }}">
+                <div class="article">
+                    {% if article['preview_image'] %}
+                    <img src="{{ url_for('article_image', article_id=article['id']) }}" 
+                         class="article-card" 
+                         alt="Превью статьи">
+                    {% else %}
+                    <div class="article-card no-image">
+                        <span>Нет изображения</span>
+                    </div>
+                    {% endif %}
+                    <h3>{{ article['topic_name'] }}</h3>
+                </div>
+            </a>
+            {% endfor %}
         {% endif %}
-      {% endfor %}
     </div>
-  </section>
+</section>
 </div>
 
 

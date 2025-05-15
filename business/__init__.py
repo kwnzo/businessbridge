@@ -1,5 +1,5 @@
-from flask import Flask, render_template, url_for, request, jsonify, json, after_this_request, send_file, redirect, session
-from utils.db import init_db,get_views, get_publics, record_view, insert_into_users, get_user_by_login, get_user_by_id, update_user_profile, update_user_avatar, delete_user_avatar, create_publication, get_user_articles, get_article_by_id
+from flask import Flask, render_template, url_for, request, jsonify, json, after_this_request, send_file, redirect, session, Response, abort
+from utils.db import init_db,get_views, get_publics, record_view, insert_into_users, get_user_by_login, get_user_by_id, update_user_profile, update_user_avatar, delete_user_avatar, create_publication, get_user_articles, get_article_by_id, get_image_data
 from flask_limiter import Limiter
 from flask_mysqldb import MySQL
 from flask_wtf.csrf import CSRFProtect, generate_csrf, validate_csrf
@@ -47,8 +47,11 @@ csrf = CSRFProtect(app)  # Затем инициализируйте CSRF
 
 @app.route('/')
 def home():
+    user = None
     data = asyncio.run(get_publics())
-    return render_template('index.html', data = data)
+    if 'user_id' in session:
+        user = asyncio.run(get_user_by_id(session['user_id']))
+    return render_template('index.html', current_user=user, data = data)
 
 # ======================================================================================== ГЛАВНАЯ 
 @app.route('/index')
@@ -57,14 +60,35 @@ def index(name=None):
     data = asyncio.run(get_publics())
     if 'user_id' in session:
         user = asyncio.run(get_user_by_id(session['user_id']))
-    return render_template('index.html', current_user=user, data = data)
+    return render_template('index.html', current_user=user, data=data)
+
+@app.route('/article_image/<int:article_id>')
+def article_images(article_id):
+    try:
+        image_data, image_type = asyncio.run(get_image_data(article_id))
+        
+        if not image_data:
+            abort(404)
+            
+        mime_type = f'image/{image_type.lower()}' if image_type else 'image/jpeg'
+        
+        return Response(
+            image_data,
+            mimetype=mime_type,
+            headers={
+                'Cache-Control': 'public, max-age=604800',
+                'Content-Disposition': f'inline; filename="article_{article_id}"'
+            }
+        )
+    
+    except Exception as e:
+        logging.error(f"Error loading image for article {article_id}: {e}")
+        abort(500)
 
 # ======================================================================================== ПОДТВЕРЖДЕНИЕ РЕГИСТРАЦИИ 
 @app.route('/reg/confirm', methods = ('GET', 'POST'))
 def confirm():
     return render_template('confirm.html')
-
-
 
 # ======================================================================================== ПРОФИЛЬ 
 @app.route('/profile')
