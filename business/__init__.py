@@ -1,5 +1,10 @@
 from flask import Flask, render_template, url_for, request, jsonify, json, after_this_request, send_file, redirect, session, Response, abort
-from utils.db import init_db,get_views, get_publics, record_view, insert_into_users, get_user_by_login, get_user_by_id, update_user_profile, update_user_avatar, delete_user_avatar, create_publication, get_user_articles, get_article_by_id, get_image_data
+from utils.db import (init_db,get_views, get_publics, record_view, 
+                      insert_into_users, get_user_by_login, get_user_by_id, 
+                      update_user_profile, update_user_avatar, 
+                      delete_user_avatar, create_publication, get_user_articles, 
+                      get_article_by_id, get_image_data, save_expert_request,
+                      add_like, remove_like, has_liked, get_likes_count, check_user_like)
 from flask_limiter import Limiter
 from flask_mysqldb import MySQL
 from flask_wtf.csrf import CSRFProtect, generate_csrf, validate_csrf
@@ -342,7 +347,7 @@ def article_image(article_id):
 def view_article(article_id, article_slug):
     if request.method == 'GET':
         # Record the view
-        asyncio.run(record_view(article_id, session['user_id']))
+        asyncio.run(record_view(article_id, session.get('user_id')))
         
         # Get the view count (now an integer)
         article_views = asyncio.run(get_views(article_id))
@@ -352,7 +357,7 @@ def view_article(article_id, article_slug):
                 return render_template('404.html'), 404
             
             # Validate the slug
-            if article_slug != article['topic_name_en']:
+            if article_slug != article.get('topic_name_en', ''):
                 return redirect(url_for('view_article', 
                                       article_id=article_id,
                                       article_slug=article['topic_name_en']))
@@ -360,16 +365,67 @@ def view_article(article_id, article_slug):
             # Fetch author details
             author = asyncio.run(get_user_by_id(article['public_creator']))
             
+            user_has_liked = False
+            if 'user_id' in session:
+                user_has_liked = asyncio.run(check_user_like(session['user_id'], article_id))
+            
+            # Get views and likes count
+            article_views = asyncio.run(get_views(article_id))
+            likes_count = asyncio.run(get_likes_count(article_id))
             return render_template(
                 'reading-publication.html',
                 article=article,
                 author=author,
                 current_user=asyncio.run(get_user_by_id(session['user_id'])) if 'user_id' in session else None,
-                article_views=article_views  # Pass the integer directly
+                article_views=article_views,
+                user_has_liked=user_has_liked,
+                likes_count=likes_count
             )
         except Exception as e:
-            logging.error(f"Error viewing article: {str(e)}")
+            logging.error(f"Error viewing article: {str(e)}", exc_info=True)
             return render_template('404.html'), 404
+
+@app.route('/api/like', methods=['POST'])
+@csrf.exempt  # Отключаем CSRF для этого API endpoint
+@login_required
+def handle_like():
+    try:
+        if not request.is_json:
+            return jsonify({'success': False, 'message': 'Неверный формат запроса'}), 400
+            
+        data = request.get_json()
+        public_id = data.get('public_id')
+        user_id = session['user_id']
+        
+        if not public_id:
+            return jsonify({'success': False, 'message': 'Не указан ID статьи'}), 400
+        
+        # Проверяем, есть ли уже лайк от этого пользователя
+        has_like = asyncio.run(check_user_like(user_id, public_id))
+        
+        if has_like:
+            # Удаляем лайк
+            success = asyncio.run(remove_like(user_id, public_id))
+            action = 'removed'
+        else:
+            # Добавляем лайк
+            success = asyncio.run(add_like(user_id, public_id))
+            action = 'added'
+        
+        if success:
+            # Получаем обновленное количество лайков
+            likes_count = asyncio.run(get_likes_count(public_id))
+            return jsonify({
+                'success': True,
+                'action': action,
+                'likes_count': likes_count
+            })
+        else:
+            return jsonify({'success': False, 'message': 'Ошибка при обработке лайка'}), 400
+            
+    except Exception as e:
+        logging.error(f"Ошибка в обработчике лайков: {str(e)}", exc_info=True)
+        return jsonify({'success': False, 'message': 'Внутренняя ошибка сервера'}), 500
 
 
 # ======================================================================================== ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ
@@ -399,13 +455,60 @@ def user_profile(user_id):
     
 
 # ======================================================================================== ЭКСПЕРТЫ
-@app.route('/expert-request')
+@app.route('/expert-request', methods=['GET', 'POST'])
 @login_required
 def expert_request():
     user = asyncio.run(get_user_by_id(session['user_id']))
     if user['account_status'] != 'verified':
         return redirect(url_for('account'))
-    return render_template('expert-request.html', current_user=user)
+
+    if request.method == "POST":
+        try:
+
+            validate_csrf(request.headers.get('X-CSRFToken'))  # Валидация CSRF
+
+            # Получаем JSON данные и CSRF токен
+            data = request.get_json()
+
+            # Валидация обязательных полей
+            required_fields = ['company', 'position', 'expertise', 'experience', 'description']
+            for field in required_fields:
+                if not data.get(field):
+                    raise ValueError(f"Поле {field} обязательно для заполнения")
+
+            # Сохраняем заявку в БД
+            success = asyncio.run(save_expert_request(
+                user_id=session['user_id'],
+                company=data['company'],
+                position=data['position'],
+                expertise=data['expertise'],
+                experience=int(data['experience']),
+                description=data['description'],
+                other_expertise=data.get('otherExpertise', '')
+            ))
+
+            if not success:
+                raise ValueError("Ошибка сохранения заявки")
+
+            return jsonify({
+                "success": True,
+                "redirect": '/profile'
+            })
+
+        except ValidationError as e:
+            return jsonify({"success": False, "message": "CSRF токен недействителен"}), 403
+        except ValueError as e:
+            return jsonify({"success": False, "message": str(e)}), 400
+        except Exception as e:
+            logging.error(f"Ошибка экспертной заявки: {str(e)}")
+            return jsonify({"success": False, "message": "Внутренняя ошибка сервера"}), 500
+
+    # GET запрос
+    if request.method == 'GET':
+        csrf_token = generate_csrf()
+    return render_template('expert-request.html', 
+                         current_user=user,
+                         csrf_token=csrf_token)
     
 
 # ======================================================================================== ОШИБКА 404
@@ -518,7 +621,7 @@ def login():
             }), 404
             
         # Проверка пароля
-        if not check_password_hash(user['user_password'], password):
+        if not check_password_hash(user['user_password'].decode('utf-8'), password):
             logger.warning(f"Неверный пароль для пользователя: {user['id']}")
             return jsonify({
                 'success': False,

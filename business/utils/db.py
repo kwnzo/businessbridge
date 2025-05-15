@@ -323,8 +323,6 @@ async def get_image_data(article_id):
                 result = await cursor.fetchone()
                 return await cursor.fetchall()
 
-
-
 async def get_users_count() -> int:
     """Возвращает общее количество пользователей"""
     async with aiomysql.connect(
@@ -510,3 +508,133 @@ async def delete_article(article_id: int) -> bool:
                 await conn.rollback()
                 logging.error(f"Error deleting article: {str(e)}")
                 return False
+
+async def insert_into_experts_application(fullName, company, position, expertise, otherExpertise, experience, description):
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            try:
+                pass
+            except Exception as e:
+                logging.error(f"Error inserting expert's application: {e}")
+
+async def save_expert_request(
+    user_id: int,
+    company: str,
+    position: str,
+    expertise: str,
+    experience: int,
+    description: str,
+    other_expertise: str = ''
+) -> bool:
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cursor:
+            try:
+                await cursor.execute("""
+                    INSERT INTO expert_requests 
+                    (user_id, company, position, expertise, other_expertise, experience, description)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """, (user_id, company, position, expertise, other_expertise, experience, description))
+                await conn.commit()
+                return True
+            except Exception as e:
+                logging.error(f"DB Error saving expert request: {str(e)}")
+                return False
+            
+async def add_like(user_id: int, public_id: int) -> bool:
+    """Добавляет лайк к статье. Возвращает True при успехе, False если лайк уже существует."""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            try:
+                await cur.execute(
+                    "INSERT INTO likes (user_id, public_id) VALUES (%s, %s)",
+                    (user_id, public_id)
+                )
+                await conn.commit()
+                return True
+            except aiomysql.IntegrityError:
+                # Лайк уже существует
+                return False
+            except Exception as e:
+                logging.error(f"Ошибка при добавлении лайка: {e}")
+                return False
+
+async def remove_like(user_id: int, public_id: int) -> bool:
+    """Удаляет лайк с статьи. Возвращает True при успехе."""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "DELETE FROM likes WHERE user_id = %s AND public_id = %s",
+                (user_id, public_id))
+            await conn.commit()
+            return cur.rowcount > 0
+
+async def has_liked(user_id: int, public_id: int) -> bool:
+    """Проверяет, поставил ли пользователь лайк статье."""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "SELECT 1 FROM likes WHERE user_id = %s AND public_id = %s",
+                (user_id, public_id))
+            return await cur.fetchone() is not None
+
+async def get_likes_count(public_id: int) -> int:
+    """Возвращает количество лайков у статьи."""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "SELECT COUNT(*) FROM likes WHERE public_id = %s",
+                (public_id,))
+            result = await cur.fetchone()
+            return result[0] if result else 0
+        
+
+async def check_user_like(user_id: int, public_id: int) -> bool:
+    """Проверяет, поставил ли пользователь лайк статье."""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "SELECT 1 FROM likes WHERE user_id = %s AND public_id = %s",
+                (user_id, public_id))
+            return await cur.fetchone() is not None

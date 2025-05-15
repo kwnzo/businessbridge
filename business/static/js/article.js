@@ -1,31 +1,45 @@
 document.addEventListener('DOMContentLoaded', function() {
-  // Обработка лайков
-  const likeButton = document.querySelector('.like-button');
-  if (likeButton) {
-    likeButton.addEventListener('click', async function() {
-      const articleId = this.dataset.articleId;
-      
-      try {
-        const response = await fetch('/like-article', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
-          },
-          body: JSON.stringify({ article_id: articleId })
+    const likeButtons = document.querySelectorAll('.like-button:not(a)');
+    
+    likeButtons.forEach(button => {
+        button.addEventListener('click', async function(e) {
+            e.preventDefault();
+            const articleId = this.dataset.articleId;
+            
+            try {
+                const response = await fetch('/api/like', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        public_id: articleId
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Обновляем состояние кнопки
+                    this.classList.toggle('liked');
+                    const likeText = this.querySelector('.like-text');
+                    if (likeText) {
+                        likeText.textContent = data.action === 'added' ? 'Убрать лайк' : 'Нравится';
+                    }
+                    
+                    // Обновляем счетчик лайков
+                    const likesCounter = document.querySelector('.article-stats .stat-item:nth-child(3) span');
+                    if (likesCounter) {
+                        likesCounter.textContent = data.likes_count;
+                    }
+                } else {
+                    console.error('Ошибка:', data.message);
+                    alert(data.message);
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                alert('Произошла ошибка при обработке запроса');
+            }
         });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-          const likeCount = this.querySelector('span');
-          likeCount.textContent = result.new_likes;
-          this.classList.toggle('liked', result.liked);
-        }
-      } catch (error) {
-        console.error('Error:', error);
-      }
     });
-  }
-  
 });

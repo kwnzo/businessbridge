@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap" rel="stylesheet">
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
   <title>Бизнес‑Мост | {{ article.topic_name }}</title>
+  <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 <body class="reading-page">
   <header class="header">
@@ -18,21 +19,31 @@
         Бизнес‑Мост
       </a>
       <nav class="header-nav">
-        <a href="{{ url_for('index') }}">Главная</a>
-        <a href="#">Эксперты</a>
+        <a href="index">Главная</a>
+        <a href="experts">Эксперты</a>
         {% if current_user %}
-          <a href="/profile" class="account-button-if-login">
-            <img src="{{ url_for('user_avatar', user_id=current_user.id) }}" 
-                 alt="Аватар" 
-                 class="avatar-icon-if-login js-avatar"
-                 data-fallback="{{ url_for('static', filename='img/avatar-placeholder.png') }}">
-            <span class="account-name-if-login">
-              {{ current_user.user_surname }} {{ current_user.user_name[0] }}.
-              {% if current_user.user_daddy %}{{ current_user.user_daddy[0] }}.{% endif %}
-            </span>
-          </a>
+          <div class="account-dropdown">
+            <a href="#" class="account-button-if-login">
+              <img src="{{ url_for('user_avatar', user_id=current_user.id) }}" 
+                  alt="Аватар" 
+                  class="avatar-icon-if-login js-avatar"
+                  data-fallback="{{ url_for('static', filename='img/avatar-placeholder.png') }}">
+              <svg class="dropdown-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+                <path d="M7 10l5 5 5-5"/>
+              </svg>
+            </a>
+            <div class="account-dropdown-content">
+              <a href="/profile" class="account-dropdown-item">Мой профиль</a>
+              {% if current_user.user_role == 'admin' %}
+                <hr class="account-dropdown-divider">
+                <a href="/admin" class="account-dropdown-item">Админ-панель</a>
+              {% endif %}
+              <hr class="account-dropdown-divider">
+              <a href="/logout" class="account-dropdown-item">Выйти</a>
+            </div>
+          </div>
         {% else %}
-          <a href="{{ url_for('login') }}" class="login-button" id="login-btn">Вход</a>
+          <a href="login" class="login-button" id="login-btn">Вход</a>
         {% endif %}
       </nav>
     </div>
@@ -62,16 +73,16 @@
         <!-- Статистика статьи -->
         <div class="article-stats">
           <div class="stat-item">
-            <img src="{{ url_for('static', filename='img/eye-icon.png') }}" alt="Просмотры">
-            <span>{{ article_views }}</span>
+              <img src="{{ url_for('static', filename='img/eye-icon.png') }}" alt="Просмотры">
+              <span>{{ article_views }}</span>
           </div>
           <div class="stat-item">
-            <img src="{{ url_for('static', filename='img/comment-icon.png') }}" alt="Комментарии">
-            <span>{{ article.comments or 0 }}</span>
+              <img src="{{ url_for('static', filename='img/comment-icon.png') }}" alt="Комментарии">
+              <span>{{ article.comments or 0 }}</span>
           </div>
           <div class="stat-item">
-            <img src="{{ url_for('static', filename='img/like-icon-1.png') }}" alt="Лайки">
-            <span>{{ article.likes or 0 }}</span>
+              <img src="{{ url_for('static', filename='img/like-icon-1.png') }}" alt="Лайки">
+              <span>{{ likes_count }}</span>
           </div>
         </div>
       </div>
@@ -93,10 +104,24 @@
     
     <!-- Кнопки взаимодействия -->
     <div class="article-actions">
-      <button class="like-button" data-article-id="{{ article.id }}">
-        <img src="{{ url_for('static', filename='img/like-icon-2.png') }}" alt="Лайк" class="like-mark">
-        Нравится
-      </button>
+        {% if current_user %}
+        <button class="like-button {% if user_has_liked %}liked{% endif %}" 
+                data-article-id="{{ article.id }}">
+            <img src="{{ url_for('static', filename='img/like-icon-2.png') }}" alt="Лайк" class="like-mark">
+            <span class="like-text">
+                {% if user_has_liked %}
+                    Убрать лайк
+                {% else %}
+                    Нравится
+                {% endif %}
+            </span>
+        </button>
+        {% else %}
+        <a href="{{ url_for('login') }}" class="like-button">
+            <img src="{{ url_for('static', filename='img/like-icon-2.png') }}" alt="Лайк" class="like-mark">
+            <span class="like-text">Нравится</span>
+        </a>
+        {% endif %}
     </div>
   </main>
 
@@ -108,5 +133,7 @@
   </footer>
 
   <script src="{{ url_for('static', filename='js/article.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/account-dropdown.js') }}"></script>
+
 </body>
 </html>

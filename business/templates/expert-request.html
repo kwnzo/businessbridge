@@ -14,13 +14,16 @@
   <div class="expert-application-container">
     <h1 class="expert-application-title">Заявка на вступление в эксперты</h1>
     
-    <div class="expert-user-info">
-      <p><strong>Ваши данные:</strong></p>
-      <p>ФИО: <span id="user-fullname">{{ current_user.user_surname }} {{ current_user.user_name }} {{ current_user.user_daddy }}</span></p>
-      <p>Email: {{ current_user.user_email }}</p>
-    </div>
 
-    <form class="expert-application-form" id="expertApplicationForm">
+
+    <form class="expert-application-form" id="expertApplicationForm" method = "post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="expert-user-info">
+        <p><strong>Ваши данные:</strong></p>
+        <p>ФИО: <span id="user-fullname">{{ current_user.user_surname }} {{ current_user.user_name }} {{ current_user.user_daddy }}</span></p>
+        <p>Email: {{ current_user.user_email }}</p>
+      </div>
+      
       <div class="expert-form-group">
         <label for="company" class="expert-form-label">
           Название предприятия/бизнеса <span class="expert-required-field">*</span>
