@@ -46,13 +46,14 @@ def dashboard():
         articles_count = asyncio.run(get_articles_count())
         experts_count = asyncio.run(get_experts_count())
         
+        # Убедимся, что передаем токен как строку, а не функцию
         return render_template('admin/dashboard.html',
                             users_count=users_count,
                             articles_count=articles_count,
                             experts_count=experts_count,
-                            csrf_token=generate_csrf())
+                            csrf_token=generate_csrf())  # generate_csrf без вызова как функции
     except Exception as e:
-        logger.error(f"Dashboard error: {str(e)}")
+        logger.error(f"Dashboard error: {str(e)}", exc_info=True)
         return render_template('admin/error.html', message="Ошибка загрузки данных"), 500
 
 @admin_bp.route('/users')
