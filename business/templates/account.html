@@ -62,7 +62,12 @@
           {% endif %}
         </div>
         <div class="profile-info">
-          <h2>{{ user.user_surname }} {{ user.user_name }} {{ user.user_daddy }}</h2>
+          <h2>{{ user.user_surname }} {{ user.user_name }} {{ user.user_daddy }} 
+            {% if user.user_role == 'expert' %}
+              <img src="{{ url_for('static', filename='img/expert-icon-mini.png') }}" alt="Эксперт" class="expert-badge">
+            {% endif %}
+          </h2>
+
           <p>{{ user.user_phone | format_phone }}</p>
           <p>{{ user.user_email }}</p>
         </div>
@@ -81,7 +86,7 @@
             </span>
           </div>
         </a>
-        {% if user.account_status == 'verified' %}
+        {% if user.account_status == 'verified' and user.user_role != 'expert' %}
           <a href="/expert-request" class="become-expert-button">
             <img src="{{ url_for('static', filename='img/expert-icon.png') }}" alt="icon" class="icon-expert" />
             <div>Стать экспертом</div>

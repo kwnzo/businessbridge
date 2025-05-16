@@ -1,4 +1,38 @@
 document.addEventListener('DOMContentLoaded', function() {
+  // Создаем модальное окно (аналогично registration-fields.js)
+  const modal = document.createElement('div');
+  modal.className = 'custom-modal';
+  modal.innerHTML = `
+    <div class="modal-content">
+      <div class="modal-body">
+        <p id="modal-message"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-close-btn">OK</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  // Функции для работы с модальным окном
+  function showModal(message) {
+    const modalMessage = document.getElementById('modal-message');
+    modalMessage.textContent = message;
+    modal.style.display = 'flex';
+  }
+
+  function closeModal() {
+    modal.style.display = 'none';
+  }
+
+  // Обработчик закрытия модалки
+  document.querySelector('.modal-close-btn').addEventListener('click', closeModal);
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) {
+      closeModal();
+    }
+  });
+
   const expertiseSelect = document.getElementById('expertise');
   const otherFieldContainer = document.getElementById('otherFieldContainer');
   
@@ -10,7 +44,6 @@ document.addEventListener('DOMContentLoaded', function() {
   form.addEventListener('submit', async function(e) {
     e.preventDefault();
     
-    // Добавьте проверку CSRF токена
     const csrfToken = document.querySelector('input[name="csrf_token"]').value;
     
     const formData = {
@@ -27,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
             method: "POST",
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken // Добавляем в заголовки
+                'X-CSRFToken': csrfToken
             },
             body: JSON.stringify(formData)
         });
@@ -41,20 +74,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const data = await response.json();
       
-      if (!response.ok) {
-        throw new Error(data.message || 'Ошибка сервера');
-      }
+        if (!response.ok) {
+            throw new Error(data.message || 'Ошибка сервера');
+        }
 
-      if (data.success) {
-        alert('Ваша заявка успешно отправлена! Мы рассмотрим её в ближайшее время.');
-        form.reset();
-        window.location.href = data.redirect;
-      } else {
-        alert(data.message || 'Произошла ошибка');
-      }
+        if (data.success) {
+            // Показываем модальное окно с сообщением об успехе
+            showModal('Ваша заявка успешно отправлена! Мы рассмотрим её в ближайшее время.');
+            
+            // Обработчик кнопки OK в модалке
+            document.querySelector('.modal-close-btn').onclick = function() {
+                closeModal();
+                if (data.redirect) {
+                    window.location.href = data.redirect;
+                } else {
+                    window.location.href = '/'; // Перенаправление на главную страницу
+                }
+            };
+        } else {
+            showModal(data.message || 'Произошла ошибка');
+        }
 
     } catch (error) {
-      alert(error.message || 'Ошибка соединения');
+        showModal(error.message || 'Ошибка соединения');
     }
   });
 });

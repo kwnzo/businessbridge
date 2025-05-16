@@ -1,0 +1,237 @@
+{% extends "admin/requests.html" %}
+
+{% block requests_content %}
+<div class="admin-header">
+  <h2>Заявки на эксперта</h2>
+</div>
+
+{% if requests %}
+<table class="admin-table">
+  <thead>
+    <tr>
+      <th>Пользователь</th>
+      <th>Компания</th>
+      <th>Должность</th>
+      <th>Экспертиза</th>
+      <th>Опыт (лет)</th>
+      <th>Дата заявки</th>
+      <th>Действия</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for req in requests %}
+    <tr>
+      <td>
+        <a href="{{ url_for('user_profile', user_id=req.user_id) }}" class="user-link">
+          {{ req.user_surname }} {{ req.user_name }}
+        </a>
+        <div class="small-text">{{ req.user_email }}</div>
+      </td>
+      <td>{{ req.company }}</td>
+      <td>{{ req.position }}</td>
+      <td>
+        {{ req.expertise }}
+        {% if req.other_expertise %}<div class="small-text">{{ req.other_expertise }}</div>{% endif %}
+      </td>
+      <td>{{ req.experience }}</td>
+      <td>{{ req.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+      <td>
+        <button class="btn-view" onclick="showRequestDetails({{ req.id }})">Подробнее</button>
+        <button class="delete-article" onclick="approveRequest({{ req.id }})">Одобрить</button>
+        <button class="delete-article" onclick="rejectRequest({{ req.id }})">Отклонить</button>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if total_pages > 1 %}
+<div class="admin-pagination">
+  {% for page_num in range(1, total_pages + 1) %}
+    <button 
+      class="{% if page_num == current_page %}active{% endif %}"
+      onclick="window.location.href='{{ url_for('admin_bp.expert_requests', page=page_num) }}'"
+    >
+      {{ page_num }}
+    </button>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% else %}
+<p>Нет заявок на эксперта</p>
+{% endif %}
+
+<!-- Модальное окно с деталями заявки -->
+<div id="requestDetailsModal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h3>Детали заявки</h3>
+    <div id="requestDetailsContent"></div>
+  </div>
+</div>
+
+<div id="rejectModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeRejectModal()">&times;</span>
+    <h3>Отклонить заявку</h3>
+    <p>Укажите причину отказа:</p>
+    <textarea id="rejectionReason" rows="4" style="width: 100%; margin-bottom: 10px;"></textarea>
+    <button onclick="confirmReject()" class="delete-article">Подтвердить отклонение</button>
+  </div>
+</div>
+
+<script>
+function showRequestDetails(requestId) {
+  fetch(`/admin/requests/expert/${requestId}/details`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        document.getElementById('requestDetailsContent').innerHTML = `
+          <p><strong>Компания:</strong> ${data.request.company}</p>
+          <p><strong>Должность:</strong> ${data.request.position}</p>
+          <p><strong>Экспертиза:</strong> ${data.request.expertise}</p>
+          ${data.request.other_expertise ? `<p><strong>Другая экспертиза:</strong> ${data.request.other_expertise}</p>` : ''}
+          <p><strong>Опыт работы:</strong> ${data.request.experience} лет</p>
+          <p><strong>Описание:</strong></p>
+          <p>${data.request.description}</p>
+        `;
+        document.getElementById('requestDetailsModal').style.display = 'block';
+      }
+    });
+}
+
+function approveRequest(requestId) {
+  if (confirm('Вы уверены, что хотите одобрить эту заявку? Пользователь получит права эксперта.')) {
+    fetch(`/admin/requests/expert/${requestId}/approve`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': '{{ csrf_token_value }}',
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        location.reload();
+      } else {
+        alert('Ошибка: ' + data.message);
+      }
+    });
+  }
+}
+
+function rejectRequest(requestId) {
+  if (confirm('Вы уверены, что хотите отклонить эту заявку?')) {
+    fetch(`/admin/requests/expert/${requestId}/reject`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': '{{ csrf_token_value }}',
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        location.reload();
+      } else {
+        alert('Ошибка: ' + data.message);
+      }
+    });
+  }
+}
+
+// Закрытие модального окна
+document.querySelector('.close').addEventListener('click', function() {
+  document.getElementById('requestDetailsModal').style.display = 'none';
+});
+
+window.addEventListener('click', function(event) {
+  if (event.target == document.getElementById('requestDetailsModal')) {
+    document.getElementById('requestDetailsModal').style.display = 'none';
+  }
+});
+
+let currentRequestId = null;
+
+function showRejectModal(requestId) {
+  currentRequestId = requestId;
+  document.getElementById('rejectionReason').value = '';
+  document.getElementById('rejectModal').style.display = 'block';
+}
+
+function closeRejectModal() {
+  document.getElementById('rejectModal').style.display = 'none';
+}
+
+function confirmReject() {
+  const reason = document.getElementById('rejectionReason').value.trim();
+  if (!reason) {
+    alert('Пожалуйста, укажите причину отказа');
+    return;
+  }
+
+  fetch(`/admin/requests/expert/${currentRequestId}/reject`, {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': '{{ csrf_token_value }}',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ reason: reason })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      location.reload();
+    } else {
+      alert('Ошибка: ' + data.message);
+    }
+  });
+}
+
+// Обновляем вызов функции rejectRequest
+function rejectRequest(requestId) {
+  showRejectModal(requestId);
+}
+
+</script>
+
+<style>
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+  background-color: #fefefe;
+  margin: 15% auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 50%;
+  max-width: 600px;
+}
+
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.close:hover {
+  color: black;
+}
+
+.small-text {
+  font-size: 0.8rem;
+  color: #666;
+}
+</style>
+{% endblock %}

@@ -8,6 +8,7 @@ import asyncio
 import logging
 import json
 import random
+import datetime
 
 with open('data/config.json', 'r')  as f:
     config = json.load(f)
@@ -638,3 +639,180 @@ async def check_user_like(user_id: int, public_id: int) -> bool:
                 "SELECT 1 FROM likes WHERE user_id = %s AND public_id = %s",
                 (user_id, public_id))
             return await cur.fetchone() is not None
+        
+
+async def get_expert_requests(limit: int = 10, offset: int = 0) -> list:
+    """Получает список заявок на эксперта"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute("""
+                SELECT 
+                    er.id, 
+                    er.company, 
+                    er.position, 
+                    er.expertise,
+                    er.other_expertise,
+                    er.experience,
+                    er.description,
+                    er.created_at,
+                    u.id as user_id,
+                    u.user_name,
+                    u.user_surname,
+                    u.user_email
+                FROM expert_requests er
+                JOIN users u ON er.user_id = u.id
+                ORDER BY er.created_at DESC
+                LIMIT %s OFFSET %s
+            """, (limit, offset))
+            return await cur.fetchall()
+
+async def get_expert_requests_count() -> int:
+    """Возвращает количество заявок на эксперта"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("SELECT COUNT(*) FROM expert_requests")
+            result = await cur.fetchone()
+            return result[0] if result else 0
+
+async def approve_expert_request_db(request_id: int) -> bool:
+    """Одобряет заявку на эксперта и обновляет роль пользователя"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            try:
+                # Получаем user_id из заявки
+                await cur.execute(
+                    "SELECT user_id FROM expert_requests WHERE id = %s",
+                    (request_id,))
+                result = await cur.fetchone()
+                if not result:
+                    return False
+                
+                user_id = result[0]
+                
+                # Обновляем роль пользователя
+                await cur.execute(
+                    "UPDATE users SET user_role = 'expert' WHERE id = %s",
+                    (user_id,))
+                
+                # Удаляем заявку
+                await cur.execute(
+                    "DELETE FROM expert_requests WHERE id = %s",
+                    (request_id,))
+                
+                await conn.commit()
+                return True
+            except Exception as e:
+                await conn.rollback()
+                logging.error(f"Error approving expert request: {str(e)}")
+                return False
+
+async def reject_expert_request_db(request_id: int, rejection_reason: str) -> bool:
+    """Отклоняет заявку на эксперта с сохранением причины в user_data"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            try:
+                # Получаем user_id из заявки
+                await cur.execute(
+                    "SELECT user_id FROM expert_requests WHERE id = %s",
+                    (request_id,))
+                result = await cur.fetchone()
+                if not result:
+                    return False
+                
+                user_id = result[0]
+                
+                # Получаем текущий user_data
+                await cur.execute(
+                    "SELECT user_data FROM users WHERE id = %s",
+                    (user_id,))
+                user_data = await cur.fetchone()
+                user_data = json.loads(user_data[0]) if user_data and user_data[0] else {}
+                
+                # Добавляем информацию об отказе
+                if 'expert_requests' not in user_data:
+                    user_data['expert_requests'] = {}
+                
+                user_data['expert_requests']['last_rejection'] = {
+                    'request_id': request_id,
+                    'reason': rejection_reason,
+                    'date': datetime.datetime.now().isoformat()
+                }
+                
+                # Обновляем user_data
+                await cur.execute(
+                    "UPDATE users SET user_data = %s WHERE id = %s",
+                    (json.dumps(user_data), user_id))
+                
+                # Удаляем заявку
+                await cur.execute(
+                    "DELETE FROM expert_requests WHERE id = %s",
+                    (request_id,))
+                
+                await conn.commit()
+                return True
+            except Exception as e:
+                await conn.rollback()
+                logging.error(f"Error rejecting expert request: {str(e)}")
+                return False
+        
+async def get_expert_request_details(request_id: int) -> Optional[dict]:
+    """Получает детали заявки на эксперта"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute("""
+                SELECT company, position, expertise, other_expertise, experience, description
+                FROM expert_requests
+                WHERE id = %s
+                LIMIT 1
+            """, (request_id,))
+            return await cur.fetchone()
+        
+async def get_user_rejections(user_id: int) -> dict:
+    """Получает историю отклоненных заявок пользователя"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute(
+                "SELECT user_data FROM users WHERE id = %s",
+                (user_id,))
+            result = await cur.fetchone()
+            if not result or not result['user_data']:
+                return {}
+            
+            user_data = json.loads(result['user_data'])
+            return user_data.get('expert_requests', {})

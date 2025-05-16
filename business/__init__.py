@@ -34,7 +34,7 @@ app.config.update(
 limiter = Limiter(
     app=app,
     key_func=lambda: request.remote_addr,
-    default_limits=["100/day", "10/minute"]
+    default_limits=["100/day", "100/minute"]
 )
 
 def login_required(f):
@@ -621,7 +621,7 @@ def login():
             }), 404
             
         # Проверка пароля
-        if not check_password_hash(user['user_password'].decode('utf-8'), password):
+        if not check_password_hash(user['user_password'], password):
             logger.warning(f"Неверный пароль для пользователя: {user['id']}")
             return jsonify({
                 'success': False,

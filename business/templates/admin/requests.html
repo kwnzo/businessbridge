@@ -1,0 +1,24 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="requests-container">
+  <h1>Управление запросами</h1>
+  
+  <div class="request-tabs">
+    <a href="{{ url_for('admin_bp.requests_management') }}" 
+       class="tab-btn {% if request.endpoint == 'admin_bp.requests_management' %}active{% endif %}">
+      Заявки на подтверждение
+    </a>
+    <a href="{{ url_for('admin_bp.expert_requests') }}" 
+       class="tab-btn {% if request.endpoint == 'admin_bp.expert_requests' %}active{% endif %}">
+      Заявки на эксперта
+    </a>
+  </div>
+
+  <div class="tab-content">
+    {% block requests_content %}
+      <p>Выберите раздел запросов</p>
+    {% endblock %}
+  </div>
+</div>
+{% endblock %}

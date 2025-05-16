@@ -12,7 +12,12 @@ from utils.db import (
     delete_user,
     search_articles,
     delete_article,
-    get_all_articles
+    get_all_articles,
+    reject_expert_request_db,
+    approve_expert_request_db,
+    get_expert_requests,
+    get_expert_requests_count,
+    get_expert_request_details
 )
 import asyncio
 import logging
@@ -181,3 +186,105 @@ def delete_article_route(article_id):
     except Exception as e:
         logger.error(f"Error deleting article: {str(e)}")
         return jsonify({'success': False, 'message': 'Ошибка сервера'}), 500
+    
+@admin_bp.route('/requests')
+@admin_required
+def requests_management():
+    return render_template('admin/requests.html')
+
+@admin_bp.route('/requests/expert')
+@admin_required
+def expert_requests():
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = 10
+        offset = (page - 1) * per_page
+        
+        # Получаем заявки на эксперта
+        requests = asyncio.run(get_expert_requests(limit=per_page, offset=offset))
+        total_requests = asyncio.run(get_expert_requests_count())
+        total_pages = (total_requests + per_page - 1) // per_page
+        
+        return render_template('admin/expert_requests.html',
+                            requests=requests,
+                            current_page=page,
+                            total_pages=total_pages,
+                            csrf_token_value=generate_csrf())
+    except Exception as e:
+        logger.error(f"Expert requests error: {str(e)}", exc_info=True)
+        return render_template('admin/error.html', message="Ошибка загрузки заявок"), 500
+
+@admin_bp.route('/requests/expert/<int:request_id>/approve', methods=['POST'])
+@admin_required
+def approve_expert_request(request_id):
+    try:
+        csrf_token = request.headers.get('X-CSRFToken') or request.form.get('csrf_token')
+        if not csrf_token:
+            logger.warning("CSRF token is missing for approve expert request")
+            return jsonify({'success': False, 'message': 'CSRF token is missing'}), 400
+            
+        validate_csrf(csrf_token)
+        
+        # Одобряем заявку и обновляем роль пользователя
+        success = asyncio.run(approve_expert_request_db(request_id))
+        if success:
+            return jsonify({'success': True})
+        return jsonify({'success': False, 'message': 'Ошибка одобрения заявки'}), 400
+    except ValidationError as e:
+        logger.warning(f"CSRF validation failed: {str(e)}")
+        return jsonify({'success': False, 'message': 'Ошибка безопасности'}), 403
+    except Exception as e:
+        logger.error(f"Error approving expert request: {str(e)}")
+        return jsonify({'success': False, 'message': 'Внутренняя ошибка сервера'}), 500
+
+@admin_bp.route('/requests/expert/<int:request_id>/reject', methods=['POST'])
+@admin_required
+def reject_expert_request(request_id):
+    try:
+        csrf_token = request.headers.get('X-CSRFToken') or request.form.get('csrf_token')
+        if not csrf_token:
+            logger.warning("CSRF token is missing for reject expert request")
+            return jsonify({'success': False, 'message': 'CSRF token is missing'}), 400
+            
+        validate_csrf(csrf_token)
+        
+        rejection_reason = request.json.get('reason', '')
+        if not rejection_reason:
+            return jsonify({'success': False, 'message': 'Укажите причину отказа'}), 400
+        
+        # Отклоняем заявку с сохранением причины в user_data
+        success = asyncio.run(reject_expert_request_db(request_id, rejection_reason))
+        if success:
+            return jsonify({'success': True})
+        return jsonify({'success': False, 'message': 'Ошибка отклонения заявки'}), 400
+    except ValidationError as e:
+        logger.warning(f"CSRF validation failed: {str(e)}")
+        return jsonify({'success': False, 'message': 'Ошибка безопасности'}), 403
+    except Exception as e:
+        logger.error(f"Error rejecting expert request: {str(e)}")
+        return jsonify({'success': False, 'message': 'Внутренняя ошибка сервера'}), 500
+def decline():
+    pass
+    
+@admin_bp.route('/requests/expert/<int:request_id>/details')
+@admin_required
+def expert_request_details(request_id):
+    try:
+        request_data = asyncio.run(get_expert_request_details(request_id))
+        if not request_data:
+            return jsonify({'success': False, 'message': 'Заявка не найдена'}), 404
+            
+        return jsonify({
+            'success': True,
+            'request': {
+                'company': request_data['company'],
+                'position': request_data['position'],
+                'expertise': request_data['expertise'],
+                'other_expertise': request_data['other_expertise'],
+                'experience': request_data['experience'],
+                'description': request_data['description']
+            }
+        })
+    except Exception as e:
+        logger.error(f"Error getting expert request details: {str(e)}")
+        return jsonify({'success': False, 'message': 'Внутренняя ошибка сервера'}), 500
