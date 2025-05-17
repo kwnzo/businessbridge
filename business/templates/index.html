@@ -70,29 +70,29 @@
 
   <!-- ======= Публикации ======= -->
   <section class="publications" aria-labelledby="publications-title">
-    <h2 id="publications-title">Публикации</h2>
+    <h2 id="publications-title">Популярные публикации</h2>
     
     <div class="articles-grid">
         {% if not data %}
             <div class="no-articles">Нет доступных публикаций</div>
         {% else %}
             {% for article in data %}
-            <a href="{{ url_for('view_article', 
-            article_id=article.id, 
-            article_slug=article.topic_name_en) }}">
-                <div class="article">
+              {% if article.public_status == 'accept' %}  <!-- Добавляем проверку статуса -->
+                <a href="{{ url_for('view_article', article_id=article.id, article_slug=article.topic_name_en) }}">
+                  <div class="article">
                     {% if article['preview_image'] %}
-                    <img src="{{ url_for('article_image', article_id=article['id']) }}" 
-                         class="article-card" 
-                         alt="Превью статьи">
+                      <img src="{{ url_for('article_image', article_id=article['id']) }}" 
+                          class="article-card" 
+                          alt="Превью статьи">
                     {% else %}
-                    <div class="article-card no-image">
+                      <div class="article-card no-image">
                         <span>Нет изображения</span>
-                    </div>
+                      </div>
                     {% endif %}
                     <h3>{{ article['topic_name'] }}</h3>
-                </div>
-            </a>
+                  </div>
+                </a>
+              {% endif %}
             {% endfor %}
         {% endif %}
     </div>

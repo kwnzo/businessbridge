@@ -18,7 +18,10 @@ from utils.db import (
     get_expert_requests,
     get_expert_requests_count,
     get_expert_request_details,
-    get_publics_for_approve
+    get_publics_for_approve, get_articles_for_review, 
+    get_articles_for_review_count, update_article_status, 
+    reject_article_db, get_filtered_articles_count, 
+    get_filtered_users_count, search_users 
 )
 import asyncio
 import logging
@@ -65,16 +68,45 @@ def users_management():
         per_page = 10
         offset = (page - 1) * per_page
         
-        users = asyncio.run(get_all_users(limit=per_page, offset=offset))
-        total_users = asyncio.run(get_users_count())
-        total_pages = (total_users + per_page - 1) // per_page
+        # Получаем параметры фильтрации
+        filters = {
+            'q': request.args.get('q', '').strip(),
+            'role': request.args.get('role', ''),
+            'status': request.args.get('status', ''),
+            'date_from': request.args.get('date_from', ''),
+            'date_to': request.args.get('date_to', ''),
+            'sort': request.args.get('sort', 'newest')
+        }
         
-        # Измените имя переменной, чтобы избежать конфликта
+        # Получаем пользователей с учетом фильтров
+        users = asyncio.run(search_users(
+            query=filters['q'],
+            role=filters['role'],
+            status=filters['status'],
+            date_from=filters['date_from'],
+            date_to=filters['date_to'],
+            sort=filters['sort'],
+            limit=per_page,
+            offset=offset
+        ))
+        
+        # Получаем общее количество с учетом фильтров
+        total_users = asyncio.run(get_filtered_users_count(
+            query=filters['q'],
+            role=filters['role'],
+            status=filters['status'],
+            date_from=filters['date_from'],
+            date_to=filters['date_to']
+        ))
+        
+        total_pages = (total_users + per_page - 1) // per_page if total_users else 1
+        
         return render_template('admin/users.html',
                             users=users,
                             current_page=page,
                             total_pages=total_pages,
-                            csrf_token_value=generate_csrf())  # <- Здесь изменили имя
+                            csrf_token_value=generate_csrf(),
+                            filters=filters)
     except Exception as e:
         logger.error(f"Users management error: {str(e)}", exc_info=True)
         return render_template('admin/error.html', message="Ошибка загрузки пользователей"), 500
@@ -141,14 +173,28 @@ def articles_management():
         per_page = 10
         offset = (page - 1) * per_page
         search_query = request.args.get('q', '').strip()
+        status_filter = request.args.get('status', '')
+        date_from = request.args.get('date_from', '')
+        date_to = request.args.get('date_to', '')
+        sort_order = request.args.get('sort', 'newest')
         
-        if search_query:
-            articles = asyncio.run(search_articles(search_query, limit=per_page, offset=offset))
-            total_articles = len(articles)
-        else:
-            articles = asyncio.run(get_all_articles(limit=per_page, offset=offset))
-            total_articles = asyncio.run(get_articles_count())
-            
+        articles = asyncio.run(search_articles(
+            query=search_query,
+            status=status_filter,
+            date_from=date_from,
+            date_to=date_to,
+            sort=sort_order,  # Теперь параметр передается правильно
+            limit=per_page,
+            offset=offset
+        ))
+        
+        total_articles = asyncio.run(get_filtered_articles_count(
+            query=search_query,
+            status=status_filter,
+            date_from=date_from,
+            date_to=date_to
+        ))
+        
         total_pages = (total_articles + per_page - 1) // per_page
         
         return render_template('admin/articles.html',
@@ -205,20 +251,43 @@ def expert_requests():
         per_page = 10
         offset = (page - 1) * per_page
         
-        # Получаем заявки на эксперта
-        requests = asyncio.run(get_expert_requests(limit=per_page, offset=offset))
-        total_requests = asyncio.run(get_expert_requests_count())
-        total_pages = (total_requests + per_page - 1) // per_page
+        # Получаем параметры фильтрации
+        filters = {
+            'q': request.args.get('q', '').strip(),
+            'date_from': request.args.get('date_from', ''),
+            'date_to': request.args.get('date_to', ''),
+            'sort': request.args.get('sort', 'newest')
+        }
+        
+        # Получаем заявки с учетом фильтров
+        requests = asyncio.run(get_expert_requests(
+            search=filters['q'],
+            date_from=filters['date_from'],
+            date_to=filters['date_to'],
+            sort=filters['sort'],
+            limit=per_page,
+            offset=offset
+        ))
+        
+        # Получаем общее количество с учетом фильтров
+        total_requests = asyncio.run(get_expert_requests_count(
+            search=filters['q'],
+            date_from=filters['date_from'],
+            date_to=filters['date_to']
+        ))
+        
+        total_pages = (total_requests + per_page - 1) // per_page if total_requests else 1
         
         return render_template('admin/expert_requests.html',
                             requests=requests,
                             current_page=page,
                             total_pages=total_pages,
-                            csrf_token_value=generate_csrf())
+                            csrf_token_value=generate_csrf(),
+                            filters=filters)
     except Exception as e:
         logger.error(f"Expert requests error: {str(e)}", exc_info=True)
         return render_template('admin/error.html', message="Ошибка загрузки заявок"), 500
-
+        
 @admin_bp.route('/requests/expert/<int:request_id>/approve', methods=['POST'])
 @admin_required
 def approve_expert_request(request_id):
@@ -292,4 +361,100 @@ def expert_request_details(request_id):
         })
     except Exception as e:
         logger.error(f"Error getting expert request details: {str(e)}")
+        return jsonify({'success': False, 'message': 'Внутренняя ошибка сервера'}), 500
+    
+
+@admin_bp.route('/requests/articles')
+@admin_required
+def article_requests():
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = 10
+        offset = (page - 1) * per_page
+        
+        # Получаем параметры фильтрации
+        filters = {
+            'q': request.args.get('q', '').strip(),
+            'date_from': request.args.get('date_from', ''),
+            'date_to': request.args.get('date_to', ''),
+            'sort': request.args.get('sort', 'newest')
+        }
+        
+        # Получаем статьи с учетом фильтров
+        articles = asyncio.run(get_articles_for_review(
+            query=filters['q'],
+            date_from=filters['date_from'],
+            date_to=filters['date_to'],
+            sort=filters['sort'],
+            limit=per_page,
+            offset=offset
+        ))
+        
+        # Получаем общее количество с учетом фильтров
+        total_articles = asyncio.run(get_articles_for_review_count(
+            query=filters['q'],
+            date_from=filters['date_from'],
+            date_to=filters['date_to']
+        ))
+        
+        total_pages = (total_articles + per_page - 1) // per_page if total_articles else 1
+        
+        return render_template('admin/article_requests.html',
+                            articles=articles,
+                            current_page=page,
+                            total_pages=total_pages,
+                            csrf_token_value=generate_csrf(),
+                            filters=filters)
+    except Exception as e:
+        logger.error(f"Article requests error: {str(e)}", exc_info=True)
+        return render_template('admin/error.html', message="Ошибка загрузки статей"), 500
+    
+@admin_bp.route('/articles/<int:article_id>/approve', methods=['POST'])
+@admin_required
+def approve_article(article_id):
+    try:
+        csrf_token = request.headers.get('X-CSRFToken') or request.form.get('csrf_token')
+        if not csrf_token:
+            logger.warning("CSRF token is missing for approve article")
+            return jsonify({'success': False, 'message': 'CSRF token is missing'}), 400
+            
+        validate_csrf(csrf_token)
+        
+        # Обновляем статус статьи
+        success = asyncio.run(update_article_status(article_id, 'accept'))
+        if success:
+            return jsonify({'success': True})
+        return jsonify({'success': False, 'message': 'Ошибка принятия статьи'}), 400
+    except ValidationError as e:
+        logger.warning(f"CSRF validation failed: {str(e)}")
+        return jsonify({'success': False, 'message': 'Ошибка безопасности'}), 403
+    except Exception as e:
+        logger.error(f"Error approving article: {str(e)}")
+        return jsonify({'success': False, 'message': 'Внутренняя ошибка сервера'}), 500
+
+@admin_bp.route('/articles/<int:article_id>/reject', methods=['POST'])
+@admin_required
+def reject_article(article_id):
+    try:
+        csrf_token = request.headers.get('X-CSRFToken') or request.form.get('csrf_token')
+        if not csrf_token:
+            logger.warning("CSRF token is missing for reject article")
+            return jsonify({'success': False, 'message': 'CSRF token is missing'}), 400
+            
+        validate_csrf(csrf_token)
+        
+        rejection_reason = request.json.get('reason', '')
+        if not rejection_reason:
+            return jsonify({'success': False, 'message': 'Укажите причину отказа'}), 400
+        
+        # Обновляем статус статьи и сохраняем причину отклонения
+        success = asyncio.run(reject_article_db(article_id, rejection_reason))
+        if success:
+            return jsonify({'success': True})
+        return jsonify({'success': False, 'message': 'Ошибка отклонения статьи'}), 400
+    except ValidationError as e:
+        logger.warning(f"CSRF validation failed: {str(e)}")
+        return jsonify({'success': False, 'message': 'Ошибка безопасности'}), 403
+    except Exception as e:
+        logger.error(f"Error rejecting article: {str(e)}")
         return jsonify({'success': False, 'message': 'Внутренняя ошибка сервера'}), 500

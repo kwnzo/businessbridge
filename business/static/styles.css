@@ -2196,3 +2196,312 @@ header.logo {
   background: #fff;
 }
 
+
+
+.expert-request-status {
+  display: flex;
+  align-items: center;
+  gap: 38px;
+  padding: 10px 73px 10px 15px;
+  background-color: #28175c;
+  border: 2px solid #28175c;
+  border-radius: 40px;
+  color: #ffffff;
+}
+
+.expert-request-status span {
+  color: #ffffff;
+  font-weight: 500;
+}
+
+/* Добавьте в styles.css */
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.status-badge.waiting {
+    background-color: #FFF3CD;
+    color: #856404;
+}
+
+.status-badge.accept {
+    background-color: #D4EDDA;
+    color: #155724;
+}
+
+.status-badge.reject {
+    background-color: #F8D7DA;
+    color: #721C24;
+}
+
+.btn-approve {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 5px;
+}
+
+.btn-approve:hover {
+    background-color: #218838;
+}
+
+.btn-reject {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-reject:hover {
+    background-color: #c82333;
+}
+
+.admin-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.admin-modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 50%;
+    border-radius: 5px;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover {
+    color: black;
+}
+
+
+
+.article-status-badge {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  padding: 4px 8px;
+  margin-bottom: 40px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: white;
+}
+
+.article-wrapper {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.article-status-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 4px 8px;
+  margin-bottom: 165px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: white;
+  z-index: 2;
+}
+
+.article-status-badge.waiting {
+  background-color: #FFC107; /* желтый для ожидания */
+}
+
+.article-status-badge.accept {
+  background-color: #4CAF50; /* зеленый для принятых */
+}
+
+.article-status-badge.reject {
+  background-color: #F44336; /* красный для отклоненных */
+}
+
+.article {
+  position: relative;
+}
+
+.article-status-notice {
+  background-color: #FFF3CD;
+  color: #856404;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.article-status-notice.rejected {
+  background-color: #F8D7DA;
+  color: #721C24;
+}
+
+
+/* Стили для фильтров */
+.admin-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.search-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.admin-filter, .admin-date-filter, .admin-search {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    height: 36px;
+}
+
+.admin-date-filter {
+    width: 120px;
+}
+
+.btn-filter {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-clear {
+    color: #666;
+    padding: 8px 12px;
+    text-decoration: none;
+}
+
+/* Стили для статусов */
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status-badge.accept {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-badge.waiting {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.status-badge.reject {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+/* Стили для кнопок действий */
+.btn-approve {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 5px;
+}
+
+.btn-reject {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 5px;
+}
+
+
+
+/* Стили для фильтров */
+.admin-actions {
+  display: flex;
+  margin-bottom: 20px;
+}
+
+.search-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.admin-filter, .admin-date-filter, .admin-search {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  height: 36px;
+}
+
+.admin-date-filter {
+  width: 120px;
+}
+
+.btn-filter {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-clear {
+  color: #666;
+  padding: 8px 12px;
+  text-decoration: none;
+}
+
+/* Стили для кнопок действий */
+.btn-approve {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-right: 5px;
+}
+
+.btn-reject {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-right: 5px;
+}
