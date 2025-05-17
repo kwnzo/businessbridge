@@ -297,11 +297,14 @@ async def get_publics():
                 try:
                     await cursor.execute('''
                         SELECT 
-                            id, 
-                            topic_name, 
-                            topic_name_en, 
-                            preview_image 
-                        FROM publics
+                            p.id, 
+                            p.topic_name, 
+                            p.topic_name_en, 
+                            p.preview_image 
+                        FROM publics p
+                        LEFT JOIN publication_stats ps ON p.id = ps.public_id
+                        WHERE p.public_status = 'accept' 
+                        ORDER BY ps.views
                     ''')
                     return await cursor.fetchall()
                 except Exception as e:

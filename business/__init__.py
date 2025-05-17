@@ -67,6 +67,7 @@ def home():
 def index(name=None):
     user = None
     data = asyncio.run(get_publics())
+    print(data)
     if 'user_id' in session:
         user = asyncio.run(get_user_by_id(session['user_id']))
     return render_template('index.html', current_user=user, data=data)
