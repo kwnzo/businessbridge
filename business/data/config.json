@@ -1,6 +1,6 @@
 {
-    "user": "root",
-    "password": "t7Er3kOQkid2D!",
+    "user": "creator",
+    "password": "t7Er3kOQkid2D",
     "db": "business",
     "host": "127.0.0.1",
     "port": 3306,
