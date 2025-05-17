@@ -510,20 +510,6 @@ async def delete_article(article_id: int) -> bool:
                 logging.error(f"Error deleting article: {str(e)}")
                 return False
 
-async def insert_into_experts_application(fullName, company, position, expertise, otherExpertise, experience, description):
-    async with aiomysql.connect(
-            user=user,
-            password=dbpassword,
-            db=db,
-            host=host,
-            port=port
-    ) as conn:
-        async with conn.cursor() as cur:
-            try:
-                pass
-            except Exception as e:
-                logging.error(f"Error inserting expert's application: {e}")
-
 async def save_expert_request(
     user_id: int,
     company: str,
@@ -816,3 +802,19 @@ async def get_user_rejections(user_id: int) -> dict:
             
             user_data = json.loads(result['user_data'])
             return user_data.get('expert_requests', {})
+        
+async def get_publics_for_approve():
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute('SELECT * FROM business.publics WHERE public_status = "waiting"')
+            data = await cur.fetchall()
+            if not data:
+                return []
+            
+            return data 

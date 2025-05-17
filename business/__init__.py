@@ -621,7 +621,7 @@ def login():
             }), 404
             
         # Проверка пароля
-        if not check_password_hash(user['user_password'], password):
+        if not check_password_hash(user['user_password'].decode('utf-8'), password):
             logger.warning(f"Неверный пароль для пользователя: {user['id']}")
             return jsonify({
                 'success': False,

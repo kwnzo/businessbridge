@@ -17,7 +17,8 @@ from utils.db import (
     approve_expert_request_db,
     get_expert_requests,
     get_expert_requests_count,
-    get_expert_request_details
+    get_expert_request_details,
+    get_publics_for_approve
 )
 import asyncio
 import logging
@@ -191,7 +192,10 @@ def delete_article_route(article_id):
 @admin_bp.route('/requests')
 @admin_required
 def requests_management():
-    return render_template('admin/requests.html')
+    if request.method == 'GET':
+        publics = asyncio.run(get_publics_for_approve())
+        
+        return render_template('admin/requests.html', publics = publics, csrf = generate_csrf())
 
 @admin_bp.route('/requests/expert')
 @admin_required
