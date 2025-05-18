@@ -34,7 +34,7 @@ app.config.update(
 limiter = Limiter(
     app=app,
     key_func = get_remote_address,
-    storage_uri = "redis://localhost:6379/0",
+    storage_uri = "memory://",
     default_limits=["100/day", "100/minute"]
 )
 
@@ -523,9 +523,15 @@ def error(error):
 # ======================================================================================== РЕГИСТРАЦИЯ
 @app.route('/reg', methods=('GET','POST'))
 def registration():
+    if request.method == "GET":
+        csrf_token = generate_csrf()
+        print(csrf_token)
+        return render_template('registration.html', csrf_token = csrf_token)
+
     if request.method == "POST":
         try:
             # Получение данных
+            validate_csrf(request.form.get('csrf_token'))
             username = request.form.get("firstNames")
             usersurname = request.form.get('lastNames')
             userdaddy = request.form.get('middleNames')
@@ -533,7 +539,7 @@ def registration():
             email = request.form.get('emails')
             password = request.form.get('passwordInputs')
 
-            hashed_password = generate_password_hash(password)
+            hashed_password = generate_password_hash(password) 
             # Сохранение в БД
             loop.run_until_complete(
                 insert_into_users(

@@ -22,7 +22,7 @@
       <div class="auth-box">
         <h2>Регистрация</h2>
         <form class="auth-form-registration" id="registrationForm" method="POST">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
           <div class="input-group-registration row">
             <div class="FIO">
               <input type="text" id="lastName" name="lastNames" placeholder="Фамилия" required /> 
