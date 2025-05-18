@@ -75,6 +75,31 @@
           <p>{{ user.user_phone | format_phone }}</p>
           <p>{{ user.user_email }}</p>
         </div>
+        <!-- После блока profile-info -->
+        {% if user.user_role == 'expert' and expert_info %}
+        <div class="expert-info-section">
+            <h3 class="expert-section-title">Информация эксперта</h3>
+            <div class="expert-details">
+                <div class="expert-detail-row">
+                    <span class="expert-detail-label">Компания:</span>
+                    <span class="expert-detail-value">{{ expert_info.company }}</span>
+                </div>
+                <div class="expert-detail-row">
+                    <span class="expert-detail-label">Должность:</span>
+                    <span class="expert-detail-value">{{ expert_info.position }}</span>
+                </div>
+                <div class="expert-detail-row">
+                    <span class="expert-detail-label">Область экспертизы:</span>
+                    <span class="expert-detail-value">
+                        {{ EXPERTISE_AREAS.get(expert_info.expertise, expert_info.expertise) }}
+                        {% if expert_info.expertise == 'other' and expert_info.other_expertise %}
+                            ({{ expert_info.other_expertise }})
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
       </div>
       <div class="profile-buttons">
         {% if is_own_profile %}
@@ -91,7 +116,7 @@
               </span>
             </div>
           </a>
-          {% if user.account_status == 'verified' and user.user_role != 'expert' and not has_expert_request %}
+          {% if user.account_status == 'verified' and user.user_role != 'expert' and user.user_role != 'admin' and not has_expert_request %}
             <a href="/expert-request" class="become-expert-button">
               <img src="{{ url_for('static', filename='img/expert-icon.png') }}" alt="icon" class="icon-expert" />
               <div>Стать экспертом</div>

@@ -23,8 +23,8 @@
 
     <!-- Навигация -->
     <nav class="header-nav">
-      <a href="index">Главная</a>
-      <a href="experts">Эксперты</a>
+      <a href="/index">Главная</a>
+      <a href="/experts">Эксперты</a>
       {% if current_user %}
         <div class="account-dropdown">
           <a href="#" class="account-button-if-login">
@@ -107,8 +107,13 @@
     <div class="quote-wrapper">
       <section class="quote">
         <blockquote>
-          <p>Отличная&nbsp;платформа&nbsp;для&nbsp;профессионалов!&nbsp;Нашёл <br>много&nbsp;полезной&nbsp;информации&nbsp;и&nbsp;новых&nbsp;партнёров.</p>
-          <cite>Сергей&nbsp;Иванов</cite>
+          {% if random_quote %}
+            <p>{{ random_quote.text }}</p>
+            <cite>{{ random_quote.author }}</cite>
+          {% else %}
+            <p>Отличная&nbsp;платформа&nbsp;для&nbsp;профессионалов!</p>
+            <cite>Команда&nbsp;Бизнес‑Мост</cite>
+          {% endif %}
         </blockquote>
       </section>
     </div>

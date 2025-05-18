@@ -21,7 +21,7 @@ from utils.db import (
     get_publics_for_approve, get_articles_for_review, 
     get_articles_for_review_count, update_article_status, 
     reject_article_db, get_filtered_articles_count, 
-    get_filtered_users_count, search_users 
+    get_filtered_users_count, search_users, get_filtered_articles
 )
 import asyncio
 import logging
@@ -172,37 +172,47 @@ def articles_management():
         page = request.args.get('page', 1, type=int)
         per_page = 10
         offset = (page - 1) * per_page
-        search_query = request.args.get('q', '').strip()
-        status_filter = request.args.get('status', '')
-        date_from = request.args.get('date_from', '')
-        date_to = request.args.get('date_to', '')
-        sort_order = request.args.get('sort', 'newest')
         
-        articles = asyncio.run(search_articles(
-            query=search_query,
-            status=status_filter,
-            date_from=date_from,
-            date_to=date_to,
-            sort=sort_order,  # Теперь параметр передается правильно
+        # Получаем параметры фильтрации
+        filters = {
+            'q': request.args.get('q', '').strip(),
+            'status': request.args.get('status', ''),
+            'category': request.args.get('category', ''),
+            'date_from': request.args.get('date_from', ''),
+            'date_to': request.args.get('date_to', ''),
+            'sort': request.args.get('sort', 'newest')
+        }
+        
+        # Получаем статьи с учетом фильтров
+        articles = asyncio.run(get_filtered_articles(
+            query=filters['q'],
+            status=filters['status'],
+            category=filters['category'],
+            date_from=filters['date_from'],
+            date_to=filters['date_to'],
+            sort=filters['sort'],
             limit=per_page,
             offset=offset
         ))
         
+        # Получаем общее количество с учетом фильтров
         total_articles = asyncio.run(get_filtered_articles_count(
-            query=search_query,
-            status=status_filter,
-            date_from=date_from,
-            date_to=date_to
+            query=filters['q'],
+            status=filters['status'],
+            category=filters['category'],
+            date_from=filters['date_from'],
+            date_to=filters['date_to']
         ))
         
-        total_pages = (total_articles + per_page - 1) // per_page
+        total_pages = (total_articles + per_page - 1) // per_page if total_articles else 1
         
         return render_template('admin/articles.html',
                             articles=articles,
                             current_page=page,
                             total_pages=total_pages,
-                            search_query=search_query,
-                            csrf_token_value=generate_csrf())
+                            csrf_token_value=generate_csrf(),
+                            search_query=filters['q'],
+                            filters=filters)
     except Exception as e:
         logger.error(f"Articles management error: {str(e)}", exc_info=True)
         return render_template('admin/error.html', message="Ошибка загрузки статей"), 500
@@ -420,11 +430,14 @@ def approve_article(article_id):
             
         validate_csrf(csrf_token)
         
-        # Обновляем статус статьи
         success = asyncio.run(update_article_status(article_id, 'accept'))
         if success:
+            logger.info(f"Article {article_id} approved successfully")
             return jsonify({'success': True})
-        return jsonify({'success': False, 'message': 'Ошибка принятия статьи'}), 400
+        
+        logger.warning(f"Article {article_id} not found or not updated")
+        return jsonify({'success': False, 'message': 'Статья не найдена'}), 404
+        
     except ValidationError as e:
         logger.warning(f"CSRF validation failed: {str(e)}")
         return jsonify({'success': False, 'message': 'Ошибка безопасности'}), 403
@@ -447,11 +460,14 @@ def reject_article(article_id):
         if not rejection_reason:
             return jsonify({'success': False, 'message': 'Укажите причину отказа'}), 400
         
-        # Обновляем статус статьи и сохраняем причину отклонения
         success = asyncio.run(reject_article_db(article_id, rejection_reason))
         if success:
+            logger.info(f"Article {article_id} rejected with reason")
             return jsonify({'success': True})
-        return jsonify({'success': False, 'message': 'Ошибка отклонения статьи'}), 400
+        
+        logger.warning(f"Article {article_id} not found or not rejected")
+        return jsonify({'success': False, 'message': 'Статья не найдена'}), 404
+        
     except ValidationError as e:
         logger.warning(f"CSRF validation failed: {str(e)}")
         return jsonify({'success': False, 'message': 'Ошибка безопасности'}), 403

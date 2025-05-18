@@ -35,6 +35,7 @@
   <thead>
     <tr>
       <th>Название</th>
+      <th>Категория</th>
       <th>Автор</th>
       <th>Дата создания</th>
       <th>Статус</th>
@@ -45,6 +46,18 @@
     {% for article in articles %}
     <tr>
       <td>{{ article.topic_name }}</td>
+      <td>
+        <span class="category-badge {{ article.category }}">
+          {% if article.category == 'marketing' %}Маркетинг
+          {% elif article.category == 'management' %}Управление
+          {% elif article.category == 'finance' %}Финансы
+          {% elif article.category == 'hr' %}HR
+          {% elif article.category == 'it' %}IT
+          {% elif article.category == 'production' %}Производство
+          {% elif article.category == 'law' %}Юриспруденция
+          {% else %}Другое{% endif %}
+        </span>
+      </td>
       <td>
         <a href="{{ url_for('user_profile', user_id=article.public_creator) }}" class="user-link">
           {{ article.user_name }} {{ article.user_surname }}
@@ -60,6 +73,8 @@
         <button class="btn-view" onclick="window.open('{{ url_for('view_article', article_id=article.id) }}', '_blank')">
           Просмотреть
         </button>
+        <br>
+
         <button class="btn-approve" onclick="approveArticle({{ article.id }})">
           Принять
         </button>
@@ -91,22 +106,50 @@
 <p>Нет статей на проверку</p>
 {% endif %}
 
-<!-- Модальное окно для отклонения -->
+<div id="approveArticleModal" class="admin-modal">
+  <div class="admin-modal-content">
+    <span class="close" onclick="closeApproveModal()">&times;</span>
+    <h3>Подтверждение</h3>
+    <p>Вы точно хотите принять эту статью?</p>
+    <div class="modal-actions">
+      <button onclick="confirmApproveArticle()" class="btn-approve">Да, принять</button>
+      <button onclick="closeApproveModal()" class="btn-cancel">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<!-- Модальное окно для отклонения (уже есть, обновим его) -->
 <div id="rejectArticleModal" class="admin-modal">
   <div class="admin-modal-content">
     <span class="close" onclick="closeRejectModal()">&times;</span>
-    <h3>Отклонить статью</h3>
+    <h3>Подтверждение отклонения</h3>
     <p>Укажите причину отклонения:</p>
     <textarea id="rejectionReason" rows="4" style="width: 100%; margin-bottom: 10px;"></textarea>
-    <button onclick="rejectArticle()" class="btn-reject">Подтвердить</button>
+    <div class="modal-actions">
+      <button onclick="confirmRejectArticle()" class="btn-reject">Да, отклонить</button>
+      <button onclick="closeRejectModal()" class="btn-cancel">Отмена</button>
+    </div>
   </div>
 </div>
 
 <script>
 let currentArticleId = null;
 
+// Функции для модального окна принятия
 function approveArticle(articleId) {
-  fetch(`/admin/articles/${articleId}/approve`, {
+  currentArticleId = articleId;
+  document.getElementById('approveArticleModal').style.display = 'block';
+}
+
+function closeApproveModal() {
+  document.getElementById('approveArticleModal').style.display = 'none';
+  currentArticleId = null;
+}
+
+function confirmApproveArticle() {
+  if (!currentArticleId) return;
+  
+  fetch(`/admin/articles/${currentArticleId}/approve`, {
     method: 'POST',
     headers: {
       'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content,
@@ -120,21 +163,28 @@ function approveArticle(articleId) {
     } else {
       alert(data.message || 'Ошибка при принятии статьи');
     }
+    closeApproveModal();
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Произошла ошибка');
+    closeApproveModal();
   });
 }
 
+// Функции для модального окна отклонения
 function showRejectModal(articleId) {
   currentArticleId = articleId;
+  document.getElementById('rejectionReason').value = '';
   document.getElementById('rejectArticleModal').style.display = 'block';
 }
 
 function closeRejectModal() {
   document.getElementById('rejectArticleModal').style.display = 'none';
   currentArticleId = null;
-  document.getElementById('rejectionReason').value = '';
 }
 
-function rejectArticle() {
+function confirmRejectArticle() {
   const reason = document.getElementById('rejectionReason').value.trim();
   if (!reason) {
     alert('Укажите причину отклонения');
@@ -156,7 +206,67 @@ function rejectArticle() {
     } else {
       alert(data.message || 'Ошибка при отклонении статьи');
     }
+    closeRejectModal();
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Произошла ошибка');
+    closeRejectModal();
   });
 }
 </script>
+
+<style>
+.category-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+/* Цвета для разных категорий */
+.category-badge.marketing { background-color: #ffebee; color: #c62828; }
+.category-badge.management { background-color: #e8f5e9; color: #2e7d32; }
+.category-badge.finance { background-color: #e3f2fd; color: #1565c0; }
+.category-badge.hr { background-color: #fff3e0; color: #ef6c00; }
+.category-badge.it { background-color: #f3e5f5; color: #7b1fa2; }
+.category-badge.production { background-color: #e0f7fa; color: #00838f; }
+.category-badge.law { background-color: #ede7f6; color: #4527a0; }
+.category-badge.other { background-color: #eceff1; color: #37474f; }
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.btn-cancel {
+  background: #f0f0f0;
+  color: #333;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-cancel:hover {
+  background: #e0e0e0;
+}
+
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.close:hover {
+  color: #333;
+}
+</style>
 {% endblock %}

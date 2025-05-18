@@ -19,8 +19,8 @@
         Бизнес‑Мост
       </a>
       <nav class="header-nav">
-        <a href="index">Главная</a>
-        <a href="experts">Эксперты</a>
+        <a href="/index">Главная</a>
+        <a href="/experts">Эксперты</a>
         {% if current_user %}
           <div class="account-dropdown">
             <a href="#" class="account-button-if-login">
@@ -61,6 +61,11 @@
         {% elif article.public_status == 'reject' %}
           <div class="article-status-notice rejected">
             Статья отклонена
+            {% if is_article_owner and article.rejection_reason %}
+              <div class="rejection-reason">
+                <strong>Причина:</strong> {{ article.rejection_reason }}
+              </div>
+            {% endif %}
           </div>
         {% endif %}
       {% endif %}
@@ -75,10 +80,15 @@
                 alt="Аватар автора" 
                 class="author-avatar">
             <div class="author-details">
-              <span class="author-name">{{ author.user_surname }} {{ author.user_name }}</span>
-              <span class="article-date">
-                {{ article.created_at.strftime('%d.%m.%Y в %H:%M') }}
-              </span>
+                <div class="author-name-wrapper">
+                    <span class="author-name">{{ author.user_surname }} {{ author.user_name }}</span>
+                    {% if author.user_role == 'expert' %}
+                    <img src="{{ url_for('static', filename='img/expert-icon-mini.png') }}" alt="Эксперт" class="expert-badge-in-experts">
+                    {% endif %}
+                </div>
+                <span class="article-date">
+                    {{ article.created_at.strftime('%d.%m.%Y в %H:%M') }}
+                </span>
             </div>
           </div>
         </a>
@@ -117,6 +127,7 @@
     
     <!-- Кнопки взаимодействия -->
     <div class="article-actions">
+      <div class="actions-left">
         {% if current_user %}
         <button class="like-button {% if user_has_liked %}liked{% endif %}" 
                 data-article-id="{{ article.id }}">
@@ -135,8 +146,29 @@
             <span class="like-text">Нравится</span>
         </a>
         {% endif %}
+      </div>
+      
+      {% if is_article_owner or is_admin %}
+      <div class="actions-right">
+        <button class="btn-delete-article" onclick="showDeleteModal({{ article.id }})">
+          Удалить статью
+        </button>
+      </div>
+      {% endif %}
     </div>
   </main>
+
+  <div id="deleteArticleModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeDeleteModal()">&times;</span>
+      <h3>Подтверждение удаления</h3>
+      <p>Вы точно хотите удалить эту статью? Это действие нельзя отменить.</p>
+      <div class="modal-actions">
+        <button onclick="confirmDeleteArticle()" class="btn-confirm-delete">Да, удалить</button>
+        <button onclick="closeDeleteModal()" class="btn-cancel">Отмена</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Подвал -->
   <footer class="footer-in-reading">
@@ -145,6 +177,157 @@
     </div>
   </footer>
 
+
+
+  <style>
+   /* Обновленные стили для блока кнопок */
+    .article-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
+    }
+    
+    .actions-left, .actions-right {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    /* Стили для кнопки удаления */
+    .btn-delete-article {
+      background-color: #ffebee;
+      color: #c62828;
+      border: 1px solid #c62828;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+    
+    .btn-delete-article:hover {
+      background-color: #c62828;
+      color: white;
+    }
+    /* Стили для модального окна */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+    
+    .modal-content {
+      background-color: #fff;
+      margin: 15% auto;
+      padding: 20px;
+      border-radius: 8px;
+      color: #111111;
+      width: 400px;
+      max-width: 90%;
+    }
+    
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    
+    .btn-confirm-delete {
+      background-color: #c62828;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    .btn-confirm-delete:hover {
+      background-color: #b71c1c;
+    }
+    
+    .btn-cancel {
+      background: #f0f0f0;
+      color: #333;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    .btn-cancel:hover {
+      background: #e0e0e0;
+    }
+    
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 24px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    
+    .close:hover {
+      color: #333;
+    }
+  </style>
+
+  <script>
+    let articleToDelete = null;
+    
+    // Показать модальное окно удаления
+    function showDeleteModal(articleId) {
+      articleToDelete = articleId;
+      document.getElementById('deleteArticleModal').style.display = 'block';
+    }
+    
+    // Закрыть модальное окно
+    function closeDeleteModal() {
+      document.getElementById('deleteArticleModal').style.display = 'none';
+      articleToDelete = null;
+    }
+    
+    // Подтвердить удаление
+    function confirmDeleteArticle() {
+    if (!articleToDelete) return;
+    
+    fetch(`/articles/${articleToDelete}/delete`, {  // Убедитесь, что путь именно такой
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content,
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.success) {
+        window.location.href = '/profile';
+      } else {
+        alert(data.message || 'Ошибка при удалении статьи');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Произошла ошибка при удалении статьи');
+    })
+    .finally(() => {
+      closeDeleteModal();
+    });
+  }
+  </script>
   <script src="{{ url_for('static', filename='js/article.js') }}"></script>
   <script src="{{ url_for('static', filename='js/account-dropdown.js') }}"></script>
 

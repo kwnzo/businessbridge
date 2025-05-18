@@ -56,126 +56,66 @@
         <h2 id="experts-welcome-title">Эксперты</h2>
     </section>
     <div class="expert-list">
-    <!-- Пример эксперта -->
-    <div class="expert" onclick="toggleArticles(this)">
-      <div class="expert-header">
-        <div class="expert-info">
-          <div class="avatar-expert" style="background-image: url('avatar1.jpg')"></div>
-          <div>
-            <div><strong>Иванов Иван Иванович</strong></div>
-            <div>ООО "Пример"</div>
+      {% for expert in experts %}
+      <div class="expert" onclick="toggleArticles(this)">
+          <div class="expert-header">
+            
+              <div class="expert-info">
+                  <a href="{{ url_for('user_profile', user_id=expert.id) }}" class="author-info-link">
+                      <div class="avatar-expert" style="background-image: url('{{ url_for('user_avatar', user_id=expert.id) }}')"></div>
+                  </a>
+                  <div>
+                      <div class="expert-name-wrapper">
+                          <strong>{{ expert.user_surname }} {{ expert.user_name }} {{ expert.user_daddy if expert.user_daddy else '' }}</strong>
+                          <img src="{{ url_for('static', filename='img/expert-icon-mini.png') }}" alt="Эксперт" class="expert-badge-in-experts">
+                      </div>
+                      <div>{{ expert.position }} в {{ expert.company }}</div>
+                      <div class="expertise">Область экспертизы: {{ expert.expertise_ru }}</div>
+                  </div>
+              </div>
+              <svg class="dropdown-arrow-experts" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+                  <path d="M7 10l5 5 5-5"/>
+              </svg>
           </div>
-        </div>
-        <svg class="dropdown-arrow-experts" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
-          <path d="M7 10l5 5 5-5"/>
-        </svg>
-      </div>
-      
-      <div class="articles-wrapper">
-        <button class="scroll-btn left hidden" onclick="scrollArticles(this, -200)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M15 18l-6-6 6-6"/>
-          </svg>
-        </button>
-        
-        <div class="articles-scroll">
-          <!-- Карточки статей (в реальном коде будут подгружаться из БД) -->
-          <a href="#" class="article-link">
-            <div class="article">
-                <img src="" class="article-card" alt="Превью статьи">
-              <h3>Статья 1</h3>
-            </div>
-          </a>
-          <a href="#" class="article-link">
-            <div class="article">
-                <img src="" class="article-card" alt="Превью статьи">
-              <h3>Статья 2</h3>
-            </div>
-          </a>
-          <a href="#" class="article-link">
-            <div class="article">
-                <img src="" class="article-card" alt="Превью статьи">
-              <h3>Статья 3</h3>
-            </div>
-          </a>
-          <a href="#" class="article-link">
-            <div class="article">
-                <img src="" class="article-card" alt="Превью статьи">
-              <h3>Статья 4</h3>
-            </div>
-          </a>
-          <a href="#" class="article-link">
-            <div class="article">
-                <img src="" class="article-card" alt="Превью статьи">
-              <h3>Статья 5</h3>
-            </div>
-          </a>
-          <a href="#" class="article-link">
-            <div class="article">
-                <img src="" class="article-card" alt="Превью статьи">
-              <h3>Статья 6</h3>
-            </div>
-          </a>
-        </div>
-        
-        <button class="scroll-btn right" onclick="scrollArticles(this, 200)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 18l6-6-6-6"/>
-          </svg>
-        </button>
-      </div>
-    </div>
-
-    <!-- Еще один пример эксперта -->
-    <div class="expert" onclick="toggleArticles(this)">
-      <div class="expert-header">
-        <div class="expert-info">
-          <div class="avatar-expert" style="background-image: url('avatar2.jpg')"></div>
-          <div>
-            <div><strong>Иванов Иван Иванович</strong></div>
-            <div>ЗАО "Пример"</div>
+          
+          <div class="articles-wrapper">
+              <button class="scroll-btn left hidden" onclick="scrollArticles(this, -200)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M15 18l-6-6 6-6"/>
+                  </svg>
+              </button>
+              
+              <div class="articles-scroll">
+                  {% for article in expert.articles %}
+                  <a href="{{ url_for('view_article', article_id=article.id) }}" class="article-link">
+                      <div class="article">
+                          {% if article.preview_image %}
+                          <img src="{{ url_for('article_image', article_id=article.id) }}" class="article-card" alt="Превью статьи">
+                          {% else %}
+                          <img src="{{ url_for('static', filename='img/article-placeholder.png') }}" class="article-card" alt="Превью статьи">
+                          {% endif %}
+                          <h3>{{ article.topic_name }}</h3>
+                      </div>
+                  </a>
+                  {% else %}
+                  <div class="no-articles">
+                      У эксперта пока нет опубликованных статей
+                  </div>
+                  {% endfor %}
+              </div>
+              
+              <button class="scroll-btn right" onclick="scrollArticles(this, 200)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M9 18l6-6-6-6"/>
+                  </svg>
+              </button>
           </div>
-        </div>
-        <svg class="dropdown-arrow-experts" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
-          <path d="M7 10l5 5 5-5"/>
-        </svg>
       </div>
-      
-      <div class="articles-wrapper">
-        <button class="scroll-btn left hidden" onclick="scrollArticles(this, -200)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M15 18l-6-6 6-6"/>
-          </svg>
-        </button>
-        
-        <div class="articles-scroll">
-          <a href="#" class="article-link">
-            <div class="article">
-                <img src="" class="article-card" alt="Превью статьи">
-              <h3>Статья 1</h3>
-            </div>
-          </a>
-          <a href="#" class="article-link">
-            <div class="article">
-                <img src="" class="article-card" alt="Превью статьи">
-              <h3>Статья 2</h3>
-            </div>
-          </a>
-          <a href="#" class="article-link">
-            <div class="article">
-                <img src="" class="article-card" alt="Превью статьи">
-              <h3>Статья 3</h3>
-            </div>
-          </a>
-        </div>
-        
-        <button class="scroll-btn right" onclick="scrollArticles(this, 200)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 18l6-6-6-6"/>
-          </svg>
-        </button>
+      {% else %}
+      <div class="no-experts">
+          На платформе пока нет зарегистрированных экспертов
       </div>
-    </div>
+      {% endfor %}
   </div>
 
   <script src="{{ url_for('static', filename='js/expert.js') }}"></script>

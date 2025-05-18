@@ -40,6 +40,21 @@
       </div>
       
       <div class="form-group">
+        <label for="category" class="form-label">Категория статьи<span class="required-field">*</span></label>
+        <select id="category" name="category" class="form-input" required>
+          <option value="" disabled selected>Выберите категорию</option>
+          <option value="marketing">Маркетинг и продажи</option>
+          <option value="management">Управление бизнесом</option>
+          <option value="finance">Финансы и инвестиции</option>
+          <option value="hr">HR и управление персоналом</option>
+          <option value="it">IT и цифровизация</option>
+          <option value="production">Производство и логистика</option>
+          <option value="law">Юриспруденция</option>
+          <option value="other">Другое</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
         <label for="title" class="form-label">Заголовок статьи<span class="required-field">*</span></label>
         <input type="text" id="title" name="title" class="form-input" placeholder="Введите заголовок" required>
       </div>

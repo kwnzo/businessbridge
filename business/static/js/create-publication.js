@@ -42,6 +42,7 @@ document.getElementById('article-form').addEventListener('submit', async functio
   
   const title = document.getElementById('title').value.trim();
   const content = document.getElementById('content').value.trim();
+  const category = document.getElementById('category').value;
   const imageFile = document.getElementById('image').files[0];
   
   // Валидация полей
@@ -55,6 +56,11 @@ document.getElementById('article-form').addEventListener('submit', async functio
     return;
   }
   
+  if (!category) {
+    showModal('Пожалуйста, выберите категорию статьи');
+    return;
+  }
+  
   if (!imageFile) {
     showModal('Пожалуйста, добавьте изображение');
     return;
@@ -63,8 +69,15 @@ document.getElementById('article-form').addEventListener('submit', async functio
   const formData = new FormData();
   formData.append('title', title);
   formData.append('content', content);
+  formData.append('category', category);
   formData.append('image', imageFile);
   formData.append('csrf_token', document.querySelector('input[name="csrf_token"]').value);
+  
+  // Логирование данных перед отправкой (для отладки)
+  console.log('Отправляемые данные:');
+  for (let [key, value] of formData.entries()) {
+    console.log(key, value);
+  }
   
   try {
     const response = await fetch('/profile/create-publication', {
@@ -78,8 +91,8 @@ document.getElementById('article-form').addEventListener('submit', async functio
       showModal('Статья успешно опубликована!', true);
       // Перенаправление после закрытия модального окна
       document.getElementById('modalCloseBtn').addEventListener('click', function() {
-        window.location.href = '/profile'; // или result.redirect, если сервер его возвращает
-      }, { once: true }); // { once: true } гарантирует, что обработчик сработает только один раз
+        window.location.href = '/profile';
+      }, { once: true });
     } else {
       showModal('Ошибка: ' + (result.message || 'Ошибка при публикации статьи'));
     }

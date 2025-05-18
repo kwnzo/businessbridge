@@ -15,6 +15,19 @@
                 <option value="reject" {% if request.args.get('status') == 'reject' %}selected{% endif %}>Отклоненные</option>
             </select>
             
+            <!-- Фильтр по категории -->
+            <select name="category" class="admin-filter">
+                <option value="">Все категории</option>
+                <option value="marketing" {% if request.args.get('category') == 'marketing' %}selected{% endif %}>Маркетинг</option>
+                <option value="management" {% if request.args.get('category') == 'management' %}selected{% endif %}>Управление</option>
+                <option value="finance" {% if request.args.get('category') == 'finance' %}selected{% endif %}>Финансы</option>
+                <option value="hr" {% if request.args.get('category') == 'hr' %}selected{% endif %}>HR</option>
+                <option value="it" {% if request.args.get('category') == 'it' %}selected{% endif %}>IT</option>
+                <option value="production" {% if request.args.get('category') == 'production' %}selected{% endif %}>Производство</option>
+                <option value="law" {% if request.args.get('category') == 'law' %}selected{% endif %}>Юриспруденция</option>
+                <option value="other" {% if request.args.get('category') == 'other' %}selected{% endif %}>Другое</option>
+            </select>
+            
             <!-- Фильтр по дате -->
             <input type="date" name="date_from" value="{{ request.args.get('date_from') }}" 
                    class="admin-date-filter" placeholder="От">
@@ -32,19 +45,19 @@
                    placeholder="Поиск..." class="admin-search">
             
             <button type="submit" class="btn-filter">Применить</button>
-            {% if request.args.get('status') or request.args.get('date_from') or request.args.get('date_to') or request.args.get('sort') or search_query %}
+            {% if request.args.get('status') or request.args.get('category') or request.args.get('date_from') or request.args.get('date_to') or request.args.get('sort') or search_query %}
                 <a href="{{ url_for('admin_bp.articles_management') }}" class="btn-clear">Сбросить</a>
             {% endif %}
         </form>
     </div>
 </div>
 
-
 <table class="admin-table">
     <thead>
         <tr>
             <th>ID</th>
             <th>Название</th>
+            <th>Категория</th>
             <th>Автор</th>
             <th>Статус</th>
             <th>Дата</th>
@@ -56,6 +69,18 @@
         <tr>
             <td>{{ article.id }}</td>
             <td>{{ article.topic_name }}</td>
+            <td>
+                <span class="category-badge {{ article.category }}">
+                    {% if article.category == 'marketing' %}Маркетинг
+                    {% elif article.category == 'management' %}Управление
+                    {% elif article.category == 'finance' %}Финансы
+                    {% elif article.category == 'hr' %}HR
+                    {% elif article.category == 'it' %}IT
+                    {% elif article.category == 'production' %}Производство
+                    {% elif article.category == 'law' %}Юриспруденция
+                    {% else %}Другое{% endif %}
+                </span>
+            </td>
             <td>
                 <a href="{{ url_for('user_profile', user_id=article.user_id) }}">
                     {{ article.user_surname }} {{ article.user_name }}
@@ -88,6 +113,7 @@
     {% for page_num in range(1, total_pages + 1) %}
         <a href="{{ url_for('admin_bp.articles_management', page=page_num, 
                           status=request.args.get('status'),
+                          category=request.args.get('category'),
                           sort=request.args.get('sort'),
                           q=search_query) }}"
            class="{% if page_num == current_page %}active{% endif %}">
@@ -96,6 +122,28 @@
     {% endfor %}
 </div>
 {% endif %}
+
+<style>
+.category-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+/* Цвета для разных категорий */
+.category-badge.marketing { background-color: #ffebee; color: #c62828; }
+.category-badge.management { background-color: #e8f5e9; color: #2e7d32; }
+.category-badge.finance { background-color: #e3f2fd; color: #1565c0; }
+.category-badge.hr { background-color: #fff3e0; color: #ef6c00; }
+.category-badge.it { background-color: #f3e5f5; color: #7b1fa2; }
+.category-badge.production { background-color: #e0f7fa; color: #00838f; }
+.category-badge.law { background-color: #ede7f6; color: #4527a0; }
+.category-badge.other { background-color: #eceff1; color: #37474f; }
+</style>
 
 <script src="{{ url_for('static', filename='js/admin-articles.js') }}"></script>
 {% endblock %}

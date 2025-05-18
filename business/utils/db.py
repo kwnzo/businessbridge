@@ -10,6 +10,20 @@ import json
 import random
 import datetime
 
+
+
+# Словарь соответствия английских ключей русским названиям
+EXPERTISE_AREAS = {
+    'marketing': 'Маркетинг и продажи',
+    'management': 'Управление бизнесом',
+    'finance': 'Финансы и инвестиции',
+    'hr': 'HR и управление персоналом',
+    'it': 'IT и цифровизация',
+    'production': 'Производство и логистика',
+    'law': 'Юриспруденция',
+    'other': 'Другое'
+}
+
 with open('data/config.json', 'r')  as f:
     config = json.load(f)
 
@@ -175,7 +189,13 @@ async def delete_user_avatar(user_id: int):
             await conn.commit()
             return cur.rowcount > 0
 
-async def create_publication(user_id: int, title: str, content: str, image_data: bytes = None) -> int:
+async def create_publication(
+    user_id: int, 
+    title: str, 
+    content: str, 
+    image_data: bytes = None,
+    category: str = 'other' 
+) -> int:
     """Создает новую публикацию и возвращает её ID"""
     try:
         async with aiomysql.connect(
@@ -191,9 +211,10 @@ async def create_publication(user_id: int, title: str, content: str, image_data:
                         public_creator,
                         topic_name,
                         topic_text,
-                        preview_image
-                    ) VALUES (%s, %s, %s, %s)
-                """, (user_id, title, content, image_data))
+                        preview_image,
+                        category  # Добавлено новое поле
+                    ) VALUES (%s, %s, %s, %s, %s)
+                """, (user_id, title, content, image_data, category))
                 await conn.commit()
                 return cur.lastrowid
     except Exception as e:
@@ -278,14 +299,14 @@ async def record_view(public_id: int, user_id: int = None):
     ) as conn:
         async with conn.cursor() as cursor:
             try:
-                # Обновляем общий счётчик просмотров
+                # Обновляем общий счётчик просмотров в publication_stats
                 await cursor.execute("""
                     INSERT INTO publication_stats (public_id, views)
                     VALUES (%s, 1)
                     ON DUPLICATE KEY UPDATE views = views + 1
                 """, (public_id,))
                 
-                # Записываем детализированный просмотр (если пользователь авторизован)
+                # Записываем детализированный просмотр в таблицу views
                 if user_id:
                     await cursor.execute("""
                         INSERT INTO views (public_id, user_id)
@@ -298,6 +319,7 @@ async def record_view(public_id: int, user_id: int = None):
                 await conn.rollback()
                 logging.error(f"Ошибка записи просмотра: {str(e)}")
                 raise
+
                 
 async def get_views(public_id: int):
     async with aiomysql.create_pool(
@@ -325,33 +347,33 @@ async def get_views(public_id: int):
                     if 'conn' in locals():
                         conn.close()
 
-async def get_publics():
-    async with aiomysql.create_pool(
+async def get_publics(limit: int = 12) -> list:
+    """Получает популярные публикации, отсортированные по лайкам и просмотрам"""
+    async with aiomysql.connect(
             user=user,
             password=dbpassword,
             db=db,
             host=host,
             port=port
-    ) as pool:
-        async with pool.acquire() as conn:
-            async with conn.cursor(aiomysql.DictCursor) as cursor:
-                try:
-                    await cursor.execute('''
-                        SELECT 
-                            p.id, 
-                            p.topic_name, 
-                            p.topic_name_en, 
-                            p.preview_image,
-                            p.public_status
-                        FROM publics p
-                        LEFT JOIN publication_stats ps ON p.id = ps.public_id
-                        WHERE p.public_status = 'accept'
-                        ORDER BY ps.views DESC
-                    ''')
-                    return await cursor.fetchall()
-                except Exception as e:
-                    logging.error(f'Error getting articles: {e}')
-                    return []
+    ) as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute('''
+                SELECT 
+                    p.id, 
+                    p.topic_name, 
+                    p.topic_name_en, 
+                    p.preview_image,
+                    p.public_status,
+                    COALESCE(ps.likes, 0) AS likes,
+                    COALESCE(ps.views, 0) AS views,
+                    (SELECT COUNT(*) FROM comments c WHERE c.public_id = p.id) AS comments_count
+                FROM publics p
+                LEFT JOIN publication_stats ps ON p.id = ps.public_id
+                WHERE p.public_status = 'accept'
+                ORDER BY (COALESCE(ps.likes, 0) * 0.7 + COALESCE(ps.views, 0) * 0.3) DESC
+                LIMIT %s
+            ''', (limit,))
+            return await cur.fetchall()
                 
 async def get_image_data(article_id):
     async with aiomysql.create_pool(
@@ -584,8 +606,9 @@ async def save_expert_request(
                 logging.error(f"DB Error saving expert request: {str(e)}")
                 return False
             
-async def add_like(user_id: int, public_id: int) -> bool:
-    """Добавляет лайк к статье. Возвращает True при успехе, False если лайк уже существует."""
+
+async def delete_article_db(article_id: int) -> bool:
+    """Удаляет статью из базы данных"""
     async with aiomysql.connect(
             user=user,
             password=dbpassword,
@@ -595,21 +618,16 @@ async def add_like(user_id: int, public_id: int) -> bool:
     ) as conn:
         async with conn.cursor() as cur:
             try:
-                await cur.execute(
-                    "INSERT INTO likes (user_id, public_id) VALUES (%s, %s)",
-                    (user_id, public_id)
-                )
+                await cur.execute("DELETE FROM publics WHERE id = %s", (article_id,))
                 await conn.commit()
-                return True
-            except aiomysql.IntegrityError:
-                # Лайк уже существует
-                return False
+                return cur.rowcount > 0
             except Exception as e:
-                logging.error(f"Ошибка при добавлении лайка: {e}")
+                await conn.rollback()
+                logging.error(f"Error deleting article: {str(e)}")
                 return False
 
-async def remove_like(user_id: int, public_id: int) -> bool:
-    """Удаляет лайк с статьи. Возвращает True при успехе."""
+async def add_like(user_id: int, public_id: int) -> bool:
+    """Добавляет лайк к статье и обновляет счетчик в publication_stats"""
     async with aiomysql.connect(
             user=user,
             password=dbpassword,
@@ -618,11 +636,60 @@ async def remove_like(user_id: int, public_id: int) -> bool:
             port=port
     ) as conn:
         async with conn.cursor() as cur:
-            await cur.execute(
-                "DELETE FROM likes WHERE user_id = %s AND public_id = %s",
-                (user_id, public_id))
-            await conn.commit()
-            return cur.rowcount > 0
+            try:
+                # Добавляем лайк в таблицу likes
+                await cur.execute(
+                    "INSERT INTO likes (user_id, public_id) VALUES (%s, %s)",
+                    (user_id, public_id))
+                
+                # Обновляем счетчик лайков в publication_stats
+                await cur.execute("""
+                    INSERT INTO publication_stats (public_id, likes)
+                    VALUES (%s, 1)
+                    ON DUPLICATE KEY UPDATE likes = likes + 1
+                """, (public_id,))
+                
+                await conn.commit()
+                return True
+            except aiomysql.IntegrityError:
+                # Лайк уже существует
+                return False
+            except Exception as e:
+                await conn.rollback()
+                logging.error(f"Ошибка при добавлении лайка: {e}")
+                return False
+
+
+async def remove_like(user_id: int, public_id: int) -> bool:
+    """Удаляет лайк с статьи и обновляет счетчик в publication_stats"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            try:
+                # Удаляем лайк из таблицы likes
+                await cur.execute(
+                    "DELETE FROM likes WHERE user_id = %s AND public_id = %s",
+                    (user_id, public_id))
+                
+                # Обновляем счетчик лайков в publication_stats
+                await cur.execute("""
+                    UPDATE publication_stats 
+                    SET likes = GREATEST(0, likes - 1)
+                    WHERE public_id = %s
+                """, (public_id,))
+                
+                await conn.commit()
+                return cur.rowcount > 0
+            except Exception as e:
+                await conn.rollback()
+                logging.error(f"Ошибка при удалении лайка: {e}")
+                return False
+
 
 async def has_liked(user_id: int, public_id: int) -> bool:
     """Проверяет, поставил ли пользователь лайк статье."""
@@ -787,20 +854,43 @@ async def approve_expert_request_db(request_id: int) -> bool:
     ) as conn:
         async with conn.cursor() as cur:
             try:
-                # Получаем user_id из заявки
-                await cur.execute(
-                    "SELECT user_id FROM expert_requests WHERE id = %s",
-                    (request_id,))
-                result = await cur.fetchone()
-                if not result:
+                # Получаем данные заявки
+                await cur.execute("""
+                    SELECT user_id, company, position, expertise, 
+                           other_expertise, experience, description
+                    FROM expert_requests 
+                    WHERE id = %s
+                """, (request_id,))
+                request_data = await cur.fetchone()
+                if not request_data:
                     return False
                 
-                user_id = result[0]
+                user_id = request_data[0]
                 
-                # Обновляем роль пользователя
+                # Обновляем роль пользователя (триггер создаст запись в experts)
                 await cur.execute(
                     "UPDATE users SET user_role = 'expert' WHERE id = %s",
                     (user_id,))
+                
+                # Обновляем данные эксперта
+                await cur.execute("""
+                    UPDATE experts 
+                    SET company = %s,
+                        position = %s,
+                        expertise = %s,
+                        other_expertise = %s,
+                        experience = %s,
+                        description = %s
+                    WHERE user_id = %s
+                """, (
+                    request_data[1],  # company
+                    request_data[2],  # position
+                    request_data[3],  # expertise
+                    request_data[4] if request_data[3] == 'other' else None,  # other_expertise только для 'other'
+                    request_data[5],  # experience
+                    request_data[6],  # description
+                    user_id
+                ))
                 
                 # Удаляем заявку
                 await cur.execute(
@@ -813,6 +903,7 @@ async def approve_expert_request_db(request_id: int) -> bool:
                 await conn.rollback()
                 logging.error(f"Error approving expert request: {str(e)}")
                 return False
+            
 
 async def reject_expert_request_db(request_id: int, rejection_reason: str) -> bool:
     """Отклоняет заявку на эксперта с сохранением причины в user_data"""
@@ -964,6 +1055,7 @@ async def get_articles_for_review(
                     p.public_status,
                     p.created_at,
                     p.public_creator,
+                    p.category,  # Добавлено поле категории
                     u.user_name,
                     u.user_surname
                 FROM publics p
@@ -1032,7 +1124,7 @@ async def get_articles_for_review_count(
             return result[0] if result else 0
 
 async def update_article_status(article_id: int, status: str) -> bool:
-    """Обновляет статус статьи"""
+    """Обновляет статус статьи (упрощенная версия без expert_publications)"""
     async with aiomysql.connect(
             user=user,
             password=dbpassword,
@@ -1041,11 +1133,19 @@ async def update_article_status(article_id: int, status: str) -> bool:
             port=port
     ) as conn:
         async with conn.cursor() as cur:
-            await cur.execute(
-                "UPDATE publics SET public_status = %s WHERE id = %s",
-                (status, article_id))
-            await conn.commit()
-            return cur.rowcount > 0
+            try:
+                # Просто обновляем статус статьи
+                await cur.execute(
+                    "UPDATE publics SET public_status = %s WHERE id = %s",
+                    (status, article_id))
+                
+                await conn.commit()
+                return cur.rowcount > 0
+            except Exception as e:
+                await conn.rollback()
+                logging.error(f"Error updating article status: {str(e)}")
+                return False
+
 
 async def reject_article_db(article_id: int, rejection_reason: str) -> bool:
     """Отклоняет статью с сохранением причины"""
@@ -1058,21 +1158,22 @@ async def reject_article_db(article_id: int, rejection_reason: str) -> bool:
     ) as conn:
         async with conn.cursor() as cur:
             try:
-                # Обновляем статус статьи
-                await cur.execute(
-                    "UPDATE publics SET public_status = 'reject' WHERE id = %s",
-                    (article_id,))
-                
-                # Здесь можно добавить сохранение причины отклонения,
-                # например, в отдельную таблицу или в JSON поле
+                # Обновляем статус и сохраняем причину отклонения
+                await cur.execute("""
+                    UPDATE publics 
+                    SET public_status = 'reject', 
+                        rejection_reason = %s 
+                    WHERE id = %s
+                """, (rejection_reason, article_id))
                 
                 await conn.commit()
-                return True
+                return cur.rowcount > 0
             except Exception as e:
                 await conn.rollback()
                 logging.error(f"Error rejecting article: {str(e)}")
                 return False
-            
+
+
 async def search_articles(
     query: str = '',
     status: str = '',
@@ -1132,13 +1233,80 @@ async def search_articles(
             await cur.execute(sql, params)
             return await cur.fetchall()
 
+async def get_filtered_articles(
+    query: str = '',
+    status: str = '',
+    category: str = '',
+    date_from: str = '',
+    date_to: str = '',
+    sort: str = 'newest',
+    limit: int = 10,
+    offset: int = 0
+) -> list:
+    """Получает список статей с фильтрами"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            sql = """
+                SELECT 
+                    p.id, 
+                    p.topic_name, 
+                    p.topic_name_en,
+                    p.category,
+                    p.public_status,
+                    p.created_at,
+                    u.id as user_id,
+                    u.user_name,
+                    u.user_surname
+                FROM publics p
+                JOIN users u ON p.public_creator = u.id
+                WHERE 1=1
+            """
+            params = []
+            
+            if query:
+                sql += " AND (p.topic_name LIKE %s OR u.user_name LIKE %s OR u.user_surname LIKE %s)"
+                params.extend([f"%{query}%", f"%{query}%", f"%{query}%"])
+            
+            if status:
+                sql += " AND p.public_status = %s"
+                params.append(status)
+                
+            if category:
+                sql += " AND p.category = %s"
+                params.append(category)
+                
+            if date_from:
+                sql += " AND DATE(p.created_at) >= %s"
+                params.append(date_from)
+                
+            if date_to:
+                sql += " AND DATE(p.created_at) <= %s"
+                params.append(date_to)
+            
+            # Добавляем сортировку
+            sql += " ORDER BY p.created_at " + ("DESC" if sort == 'newest' else "ASC")
+            
+            if limit:
+                sql += " LIMIT %s OFFSET %s"
+                params.extend([limit, offset])
+            
+            await cur.execute(sql, params)
+            return await cur.fetchall()
+
 async def get_filtered_articles_count(
     query: str = '',
     status: str = '',
+    category: str = '',
     date_from: str = '',
     date_to: str = ''
 ) -> int:
-    """Получение количества статей с фильтрами"""
+    """Получает количество статей с учетом фильтров"""
     async with aiomysql.connect(
             user=user,
             password=dbpassword,
@@ -1163,13 +1331,17 @@ async def get_filtered_articles_count(
                 sql += " AND p.public_status = %s"
                 params.append(status)
                 
+            if category:
+                sql += " AND p.category = %s"
+                params.append(category)
+                
             if date_from:
-                sql += " AND p.created_at >= %s"
-                params.append(f"{date_from} 00:00:00")
+                sql += " AND DATE(p.created_at) >= %s"
+                params.append(date_from)
                 
             if date_to:
-                sql += " AND p.created_at <= %s"
-                params.append(f"{date_to} 23:59:59")
+                sql += " AND DATE(p.created_at) <= %s"
+                params.append(date_to)
                 
             await cur.execute(sql, params)
             result = await cur.fetchone()
@@ -1286,3 +1458,191 @@ async def get_filtered_users_count(
             return result[0] if result else 0
 
 
+async def add_quote(text: str, author: str) -> int:
+    """Добавляет новую цитату в базу данных"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "INSERT INTO quotes (text, author) VALUES (%s, %s)",
+                (text, author))
+            await conn.commit()
+            return cur.lastrowid
+
+async def get_random_quote() -> Optional[dict]:
+    """Получает случайную цитату из базы данных"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute("""
+                SELECT text, author FROM quotes
+                ORDER BY RAND()
+                LIMIT 1
+            """)
+            return await cur.fetchone()
+
+async def get_all_quotes() -> list:
+    """Получает все цитаты из базы данных"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute("SELECT id, text, author FROM quotes")
+            return await cur.fetchall()
+        
+
+
+async def sync_experts_table():
+    """Синхронизирует таблицу experts с пользователями, имеющими роль expert"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            try:
+                # Добавляем отсутствующих экспертов
+                await cur.execute("""
+                    INSERT IGNORE INTO experts (user_id)
+                    SELECT id FROM users WHERE user_role = 'expert'
+                    AND id NOT IN (SELECT user_id FROM experts)
+                """)
+                
+                # Удаляем лишних экспертов (у которых больше нет роли)
+                await cur.execute("""
+                    DELETE FROM experts 
+                    WHERE user_id NOT IN (
+                        SELECT id FROM users WHERE user_role = 'expert'
+                    )
+                """)
+                
+                await conn.commit()
+                return True
+            except Exception as e:
+                await conn.rollback()
+                logging.error(f"Error syncing experts table: {str(e)}")
+                return False
+            
+
+async def get_all_experts() -> list:
+    """Получает список всех экспертов с основной информацией"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute("""
+                SELECT 
+                    u.id,
+                    u.user_name,
+                    u.user_surname,
+                    u.user_daddy,
+                    u.user_avatar,
+                    e.company,
+                    e.position,
+                    e.expertise,
+                    e.other_expertise,
+                    e.experience,
+                    e.description
+                FROM users u
+                JOIN experts e ON u.id = e.user_id
+                WHERE u.user_role = 'expert'
+                ORDER BY u.user_surname, u.user_name
+            """)
+            experts = await cur.fetchall()
+            
+            # Добавляем русское название области экспертизы
+            for expert in experts:
+                expert['expertise_ru'] = EXPERTISE_AREAS.get(
+                    expert['expertise'], 
+                    expert['expertise']  # fallback если ключ не найден
+                )
+                if expert['expertise'] == 'other' and expert['other_expertise']:
+                    expert['expertise_ru'] = expert['other_expertise']
+            
+            return experts
+
+async def get_expert_articles(expert_id: int) -> list:
+    """Получает опубликованные статьи эксперта"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute("""
+                SELECT 
+                    id,
+                    topic_name,
+                    preview_image,
+                    created_at
+                FROM publics
+                WHERE public_creator = %s AND public_status = 'accept'
+                ORDER BY created_at DESC
+            """, (expert_id,))
+            return await cur.fetchall()
+        
+async def get_expert_info(user_id: int) -> Optional[dict]:
+    """Получает информацию эксперта по ID пользователя"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute("""
+                SELECT company, position, expertise, other_expertise, experience, description
+                FROM experts
+                WHERE user_id = %s
+                LIMIT 1
+            """, (user_id,))
+            return await cur.fetchone()
+        
+async def reject_article_db(article_id: int, rejection_reason: str) -> bool:
+    """Отклоняет статью с сохранением причины"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            try:
+                # Обновляем статус и сохраняем причину отклонения
+                await cur.execute("""
+                    UPDATE publics 
+                    SET public_status = 'reject', 
+                        rejection_reason = %s 
+                    WHERE id = %s
+                """, (rejection_reason, article_id))
+                
+                await conn.commit()
+                return cur.rowcount > 0
+            except Exception as e:
+                await conn.rollback()
+                logging.error(f"Error rejecting article: {str(e)}")
+                return False
