@@ -200,8 +200,8 @@ async def create_publication(user_id: int, title: str, content: str, image_data:
         logging.error(f'Ошибка при создании публикации: {e}')
         raise
 
-async def get_user_articles(user_id: int) -> list:
-    """Получает все статьи пользователя"""
+async def get_user_articles(user_id: int, is_owner: bool = False) -> list:
+    """Получает статьи пользователя"""
     async with aiomysql.connect(
             user=user,
             password=dbpassword,
@@ -210,16 +210,43 @@ async def get_user_articles(user_id: int) -> list:
             port=port
     ) as conn:
         async with conn.cursor(aiomysql.DictCursor) as cur:
-            await cur.execute("""
-                SELECT id, topic_name, topic_name_en, topic_text, preview_image, created_at 
-                FROM publics 
-                WHERE public_creator = %s 
-                ORDER BY created_at DESC
-            """, (user_id,))
+            if is_owner:
+                # Для владельца показываем все статьи
+                await cur.execute("""
+                    SELECT 
+                        id, 
+                        topic_name, 
+                        COALESCE(topic_name_en, 'no-slug') as topic_name_en,
+                        topic_text,
+                        preview_image,
+                        created_at,
+                        public_status
+                    FROM publics 
+                    WHERE public_creator = %s
+                    ORDER BY created_at DESC
+                """, (user_id,))
+            else:
+                # Для других пользователей показываем только принятые статьи
+                await cur.execute("""
+                    SELECT 
+                        id, 
+                        topic_name, 
+                        COALESCE(topic_name_en, 'no-slug') as topic_name_en,
+                        topic_text,
+                        preview_image,
+                        created_at,
+                        'accept' as public_status
+                    FROM publics 
+                    WHERE public_creator = %s AND public_status = 'accept'
+                    ORDER BY created_at DESC
+                """, (user_id,))
             return await cur.fetchall()
 
+        
+       
+
 async def get_article_by_id(article_id: int) -> Optional[dict]:
-    """Получает статью по ID"""
+    """Получает статью по ID (без проверки статуса)"""
     async with aiomysql.connect(
             user=user,
             password=dbpassword,
@@ -229,34 +256,48 @@ async def get_article_by_id(article_id: int) -> Optional[dict]:
     ) as conn:
         async with conn.cursor(aiomysql.DictCursor) as cur:
             await cur.execute("""
-                SELECT * FROM publics 
-                WHERE id = %s
+                SELECT 
+                    p.*,
+                    u.user_name,
+                    u.user_surname
+                FROM publics p
+                JOIN users u ON p.public_creator = u.id
+                WHERE p.id = %s
                 LIMIT 1
             """, (article_id,))
             return await cur.fetchone()
         
 
-async def record_view(public_id: int, user_id: int):
-    async with aiomysql.create_pool(
+async def record_view(public_id: int, user_id: int = None):
+    async with aiomysql.connect(
             user=user,
             password=dbpassword,
             db=db,
             host=host,
             port=port
-    ) as pool:
-        async with pool.acquire() as conn:
-            async with conn.cursor() as cursor:
-                try:
-                    await cursor.execute(
-                        "INSERT INTO views (public_id, user_id) "
-                        "VALUES (%s, %s) "
-                        "ON DUPLICATE KEY UPDATE created_at = NOW()",
-                        (public_id, user_id)
-                    )
-                    await conn.commit()
-                except Exception as e:
-                    await conn.rollback()
-                    raise e
+    ) as conn:
+        async with conn.cursor() as cursor:
+            try:
+                # Обновляем общий счётчик просмотров
+                await cursor.execute("""
+                    INSERT INTO publication_stats (public_id, views)
+                    VALUES (%s, 1)
+                    ON DUPLICATE KEY UPDATE views = views + 1
+                """, (public_id,))
+                
+                # Записываем детализированный просмотр (если пользователь авторизован)
+                if user_id:
+                    await cursor.execute("""
+                        INSERT INTO views (public_id, user_id)
+                        VALUES (%s, %s)
+                        ON DUPLICATE KEY UPDATE created_at = NOW()
+                    """, (public_id, user_id))
+                
+                await conn.commit()
+            except Exception as e:
+                await conn.rollback()
+                logging.error(f"Ошибка записи просмотра: {str(e)}")
+                raise
                 
 async def get_views(public_id: int):
     async with aiomysql.create_pool(
@@ -293,18 +334,19 @@ async def get_publics():
             port=port
     ) as pool:
         async with pool.acquire() as conn:
-            async with conn.cursor(aiomysql.DictCursor) as cursor:  # Используем DictCursor
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
                 try:
                     await cursor.execute('''
                         SELECT 
                             p.id, 
                             p.topic_name, 
                             p.topic_name_en, 
-                            p.preview_image 
+                            p.preview_image,
+                            p.public_status
                         FROM publics p
                         LEFT JOIN publication_stats ps ON p.id = ps.public_id
-                        WHERE p.public_status = 'accept' 
-                        ORDER BY ps.views
+                        WHERE p.public_status = 'accept'
+                        ORDER BY ps.views DESC
                     ''')
                     return await cursor.fetchall()
                 except Exception as e:
@@ -630,17 +672,25 @@ async def check_user_like(user_id: int, public_id: int) -> bool:
             return await cur.fetchone() is not None
         
 
-async def get_expert_requests(limit: int = 10, offset: int = 0) -> list:
-    """Получает список заявок на эксперта"""
+async def get_expert_requests(
+    search: str = '',
+    date_from: str = '',
+    date_to: str = '',
+    sort: str = 'newest',
+    limit: int = 10,
+    offset: int = 0
+) -> list:
+    """Получает список заявок с фильтрацией"""
     async with aiomysql.connect(
-            user=user,
-            password=dbpassword,
-            db=db,
-            host=host,
-            port=port
+        host=host,
+        port=port,
+        user=user,
+        password=dbpassword,
+        db=db
     ) as conn:
         async with conn.cursor(aiomysql.DictCursor) as cur:
-            await cur.execute("""
+            # Базовый запрос
+            sql = """
                 SELECT 
                     er.id, 
                     er.company, 
@@ -656,25 +706,76 @@ async def get_expert_requests(limit: int = 10, offset: int = 0) -> list:
                     u.user_email
                 FROM expert_requests er
                 JOIN users u ON er.user_id = u.id
-                ORDER BY er.created_at DESC
-                LIMIT %s OFFSET %s
-            """, (limit, offset))
+                WHERE 1=1
+            """
+            params = []
+            
+            # Добавляем условия фильтрации
+            if search:
+                sql += " AND (u.user_name LIKE %s OR u.user_surname LIKE %s OR er.company LIKE %s)"
+                search_term = f"%{search}%"
+                params.extend([search_term, search_term, search_term])
+            
+            if date_from:
+                sql += " AND DATE(er.created_at) >= %s"
+                params.append(date_from)
+            
+            if date_to:
+                sql += " AND DATE(er.created_at) <= %s"
+                params.append(date_to)
+            
+            # Добавляем сортировку
+            sql += " ORDER BY er.created_at " + ("DESC" if sort == 'newest' else "ASC")
+            
+            # Добавляем пагинацию
+            if limit:
+                sql += " LIMIT %s OFFSET %s"
+                params.extend([limit, offset])
+            
+            # Выполняем запрос
+            await cur.execute(sql, params)
             return await cur.fetchall()
 
-async def get_expert_requests_count() -> int:
-    """Возвращает количество заявок на эксперта"""
+async def get_expert_requests_count(
+    search: str = '',
+    date_from: str = '',
+    date_to: str = ''
+) -> int:
+    """Получает количество заявок с учетом фильтров"""
     async with aiomysql.connect(
-            user=user,
-            password=dbpassword,
-            db=db,
-            host=host,
-            port=port
+        host=host,
+        port=port,
+        user=user,
+        password=dbpassword,
+        db=db
     ) as conn:
         async with conn.cursor() as cur:
-            await cur.execute("SELECT COUNT(*) FROM expert_requests")
+            sql = """
+                SELECT COUNT(*)
+                FROM expert_requests er
+                JOIN users u ON er.user_id = u.id
+                WHERE 1=1
+            """
+            params = []
+            
+            if search:
+                sql += " AND (u.user_name LIKE %s OR u.user_surname LIKE %s OR er.company LIKE %s)"
+                search_term = f"%{search}%"
+                params.extend([search_term, search_term, search_term])
+            
+            if date_from:
+                sql += " AND DATE(er.created_at) >= %s"
+                params.append(date_from)
+            
+            if date_to:
+                sql += " AND DATE(er.created_at) <= %s"
+                params.append(date_to)
+            
+            await cur.execute(sql, params)
             result = await cur.fetchone()
             return result[0] if result else 0
-
+        
+        
 async def approve_expert_request_db(request_id: int) -> bool:
     """Одобряет заявку на эксперта и обновляет роль пользователя"""
     async with aiomysql.connect(
@@ -821,3 +922,367 @@ async def get_publics_for_approve():
                 return []
             
             return data 
+        
+
+async def has_expert_request(user_id: int) -> bool:
+    """Проверяет, есть ли у пользователя активная заявка на эксперта"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "SELECT 1 FROM expert_requests WHERE user_id = %s",
+                (user_id,))
+            return await cur.fetchone() is not None
+        
+
+async def get_articles_for_review(
+    query: str = '',
+    date_from: str = '',
+    date_to: str = '',
+    sort: str = 'newest',
+    limit: int = 10,
+    offset: int = 0
+) -> list:
+    """Получает список статей на проверку с фильтрацией"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            sql = """
+                SELECT 
+                    p.id, 
+                    p.topic_name, 
+                    p.public_status,
+                    p.created_at,
+                    p.public_creator,
+                    u.user_name,
+                    u.user_surname
+                FROM publics p
+                JOIN users u ON p.public_creator = u.id
+                WHERE p.public_status = 'waiting'
+            """
+            params = []
+            
+            if query:
+                sql += " AND (p.topic_name LIKE %s OR u.user_name LIKE %s OR u.user_surname LIKE %s)"
+                params.extend([f"%{query}%", f"%{query}%", f"%{query}%"])
+            
+            if date_from:
+                sql += " AND DATE(p.created_at) >= %s"
+                params.append(date_from)
+            
+            if date_to:
+                sql += " AND DATE(p.created_at) <= %s"
+                params.append(date_to)
+            
+            sql += " ORDER BY p.created_at " + ("DESC" if sort == 'newest' else "ASC")
+            
+            if limit:
+                sql += " LIMIT %s OFFSET %s"
+                params.extend([limit, offset])
+            
+            await cur.execute(sql, params)
+            return await cur.fetchall()
+
+async def get_articles_for_review_count(
+    query: str = '',
+    date_from: str = '',
+    date_to: str = ''
+) -> int:
+    """Получает количество статей на проверке с учетом фильтров"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            sql = """
+                SELECT COUNT(*)
+                FROM publics p
+                JOIN users u ON p.public_creator = u.id
+                WHERE p.public_status = 'waiting'
+            """
+            params = []
+            
+            if query:
+                sql += " AND (p.topic_name LIKE %s OR u.user_name LIKE %s OR u.user_surname LIKE %s)"
+                params.extend([f"%{query}%", f"%{query}%", f"%{query}%"])
+            
+            if date_from:
+                sql += " AND DATE(p.created_at) >= %s"
+                params.append(date_from)
+            
+            if date_to:
+                sql += " AND DATE(p.created_at) <= %s"
+                params.append(date_to)
+            
+            await cur.execute(sql, params)
+            result = await cur.fetchone()
+            return result[0] if result else 0
+
+async def update_article_status(article_id: int, status: str) -> bool:
+    """Обновляет статус статьи"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "UPDATE publics SET public_status = %s WHERE id = %s",
+                (status, article_id))
+            await conn.commit()
+            return cur.rowcount > 0
+
+async def reject_article_db(article_id: int, rejection_reason: str) -> bool:
+    """Отклоняет статью с сохранением причины"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            try:
+                # Обновляем статус статьи
+                await cur.execute(
+                    "UPDATE publics SET public_status = 'reject' WHERE id = %s",
+                    (article_id,))
+                
+                # Здесь можно добавить сохранение причины отклонения,
+                # например, в отдельную таблицу или в JSON поле
+                
+                await conn.commit()
+                return True
+            except Exception as e:
+                await conn.rollback()
+                logging.error(f"Error rejecting article: {str(e)}")
+                return False
+            
+async def search_articles(
+    query: str = '',
+    status: str = '',
+    date_from: str = '',
+    date_to: str = '',
+    sort: str = 'newest',  # Добавляем параметр сортировки
+    limit: int = 10,
+    offset: int = 0
+) -> list:
+    """Поиск статей с фильтрами"""
+    async with aiomysql.connect(
+        host=host,
+        port=port,
+        user=user,
+        password=dbpassword,
+        db=db
+    ) as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            sql = """
+                SELECT 
+                    p.id, 
+                    p.topic_name, 
+                    p.topic_name_en,
+                    p.created_at,
+                    p.public_status,
+                    u.id as user_id,
+                    u.user_name,
+                    u.user_surname
+                FROM publics p
+                JOIN users u ON p.public_creator = u.id
+                WHERE 1=1
+            """
+            params = []
+            
+            if query:
+                sql += " AND (p.topic_name LIKE %s OR u.user_name LIKE %s OR u.user_surname LIKE %s)"
+                params.extend([f"%{query}%", f"%{query}%", f"%{query}%"])
+            
+            if status:
+                sql += " AND p.public_status = %s"
+                params.append(status)
+                
+            if date_from:
+                sql += " AND DATE(p.created_at) >= %s"
+                params.append(date_from)
+                
+            if date_to:
+                sql += " AND DATE(p.created_at) <= %s"
+                params.append(date_to)
+            
+            # Добавляем сортировку
+            sql += " ORDER BY p.created_at " + ("DESC" if sort == 'newest' else "ASC")
+            
+            sql += " LIMIT %s OFFSET %s"
+            params.extend([limit, offset])
+            
+            await cur.execute(sql, params)
+            return await cur.fetchall()
+
+async def get_filtered_articles_count(
+    query: str = '',
+    status: str = '',
+    date_from: str = '',
+    date_to: str = ''
+) -> int:
+    """Получение количества статей с фильтрами"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            sql = """
+                SELECT COUNT(*)
+                FROM publics p
+                JOIN users u ON p.public_creator = u.id
+                WHERE 1=1
+            """
+            params = []
+            
+            if query:
+                sql += " AND (p.topic_name LIKE %s OR u.user_name LIKE %s OR u.user_surname LIKE %s)"
+                params.extend([f"%{query}%", f"%{query}%", f"%{query}%"])
+            
+            if status:
+                sql += " AND p.public_status = %s"
+                params.append(status)
+                
+            if date_from:
+                sql += " AND p.created_at >= %s"
+                params.append(f"{date_from} 00:00:00")
+                
+            if date_to:
+                sql += " AND p.created_at <= %s"
+                params.append(f"{date_to} 23:59:59")
+                
+            await cur.execute(sql, params)
+            result = await cur.fetchone()
+            return result[0] if result else 0
+        
+
+async def search_users(
+    query: str = '',
+    role: str = '',
+    status: str = '',
+    date_from: str = '',
+    date_to: str = '',
+    sort: str = 'newest',
+    limit: int = 10,
+    offset: int = 0
+) -> list:
+    """Поиск пользователей с фильтрами"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            sql = """
+                SELECT 
+                    id, 
+                    user_name, 
+                    user_surname, 
+                    user_email,
+                    user_role,
+                    account_status,
+                    created_at
+                FROM users
+                WHERE 1=1
+            """
+            params = []
+            
+            if query:
+                sql += " AND (user_name LIKE %s OR user_surname LIKE %s OR user_email LIKE %s)"
+                params.extend([f"%{query}%", f"%{query}%", f"%{query}%"])
+            
+            if role:
+                sql += " AND user_role = %s"
+                params.append(role)
+                
+            if status:
+                sql += " AND account_status = %s"
+                params.append(status)
+                
+            if date_from:
+                sql += " AND DATE(created_at) >= %s"
+                params.append(date_from)
+                
+            if date_to:
+                sql += " AND DATE(created_at) <= %s"
+                params.append(date_to)
+            
+            # Добавляем сортировку
+            sql += " ORDER BY created_at " + ("DESC" if sort == 'newest' else "ASC")
+            
+            sql += " LIMIT %s OFFSET %s"
+            params.extend([limit, offset])
+            
+            await cur.execute(sql, params)
+            return await cur.fetchall()
+
+async def get_filtered_users_count(
+    query: str = '',
+    role: str = '',
+    status: str = '',
+    date_from: str = '',
+    date_to: str = ''
+) -> int:
+    """Получение количества пользователей с фильтрами"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            sql = """
+                SELECT COUNT(*)
+                FROM users
+                WHERE 1=1
+            """
+            params = []
+            
+            if query:
+                sql += " AND (user_name LIKE %s OR user_surname LIKE %s OR user_email LIKE %s)"
+                params.extend([f"%{query}%", f"%{query}%", f"%{query}%"])
+            
+            if role:
+                sql += " AND user_role = %s"
+                params.append(role)
+                
+            if status:
+                sql += " AND account_status = %s"
+                params.append(status)
+                
+            if date_from:
+                sql += " AND DATE(created_at) >= %s"
+                params.append(date_from)
+                
+            if date_to:
+                sql += " AND DATE(created_at) <= %s"
+                params.append(date_to)
+                
+            await cur.execute(sql, params)
+            result = await cur.fetchone()
+            return result[0] if result else 0
+
+

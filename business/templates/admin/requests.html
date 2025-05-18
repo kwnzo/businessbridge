@@ -6,12 +6,17 @@
   
   <div class="request-tabs">
     <a href="{{ url_for('admin_bp.requests_management') }}" 
-       class="tab-btn {% if request.endpoint == 'admin_bp.requests_management' %}active{% endif %}">
+      class="tab-btn {% if request.endpoint == 'admin_bp.requests_management' %}active{% endif %}">
       Заявки на подтверждение
     </a>
     <a href="{{ url_for('admin_bp.expert_requests') }}" 
-       class="tab-btn {% if request.endpoint == 'admin_bp.expert_requests' %}active{% endif %}">
+      class="tab-btn {% if request.endpoint == 'admin_bp.expert_requests' %}active{% endif %}">
       Заявки на эксперта
+    </a>
+    <!-- Добавляем новую вкладку -->
+    <a href="{{ url_for('admin_bp.article_requests') }}" 
+      class="tab-btn {% if request.endpoint == 'admin_bp.article_requests' %}active{% endif %}">
+      Статьи на проверку
     </a>
   </div>
 

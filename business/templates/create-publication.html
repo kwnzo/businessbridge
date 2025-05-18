@@ -31,7 +31,7 @@
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       
       <div class="form-group">
-        <label class="form-label">Изображение <span class="required-field">*</span></label>
+        <label class="form-label">Изображение (в формате 2:1) <span class="required-field">*</span></label>
         <div class="file-input-wrapper">
           <div class="file-input-button" id="file-label">Выберите изображение</div>
           <input type="file" id="image" name="image" accept="image/*" required>
@@ -52,6 +52,17 @@
       <button type="submit" class="submit-btn">Опубликовать</button>
     </form>
   </div>
+
+<div class="custom-modal" id="resultModal">
+  <div class="modal-content">
+    <div class="modal-body">
+      <p id="modal-message"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-close-btn" id="modalCloseBtn">OK</button>
+    </div>
+  </div>
+</div>
 
   <script src="{{ url_for('static', filename='js/create-publication.js') }}"></script>
   </body>

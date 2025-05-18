@@ -52,8 +52,21 @@
   <main class="article-container">
     <!-- Заголовок статьи -->
     <div class="article-header">
+
+      {% if is_article_owner or is_admin %}
+        {% if article.public_status == 'waiting' %}
+          <div class="article-status-notice">
+            Статья на проверке
+          </div>
+        {% elif article.public_status == 'reject' %}
+          <div class="article-status-notice rejected">
+            Статья отклонена
+          </div>
+        {% endif %}
+      {% endif %}
+
       <h1 class="article-title">{{ article.topic_name }}</h1>
-      
+            
       <!-- Информация об авторе и дате -->
       <div class="article-meta">
         <a href="{{ url_for('user_profile', user_id=author.id) }}" class="author-info-link">

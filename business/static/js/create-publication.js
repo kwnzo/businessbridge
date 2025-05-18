@@ -1,3 +1,35 @@
+// Модальное окно для отображения сообщений
+function showModal(message, isSuccess = false) {
+  const modal = document.getElementById('resultModal');
+  const modalMessage = document.getElementById('modal-message');
+  
+  modalMessage.textContent = message;
+  
+  // Можно добавить класс для стилизации успешных/ошибочных сообщений
+  if (isSuccess) {
+    modalMessage.classList.add('success-message');
+    modalMessage.classList.remove('error-message');
+  } else {
+    modalMessage.classList.add('error-message');
+    modalMessage.classList.remove('success-message');
+  }
+  
+  modal.style.display = 'flex';
+}
+
+// Закрытие модального окна
+document.getElementById('modalCloseBtn').addEventListener('click', function() {
+  document.getElementById('resultModal').style.display = 'none';
+});
+
+// Закрытие при клике вне модального окна
+window.addEventListener('click', function(event) {
+  const modal = document.getElementById('resultModal');
+  if (event.target === modal) {
+    modal.style.display = 'none';
+  }
+});
+
 // Отображение имени выбранного файла
 document.getElementById('image').addEventListener('change', function(e) {
   const fileName = e.target.files[0]?.name || 'Файл не выбран';
@@ -14,17 +46,17 @@ document.getElementById('article-form').addEventListener('submit', async functio
   
   // Валидация полей
   if (!title) {
-    alert('Пожалуйста, введите заголовок статьи');
+    showModal('Пожалуйста, введите заголовок статьи');
     return;
   }
   
   if (!content) {
-    alert('Пожалуйста, напишите текст статьи');
+    showModal('Пожалуйста, напишите текст статьи');
     return;
   }
   
   if (!imageFile) {
-    alert('Пожалуйста, добавьте изображение');
+    showModal('Пожалуйста, добавьте изображение');
     return;
   }
   
@@ -32,24 +64,27 @@ document.getElementById('article-form').addEventListener('submit', async functio
   formData.append('title', title);
   formData.append('content', content);
   formData.append('image', imageFile);
-  formData.append('csrf_token', document.querySelector('input[name="csrf_token"]').value)
+  formData.append('csrf_token', document.querySelector('input[name="csrf_token"]').value);
   
   try {
     const response = await fetch('/profile/create-publication', {
       method: 'POST',
       body: formData
-  });
+    });
     
     const result = await response.json();
     
     if (result.success) {
-      alert('Статья успешно опубликована!');
-      window.location.href = result.redirect || '/profile';
+      showModal('Статья успешно опубликована!', true);
+      // Перенаправление после закрытия модального окна
+      document.getElementById('modalCloseBtn').addEventListener('click', function() {
+        window.location.href = '/profile'; // или result.redirect, если сервер его возвращает
+      }, { once: true }); // { once: true } гарантирует, что обработчик сработает только один раз
     } else {
-      alert('Ошибка: ' + (result.message || 'Ошибка при публикации статьи'));
+      showModal('Ошибка: ' + (result.message || 'Ошибка при публикации статьи'));
     }
   } catch (error) {
     console.error('Ошибка:', error);
-    alert('Произошла ошибка при отправке данных');
+    showModal('Произошла ошибка при отправке данных');
   }
 });

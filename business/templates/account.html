@@ -14,13 +14,13 @@
   <!-- ======= Header ======= -->
   <header class="header">
     <div class="header-inner">
-      <a class="logo" href="index">
+      <a class="logo" href="/index">
         <img src="{{ url_for('static', filename='img/logo.png')}}" alt="logo" width="65" height="65">
         Бизнес‑Мост
       </a>
       <nav class="header-nav">
-        <a href="index">Главная</a>
-        <a href="experts">Эксперты</a>
+        <a href="/index">Главная</a>
+        <a href="/experts">Эксперты</a>
         {% if current_user %}
           <div class="account-dropdown">
             <a href="#" class="account-button-if-login">
@@ -33,6 +33,10 @@
               </svg>
             </a>
             <div class="account-dropdown-content">
+              {% if not is_own_profile %}
+                <a href="/profile" class="account-dropdown-item">Мой профиль</a>
+                <hr class="account-dropdown-divider">
+              {% endif %}
               {% if current_user.user_role == 'admin' %}
                 <a href="/admin" class="account-dropdown-item">Админ-панель</a>
               {% endif %}
@@ -73,55 +77,71 @@
         </div>
       </div>
       <div class="profile-buttons">
-        <a href="/profile/edit-profile" class="edit-profile-button">Редактировать данные</a>
-        <a href="#" class="confirm-profile-button">
-          <img src="{{ url_for('static', filename='img/confirm-profile.png') }}" alt="icon" class="icon-confirm-profile" />
-          <div>Подтверждение аккаунта<br>
-            <span>
-              {% if user.account_status == 'verified' %}
-                Подтверждён
-              {% else %}
-                Не подтверждён
-              {% endif %}
-            </span>
-          </div>
-        </a>
-        {% if user.account_status == 'verified' and user.user_role != 'expert' %}
-          <a href="/expert-request" class="become-expert-button">
-            <img src="{{ url_for('static', filename='img/expert-icon.png') }}" alt="icon" class="icon-expert" />
-            <div>Стать экспертом</div>
+        {% if is_own_profile %}
+          <a href="/profile/edit-profile" class="edit-profile-button">Редактировать данные</a>
+          <a href="#" class="confirm-profile-button">
+            <img src="{{ url_for('static', filename='img/confirm-profile.png') }}" alt="icon" class="icon-confirm-profile" />
+            <div>Подтверждение аккаунта<br>
+              <span>
+                {% if user.account_status == 'verified' %}
+                  Подтверждён
+                {% else %}
+                  Не подтверждён
+                {% endif %}
+              </span>
+            </div>
           </a>
+          {% if user.account_status == 'verified' and user.user_role != 'expert' and not has_expert_request %}
+            <a href="/expert-request" class="become-expert-button">
+              <img src="{{ url_for('static', filename='img/expert-icon.png') }}" alt="icon" class="icon-expert" />
+              <div>Стать экспертом</div>
+            </a>
+          {% endif %}
+          {% if has_expert_request %}
+            <div class="expert-request-status">
+              <img src="{{ url_for('static', filename='img/expert-icon.png') }}" alt="icon" class="icon-expert" />
+              <div>Заявка на эксперта<br><span>на рассмотрении</span></div>
+            </div>
+          {% endif %}
         {% endif %}
       </div>
 
       <!-- ======= Публикации ======= -->
       <div class="profile-publications-wrapper">
-
         <div class="profile-publications">
-          <h1 class="publications-title">Ваши публикации</h1>
+          <h1 class="publications-title">
+            {% if is_own_profile %}Ваши публикации{% else %}Публикации{% endif %}
+          </h1>
           <div class="publications-divider"></div>
         </div>
 
         <div class="articles-grid">
-          <a href="/profile/create-publication" class="article-card add-article-card">
-            +
-          </a>
+          {% if is_own_profile %}
+            <a href="/profile/create-publication" class="article-card add-article-card">
+              +
+            </a>
+          {% endif %}
           
           {% for article in user_articles %}
-          <a href="{{ url_for('view_article', article_id=article.id, article_slug=article.topic_name_en) }}" class="article-link">
-            <div class="article">
-              {% if article.preview_image %}
-                <img src="{{ url_for('article_image', article_id=article.id) }}" class="article-card" alt="Превью статьи">
-              {% else %}
-                <div class="article-card"></div>
-              {% endif %}
-              <h3>{{ article.topic_name }}</h3>
-            </div>
-          </a>
+          <div class="article-wrapper">
+            <a href="{{ url_for('view_article', article_id=article.id, article_slug=article.topic_name_en|default('no-slug')) }}" class="article-link">
+              <div class="article">
+                {% if article.preview_image %}
+                  <img src="{{ url_for('article_image', article_id=article.id) }}" class="article-card" alt="Превью статьи">
+                {% else %}
+                  <div class="article-card"></div>
+                {% endif %}
+                <h3>{{ article.topic_name }}</h3>
+              </div>
+            </a>
+            {% if is_own_profile %}
+              <div class="article-status-badge {{ article.public_status }}">
+                {{ 'Опубликовано' if article.public_status == 'accept' else 'Отклонено' if article.public_status == 'reject' else 'На проверке' }}
+              </div>
+            {% endif %}
+          </div>
           {% endfor %}
         </div>
-
-
       </div>
     </div>
   </div>

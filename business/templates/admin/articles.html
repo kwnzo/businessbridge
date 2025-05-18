@@ -6,14 +6,34 @@
     <div class="admin-actions">
         <form method="get" action="{{ url_for('admin_bp.articles_management') }}" class="search-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
-            <input type="text" 
-                   name="q" 
-                   value="{{ search_query }}"
-                   placeholder="Поиск по названию или автору..." 
-                   class="admin-search">
-            <button type="submit">Найти</button>
-            {% if search_query %}
-                <a href="{{ url_for('admin_bp.articles_management') }}" class="clear-search">Сбросить</a>
+            
+            <!-- Фильтр по статусу -->
+            <select name="status" class="admin-filter">
+                <option value="">Все статусы</option>
+                <option value="accept" {% if request.args.get('status') == 'accept' %}selected{% endif %}>Опубликованные</option>
+                <option value="waiting" {% if request.args.get('status') == 'waiting' %}selected{% endif %}>На проверке</option>
+                <option value="reject" {% if request.args.get('status') == 'reject' %}selected{% endif %}>Отклоненные</option>
+            </select>
+            
+            <!-- Фильтр по дате -->
+            <input type="date" name="date_from" value="{{ request.args.get('date_from') }}" 
+                   class="admin-date-filter" placeholder="От">
+            <input type="date" name="date_to" value="{{ request.args.get('date_to') }}" 
+                   class="admin-date-filter" placeholder="До">
+                   
+            <!-- Сортировка -->
+            <select name="sort" class="admin-filter">
+                <option value="newest" {% if request.args.get('sort') == 'newest' %}selected{% endif %}>Сначала новые</option>
+                <option value="oldest" {% if request.args.get('sort') == 'oldest' %}selected{% endif %}>Сначала старые</option>
+            </select>
+            
+            <!-- Поиск -->
+            <input type="text" name="q" value="{{ search_query }}" 
+                   placeholder="Поиск..." class="admin-search">
+            
+            <button type="submit" class="btn-filter">Применить</button>
+            {% if request.args.get('status') or request.args.get('date_from') or request.args.get('date_to') or request.args.get('sort') or search_query %}
+                <a href="{{ url_for('admin_bp.articles_management') }}" class="btn-clear">Сбросить</a>
             {% endif %}
         </form>
     </div>
@@ -26,6 +46,7 @@
             <th>ID</th>
             <th>Название</th>
             <th>Автор</th>
+            <th>Статус</th>
             <th>Дата</th>
             <th>Действия</th>
         </tr>
@@ -40,7 +61,18 @@
                     {{ article.user_surname }} {{ article.user_name }}
                 </a>
             </td>
-            <td>{{ article.created_at.strftime('%d.%m.%Y') }}</td>
+            <td>
+                <span class="status-badge {{ article.public_status }}">
+                    {% if article.public_status == 'accept' %}
+                        Опубликована
+                    {% elif article.public_status == 'waiting' %}
+                        На проверке
+                    {% else %}
+                        Отклонена
+                    {% endif %}
+                </span>
+            </td>
+            <td>{{ article.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
             <td>
                 <a href="{{ url_for('view_article', article_id=article.id, article_slug=article.topic_name_en) }}" 
                    class="btn-view" target="_blank">Просмотр</a>
@@ -54,7 +86,10 @@
 {% if total_pages > 1 %}
 <div class="admin-pagination">
     {% for page_num in range(1, total_pages + 1) %}
-        <a href="{{ url_for('admin_bp.articles_management', page=page_num, q=search_query) }}"
+        <a href="{{ url_for('admin_bp.articles_management', page=page_num, 
+                          status=request.args.get('status'),
+                          sort=request.args.get('sort'),
+                          q=search_query) }}"
            class="{% if page_num == current_page %}active{% endif %}">
             {{ page_num }}
         </a>
