@@ -11,6 +11,7 @@ from flask_limiter import Limiter
 from flask_mysqldb import MySQL
 from flask_wtf.csrf import CSRFProtect, generate_csrf, validate_csrf   
 from wtforms import ValidationError
+from flask_limiter.util import get_remote_address
 from io import BytesIO  
 import hashlib
 import time
@@ -35,7 +36,8 @@ app.config.update(
 
 limiter = Limiter(
     app=app,
-    key_func=lambda: request.remote_addr,
+    key_func=get_remote_address,
+    storage_uri = "memory://",
     default_limits=["100/day", "100/minute"]
 )
 
@@ -54,9 +56,6 @@ app.secret_key = config['secret-key']  # Сначала установите к�
 csrf = CSRFProtect(app)  # Затем инициализируйте CSRF
 
 app.register_blueprint(admin_bp)
-
-
-
 
 
 @app.route('/')

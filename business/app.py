@@ -115,6 +115,7 @@ def account():
         # Получаем статьи пользователя
         user_articles = asyncio.run(get_user_articles(user_id))
         
+        
         if 'user_phone' in user and user['user_phone']:
             user['formatted_phone'] = format_phone(user['user_phone'])
         
