@@ -748,6 +748,14 @@ def login():
             'success': False,
             'message': 'Внутренняя ошибка сервера. Пожалуйста, попробуйте позже'
         }), 500
+    
+
+@app.route('/chats')
+@login_required
+def chat_page():
+    user = asyncio.run(get_user_by_id(session['user_id'])) if 'user_id' in session else None
+    return render_template('chats.html', current_user=user)
+
 
 
 async def main():
