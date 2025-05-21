@@ -406,6 +406,8 @@ def article_requests():
             date_from=filters['date_from'],
             date_to=filters['date_to']
         ))
+        if not total_articles:
+            logging.error('ERROR')
         
         total_pages = (total_articles + per_page - 1) // per_page if total_articles else 1
         

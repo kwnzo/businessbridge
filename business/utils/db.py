@@ -212,7 +212,7 @@ async def create_publication(
                         topic_name,
                         topic_text,
                         preview_image,
-                        category  # Добавлено новое поле
+                        category
                     ) VALUES (%s, %s, %s, %s, %s)
                 """, (user_id, title, content, image_data, category))
                 await conn.commit()

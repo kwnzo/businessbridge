@@ -4,10 +4,12 @@ from utils.db import (init_db,get_views, get_publics, record_view,
                       update_user_profile, update_user_avatar, 
                       delete_user_avatar, create_publication, get_user_articles, 
                       get_article_by_id, get_image_data, save_expert_request,
-                      add_like, remove_like, has_liked, get_likes_count, check_user_like)
+                      add_like, remove_like, has_liked, get_likes_count, check_user_like, 
+                      has_expert_request, get_random_quote, get_all_experts, 
+                      get_expert_articles, get_expert_info, EXPERTISE_AREAS, delete_article_db)
 from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
-from flask_wtf.csrf import CSRFProtect, generate_csrf, validate_csrf
+from flask_mysqldb import MySQL
+from flask_wtf.csrf import CSRFProtect, generate_csrf, validate_csrf   
 from wtforms import ValidationError
 from io import BytesIO  
 import hashlib
@@ -33,8 +35,7 @@ app.config.update(
 
 limiter = Limiter(
     app=app,
-    key_func = get_remote_address,
-    storage_uri = "memory://",
+    key_func=lambda: request.remote_addr,
     default_limits=["100/day", "100/minute"]
 )
 
@@ -58,19 +59,31 @@ app.register_blueprint(admin_bp)
 @app.route('/')
 def home():
     user = None
-    data = asyncio.run(get_publics())
+    data = asyncio.run(get_publics(12))
+    quote = asyncio.run(get_random_quote())  # Получаем случайную цитату
+    
     if 'user_id' in session:
         user = asyncio.run(get_user_by_id(session['user_id']))
-    return render_template('index.html', current_user=user, data = data)
+    
+    return render_template('index.html', 
+                         current_user=user, 
+                         data=data,
+                         random_quote=quote)  # Передаем цитату в шаблон
 
 # ======================================================================================== ГЛАВНАЯ 
 @app.route('/index')
 def index(name=None):
     user = None
-    data = asyncio.run(get_publics())
+    data = asyncio.run(get_publics(12))
+    quote = asyncio.run(get_random_quote())  # Получаем случайную цитату
+    
     if 'user_id' in session:
         user = asyncio.run(get_user_by_id(session['user_id']))
-    return render_template('index.html', current_user=user, data=data)
+    
+    return render_template('index.html', 
+                         current_user=user, 
+                         data=data,
+                         random_quote=quote)  # Передаем цитату в шаблон
 
 @app.route('/article_image/<int:article_id>')
 def article_images(article_id):
@@ -106,24 +119,27 @@ def confirm():
 @app.route('/profile')
 @login_required
 def account():
-    user_id = session['user_id']  
     try:
+        user_id = session['user_id']
         user = asyncio.run(get_user_by_id(user_id))
-        if not user:
-            raise ValueError("User not found")
         
-        # Получаем статьи пользователя
-        user_articles = asyncio.run(get_user_articles(user_id))
-        
-        
-        if 'user_phone' in user and user['user_phone']:
-            user['formatted_phone'] = format_phone(user['user_phone'])
+        expert_info = None
+        if user['user_role'] == 'expert':
+            expert_info = asyncio.run(get_expert_info(user_id))
+
+        user_articles = asyncio.run(get_user_articles(user_id, is_owner=True))
+        has_request = asyncio.run(has_expert_request(user_id))
         
         return render_template('account.html', 
                             user=user,
                             current_user=user,
-                            user_articles=user_articles)
+                            expert_info=expert_info,
+                            EXPERTISE_AREAS=EXPERTISE_AREAS,
+                            user_articles=user_articles,
+                            has_expert_request=has_request,
+                            is_own_profile=True)
     except Exception as e:
+        logging.error(f"Ошибка профиля: {str(e)}")
         session.clear()
         return redirect(url_for('login'))
 
@@ -256,40 +272,44 @@ def edit_profile():
 # ======================================================================================== СОЗДАНИЕ СТАТЬИ 
 @app.route('/profile/create-publication', methods=['GET', 'POST'])
 @login_required
-def create_publication_route():  # Изменили имя, чтобы избежать конфликта
+def create_publication_route():
     if request.method == 'GET':
         csrf_token = generate_csrf()
         return render_template('create-publication.html', csrf_token=csrf_token)
     
     if request.method == 'POST':
         try:
-            # Проверка CSRF токена
-            csrf_token = request.form.get('csrf_token') or request.headers.get('X-CSRFToken')
+            print("Полученные данные формы:", request.form)  # Отладочное сообщение
+            print("Полученные файлы:", request.files)       # Отладочное сообщение
+            
             validate_csrf(request.form.get('csrf_token'))
             
-            # Получение данных из формы
             title = request.form.get('title')
             content = request.form.get('content')
+            category = request.form.get('category')
             image = request.files.get('image')
-            print(title, content,image)
-            # Валидация данных
-            if not title or not content:
+            
+            print(f"Поля: title={title}, content={content}, category={category}")  # Отладочное сообщение
+            
+            if not title or not content or not category:
                 return jsonify({
                     "success": False,
-                    "message": "Заголовок и текст статьи обязательны"
+                    "message": "Все обязательные поля должны быть заполнены",
+                    "missing_fields": {
+                        "title": not bool(title),
+                        "content": not bool(content),
+                        "category": not bool(category)
+                    }
                 }), 400
                 
-            # Обработка изображения
             image_data = None
             if image and image.filename:
-                # Проверка размера изображения
-                if image.content_length > 5 * 1024 * 1024:  # 5MB limit
+                if image.content_length > 5 * 1024 * 1024:
                     return jsonify({
                         "success": False,
                         "message": "Размер изображения не должен превышать 5MB"
                     }), 400
                 
-                # Проверка типа изображения
                 allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
                 if '.' in image.filename and image.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
                     return jsonify({
@@ -299,13 +319,13 @@ def create_publication_route():  # Изменили имя, чтобы избе�
                 
                 image_data = image.read()
             
-            # Сохранение в базу данных
             publication_id = asyncio.run(
                 create_publication(
                     user_id=session['user_id'],
                     title=title,
                     content=content,
-                    image_data=image_data
+                    image_data=image_data,
+                    category=category  # Передаем категорию
                 )
             )
             
@@ -326,19 +346,27 @@ def create_publication_route():  # Изменили имя, чтобы избе�
             logging.error(f"Ошибка при создании статьи: {str(e)}")
             return jsonify({
                 "success": False,
-                "message": "Произошла ошибка при с оздании статьи"
+                "message": "Произошла ошибка при создании статьи"
             }), 500
 
 
 @app.route('/experts')
 def experts():
     user = None
-    if request.method == "GET":
-        print(session['user_id'] if session['user_id'] != None else None, '\n',session)
-        if 'user_id' in session:
-            user = asyncio.run(get_user_by_id(session['user_id']))
-    return render_template('experts.html', current_user=user)
-
+    if 'user_id' in session:
+        user = asyncio.run(get_user_by_id(session['user_id']))
+    
+    experts_list = asyncio.run(get_all_experts())
+    
+    # Получаем статьи для каждого эксперта
+    for expert in experts_list:
+        expert['articles'] = asyncio.run(get_expert_articles(expert['id']))
+    
+    return render_template(
+        'experts.html',
+        current_user=user,
+        experts=experts_list
+    )
 
 # ======================================================================================== ПРОСМОТР СТАТЬИ
 @app.route('/article-image/<int:article_id>')
@@ -349,49 +377,65 @@ def article_image(article_id):
     return send_file('static/img/article-placeholder.png')
 
 @app.route('/article/<int:article_id>/<article_slug>')
-def view_article(article_id, article_slug):
-    if request.method == 'GET':
-        # Record the view
+@app.route('/article/<int:article_id>')
+def view_article(article_id, article_slug=None):
+    try:
+        article = asyncio.run(get_article_by_id(article_id))
+        if not article:
+            return render_template('404.html'), 404
+        
+        # Получаем текущего пользователя
+        current_user = None
+        if 'user_id' in session:
+            current_user = asyncio.run(get_user_by_id(session['user_id']))
+        
+        # Проверка прав доступа
+        is_owner = current_user and current_user['id'] == article['public_creator']
+        is_admin = current_user and current_user['user_role'] == 'admin'
+        
+        if article['public_status'] == 'reject' and not (is_owner or is_admin):
+            return render_template('404.html'), 404
+        
+        if article['public_status'] == 'waiting' and not (is_owner or is_admin):
+            return render_template('404.html'), 404
+        
+        # Записываем просмотр (если статья доступна)
         asyncio.run(record_view(article_id, session.get('user_id')))
         
-        # Get the view count (now an integer)
+        # Проверка slug и редирект при необходимости
+        if article_slug and article_slug != article.get('topic_name_en', ''):
+            return redirect(url_for('view_article', 
+                                 article_id=article_id,
+                                 article_slug=article['topic_name_en']))
+        
+        # Получаем данные автора
+        author = asyncio.run(get_user_by_id(article['public_creator']))
+        
+        # Получаем статистику
         article_views = asyncio.run(get_views(article_id))
-        try:
-            article = asyncio.run(get_article_by_id(article_id))
-            if not article:
-                return render_template('404.html'), 404
-            
-            # Validate the slug
-            if article_slug != article.get('topic_name_en', ''):
-                return redirect(url_for('view_article', 
-                                      article_id=article_id,
-                                      article_slug=article['topic_name_en']))
-            
-            # Fetch author details
-            author = asyncio.run(get_user_by_id(article['public_creator']))
-            
-            user_has_liked = False
-            if 'user_id' in session:
-                user_has_liked = asyncio.run(check_user_like(session['user_id'], article_id))
-            
-            # Get views and likes count
-            article_views = asyncio.run(get_views(article_id))
-            likes_count = asyncio.run(get_likes_count(article_id))
-            return render_template(
-                'reading-publication.html',
-                article=article,
-                author=author,
-                current_user=asyncio.run(get_user_by_id(session['user_id'])) if 'user_id' in session else None,
-                article_views=article_views,
-                user_has_liked=user_has_liked,
-                likes_count=likes_count
-            )
-        except Exception as e:
-            logging.error(f"Error viewing article: {str(e)}", exc_info=True)
-            return render_template('404.html'), 404
+        likes_count = asyncio.run(get_likes_count(article_id))
+        user_has_liked = False
+        
+        if 'user_id' in session:
+            user_has_liked = asyncio.run(check_user_like(session['user_id'], article_id))
+        
+        return render_template(
+            'reading-publication.html',
+            article=article,
+            author=author,
+            current_user=current_user,
+            article_views=article_views,
+            user_has_liked=user_has_liked,
+            likes_count=likes_count,
+            is_article_owner=is_owner,
+            is_admin=is_admin
+        )
+    except Exception as e:
+        logging.error(f"Ошибка просмотра статьи: {str(e)}", exc_info=True)
+        return render_template('404.html'), 404    
 
 @app.route('/api/like', methods=['POST'])
-@csrf.exempt  # Отключаем CSRF для этого API endpoint
+@csrf.exempt
 @login_required
 def handle_like():
     try:
@@ -405,31 +449,59 @@ def handle_like():
         if not public_id:
             return jsonify({'success': False, 'message': 'Не указан ID статьи'}), 400
         
-        # Проверяем, есть ли уже лайк от этого пользователя
+        # Проверяем лайк
         has_like = asyncio.run(check_user_like(user_id, public_id))
         
         if has_like:
-            # Удаляем лайк
             success = asyncio.run(remove_like(user_id, public_id))
             action = 'removed'
         else:
-            # Добавляем лайк
             success = asyncio.run(add_like(user_id, public_id))
             action = 'added'
         
         if success:
-            # Получаем обновленное количество лайков
             likes_count = asyncio.run(get_likes_count(public_id))
             return jsonify({
                 'success': True,
                 'action': action,
                 'likes_count': likes_count
             })
-        else:
-            return jsonify({'success': False, 'message': 'Ошибка при обработке лайка'}), 400
+        return jsonify({'success': False, 'message': 'Ошибка обработки лайка'}), 400
             
     except Exception as e:
-        logging.error(f"Ошибка в обработчике лайков: {str(e)}", exc_info=True)
+        logging.error(f"Ошибка обработки лайка: {str(e)}", exc_info=True)
+        return jsonify({'success': False, 'message': 'Внутренняя ошибка сервера'}), 500
+    
+
+
+@app.route('/articles/<int:article_id>/delete', methods=['POST'])
+@login_required
+def delete_article(article_id):
+    try:
+        # Проверка CSRF токена
+        csrf_token = request.headers.get('X-CSRFToken') or request.form.get('csrf_token')
+        if not csrf_token:
+            return jsonify({'success': False, 'message': 'Отсутствует CSRF токен'}), 400
+            
+        validate_csrf(csrf_token)
+        
+        # Получаем статью для проверки владельца
+        article = asyncio.run(get_article_by_id(article_id))
+        if not article:
+            return jsonify({'success': False, 'message': 'Статья не найдена'}), 404
+            
+        # Проверяем, что пользователь - владелец или администратор
+        current_user = asyncio.run(get_user_by_id(session['user_id']))
+        if current_user['id'] != article['public_creator'] and current_user['user_role'] != 'admin':
+            return jsonify({'success': False, 'message': 'Недостаточно прав'}), 403
+        
+        # Удаляем статью
+        success = asyncio.run(delete_article_db(article_id))
+        if success:
+            return jsonify({'success': True, 'message': 'Статья успешно удалена'})
+        return jsonify({'success': False, 'message': 'Ошибка при удалении статьи'}), 500
+    except Exception as e:
+        logging.error(f"Error deleting article: {str(e)}")
         return jsonify({'success': False, 'message': 'Внутренняя ошибка сервера'}), 500
 
 
@@ -441,24 +513,26 @@ def user_profile(user_id):
         if not user:
             return render_template('404.html'), 404
         
-        # Получаем статьи пользователя
-        user_articles = asyncio.run(get_user_articles(user_id))
+        expert_info = None
+        if user['user_role'] == 'expert':
+            expert_info = asyncio.run(get_expert_info(user_id))
         
-        if 'user_phone' in user and user['user_phone']:
-            user['formatted_phone'] = format_phone(user['user_phone'])
-        
+        is_own_profile = 'user_id' in session and session['user_id'] == user_id
+        user_articles = asyncio.run(get_user_articles(user_id, is_owner=is_own_profile))
+
         return render_template(
-            'account.html',  # Используем тот же шаблон, что и для личного кабинета
+            'account.html',
             user=user,
+            expert_info=expert_info,
+            EXPERTISE_AREAS=EXPERTISE_AREAS,
             current_user=asyncio.run(get_user_by_id(session['user_id'])) if 'user_id' in session else None,
             user_articles=user_articles,
-            is_own_profile=(session.get('user_id') == user_id)  # Добавляем флаг, свой ли это профиль
+            is_own_profile=is_own_profile
         )
     except Exception as e:
         logging.error(f"Error viewing user profile: {str(e)}")
         return render_template('404.html'), 404
     
-
 # ======================================================================================== ЭКСПЕРТЫ
 @app.route('/expert-request', methods=['GET', 'POST'])
 @login_required
@@ -524,15 +598,9 @@ def error(error):
 # ======================================================================================== РЕГИСТРАЦИЯ
 @app.route('/reg', methods=('GET','POST'))
 def registration():
-    if request.method == "GET":
-        csrf_token = generate_csrf()
-        print(csrf_token)
-        return render_template('registration.html', csrf_token = csrf_token)
-
     if request.method == "POST":
         try:
             # Получение данных
-            validate_csrf(request.form.get('csrf_token'))
             username = request.form.get("firstNames")
             usersurname = request.form.get('lastNames')
             userdaddy = request.form.get('middleNames')
@@ -540,7 +608,7 @@ def registration():
             email = request.form.get('emails')
             password = request.form.get('passwordInputs')
 
-            hashed_password = generate_password_hash(password) 
+            hashed_password = generate_password_hash(password)
             # Сохранение в БД
             loop.run_until_complete(
                 insert_into_users(
@@ -632,7 +700,7 @@ def login():
             }), 404
             
         # Проверка пароля
-        if not check_password_hash(user['user_password'].decode('utf-8'), password):
+        if not check_password_hash(user['user_password'], password):
             logger.warning(f"Неверный пароль для пользователя: {user['id']}")
             return jsonify({
                 'success': False,
@@ -692,7 +760,7 @@ async def main():
 
     finally:
         if start == True:
-            app.run(host = '0.0.0.0', port = 9000)
+            app.run(debug=True)
         else:
             return logging.error(f"start isn't True")
 
