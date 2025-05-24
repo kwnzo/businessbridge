@@ -1,27 +1,18 @@
-from flask import Blueprint, render_template, redirect, url_for, session, request, jsonify
+from flask import Blueprint, render_template, redirect, url_for, session, request, jsonify, send_file, abort
 from functools import wraps
 from flask_wtf.csrf import generate_csrf, validate_csrf
 from wtforms import ValidationError
+from io import BytesIO
 from utils.db import (
-    get_user_by_id,
-    get_users_count,
-    get_articles_count,
-    get_experts_count,
-    get_all_users,
-    update_user_role,
-    delete_user,
-    search_articles,
-    delete_article,
-    get_all_articles,
-    reject_expert_request_db,
-    approve_expert_request_db,
-    get_expert_requests,
-    get_expert_requests_count,
-    get_expert_request_details,
-    get_publics_for_approve, get_articles_for_review, 
-    get_articles_for_review_count, update_article_status, 
-    reject_article_db, get_filtered_articles_count, 
-    get_filtered_users_count, search_users, get_filtered_articles
+    get_user_by_id, get_users_count,
+    get_articles_count, get_experts_count, get_all_users,
+    update_user_role, delete_user, search_articles, delete_article,
+    get_all_articles, reject_expert_request_db, approve_expert_request_db, get_expert_requests,
+    get_expert_requests_count, get_expert_request_details, get_publics_for_approve, 
+    get_articles_for_review,get_articles_for_review_count, update_article_status, 
+    reject_article_db, get_filtered_articles_count, get_filtered_users_count, 
+    search_users, get_filtered_articles, get_passport_photo, get_passport_requests,
+    get_passport_requests_count, approve_passport_request_db, reject_passport_request_db
 )
 import asyncio
 import logging
@@ -475,4 +466,119 @@ def reject_article(article_id):
         return jsonify({'success': False, 'message': 'Ошибка безопасности'}), 403
     except Exception as e:
         logger.error(f"Error rejecting article: {str(e)}")
+        return jsonify({'success': False, 'message': 'Внутренняя ошибка сервера'}), 500
+    
+@admin_bp.route('/requests/passport')
+@admin_required
+def passport_requests():
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = 10
+        offset = (page - 1) * per_page
+        
+        # Получаем параметры фильтрации
+        filters = {
+            'q': request.args.get('q', '').strip(),
+            'status': request.args.get('status', ''),
+            'date_from': request.args.get('date_from', ''),
+            'date_to': request.args.get('date_to', ''),
+            'sort': request.args.get('sort', 'newest')
+        }
+        
+        # Получаем заявки с учетом фильтров
+        requests = asyncio.run(get_passport_requests(
+            search=filters['q'],
+            status=filters['status'],
+            date_from=filters['date_from'],
+            date_to=filters['date_to'],
+            sort=filters['sort'],
+            limit=per_page,
+            offset=offset
+        ))
+        
+        # Получаем общее количество с учетом фильтров
+        total_requests = asyncio.run(get_passport_requests_count(
+            search=filters['q'],
+            status=filters['status'],
+            date_from=filters['date_from'],
+            date_to=filters['date_to']
+        ))
+        
+        total_pages = (total_requests + per_page - 1) // per_page if total_requests else 1
+        
+        return render_template('admin/passport_requests.html',
+                            requests=requests,
+                            current_page=page,
+                            total_pages=total_pages,
+                            csrf_token_value=generate_csrf(),
+                            filters=filters)
+    except Exception as e:
+        logger.error(f"Passport requests error: {str(e)}", exc_info=True)
+        return render_template('admin/error.html', message="Ошибка загрузки заявок"), 500
+
+@admin_bp.route('/passport-requests/<int:request_id>/photo')
+@admin_required
+def passport_request_photo(request_id):
+    try:
+        photo_data = asyncio.run(get_passport_photo(request_id))
+        if not photo_data:
+            abort(404)
+            
+        return send_file(
+            BytesIO(photo_data),
+            mimetype='image/jpeg',
+            as_attachment=False
+        )
+    except Exception as e:
+        logger.error(f"Error getting passport photo: {str(e)}")
+        abort(500)
+
+@admin_bp.route('/passport-requests/<int:request_id>/approve', methods=['POST'])
+@admin_required
+def approve_passport_request(request_id):
+    try:
+        csrf_token = request.headers.get('X-CSRFToken') or request.form.get('csrf_token')
+        if not csrf_token:
+            logger.warning("CSRF token is missing for approve passport request")
+            return jsonify({'success': False, 'message': 'CSRF token is missing'}), 400
+            
+        validate_csrf(csrf_token)
+        
+        # Одобряем заявку и обновляем статус аккаунта пользователя
+        success = asyncio.run(approve_passport_request_db(request_id))
+        if success:
+            return jsonify({'success': True})
+        return jsonify({'success': False, 'message': 'Ошибка одобрения заявки'}), 400
+    except ValidationError as e:
+        logger.warning(f"CSRF validation failed: {str(e)}")
+        return jsonify({'success': False, 'message': 'Ошибка безопасности'}), 403
+    except Exception as e:
+        logger.error(f"Error approving passport request: {str(e)}")
+        return jsonify({'success': False, 'message': 'Внутренняя ошибка сервера'}), 500
+
+@admin_bp.route('/passport-requests/<int:request_id>/reject', methods=['POST'])
+@admin_required
+def reject_passport_request(request_id):
+    try:
+        csrf_token = request.headers.get('X-CSRFToken') or request.form.get('csrf_token')
+        if not csrf_token:
+            logger.warning("CSRF token is missing for reject passport request")
+            return jsonify({'success': False, 'message': 'CSRF token is missing'}), 400
+            
+        validate_csrf(csrf_token)
+        
+        rejection_reason = request.json.get('reason', '')
+        if not rejection_reason:
+            return jsonify({'success': False, 'message': 'Укажите причину отказа'}), 400
+        
+        # Отклоняем заявку
+        success = asyncio.run(reject_passport_request_db(request_id, rejection_reason))
+        if success:
+            return jsonify({'success': True})
+        return jsonify({'success': False, 'message': 'Ошибка отклонения заявки'}), 400
+    except ValidationError as e:
+        logger.warning(f"CSRF validation failed: {str(e)}")
+        return jsonify({'success': False, 'message': 'Ошибка безопасности'}), 403
+    except Exception as e:
+        logger.error(f"Error rejecting passport request: {str(e)}")
         return jsonify({'success': False, 'message': 'Внутренняя ошибка сервера'}), 500

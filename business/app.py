@@ -6,7 +6,9 @@ from utils.db import (init_db,get_views, get_publics, record_view,
                       get_article_by_id, get_image_data, save_expert_request,
                       add_like, remove_like, has_liked, get_likes_count, check_user_like, 
                       has_expert_request, get_random_quote, get_all_experts, 
-                      get_expert_articles, get_expert_info, EXPERTISE_AREAS, delete_article_db)
+                      get_expert_articles, get_expert_info, EXPERTISE_AREAS, delete_article_db,
+                      get_passport_request, has_pending_passport_request, create_passport_request,
+                      get_user_notifications, mark_notifications_as_read, get_unread_notifications_count)
 from flask_limiter import Limiter
 from flask_mysqldb import MySQL
 from flask_wtf.csrf import CSRFProtect, generate_csrf, validate_csrf   
@@ -61,14 +63,24 @@ def home():
     user = None
     data = asyncio.run(get_publics(12))
     quote = asyncio.run(get_random_quote())  # Получаем случайную цитату
+    has_unread = False
+    unread_count = 0
     
     if 'user_id' in session:
         user = asyncio.run(get_user_by_id(session['user_id']))
+        has_unread = asyncio.run(get_unread_notifications_count(session['user_id'])) > 0
+        unread_count = asyncio.run(get_unread_notifications_count(session['user_id']))
     
-    return render_template('index.html', 
+        return render_template('index.html', 
                          current_user=user, 
                          data=data,
-                         random_quote=quote)  # Передаем цитату в шаблон
+                         random_quote=quote,
+                         has_unread_notifications=has_unread,
+                         unread_count=unread_count)  # Передаем цитату в шаблон
+    else:
+        return render_template('index.html',
+                         data=data,
+                         random_quote=quote)
 
 # ======================================================================================== ГЛАВНАЯ 
 @app.route('/index')
@@ -76,14 +88,20 @@ def index(name=None):
     user = None
     data = asyncio.run(get_publics(12))
     quote = asyncio.run(get_random_quote())  # Получаем случайную цитату
+    has_unread = False
+    unread_count = 0
     
     if 'user_id' in session:
         user = asyncio.run(get_user_by_id(session['user_id']))
+        has_unread = asyncio.run(get_unread_notifications_count(session['user_id'])) > 0
+        unread_count = asyncio.run(get_unread_notifications_count(session['user_id']))
     
     return render_template('index.html', 
                          current_user=user, 
                          data=data,
-                         random_quote=quote)  # Передаем цитату в шаблон
+                         random_quote=quote,
+                         has_unread_notifications=has_unread,
+                         unread_count=unread_count)  # Передаем цитату в шаблон
 
 @app.route('/article_image/<int:article_id>')
 def article_images(article_id):
@@ -122,6 +140,8 @@ def account():
     try:
         user_id = session['user_id']
         user = asyncio.run(get_user_by_id(user_id))
+        has_unread = asyncio.run(get_unread_notifications_count(user_id)) > 0
+        unread_count = asyncio.run(get_unread_notifications_count(user_id))
         
         expert_info = None
         if user['user_role'] == 'expert':
@@ -137,11 +157,14 @@ def account():
                             EXPERTISE_AREAS=EXPERTISE_AREAS,
                             user_articles=user_articles,
                             has_expert_request=has_request,
-                            is_own_profile=True)
+                            is_own_profile=True,
+                            has_unread_notifications=has_unread,
+                            unread_count=unread_count)
     except Exception as e:
         logging.error(f"Ошибка профиля: {str(e)}")
         session.clear()
         return redirect(url_for('login'))
+
 
 def format_phone(phone):
     if not phone:
@@ -166,6 +189,9 @@ def edit_profile():
         try:
             user_id = session['user_id']
             user = asyncio.run(get_user_by_id(user_id))
+            has_unread = asyncio.run(get_unread_notifications_count(user_id)) > 0
+            unread_count = asyncio.run(get_unread_notifications_count(user_id))
+            
             if not user:
                 raise ValueError("User not found")
             
@@ -179,7 +205,9 @@ def edit_profile():
             return render_template('edit-profile.html', 
                                 user=user,
                                 current_user=user,  # Добавляем current_user
-                                csrf_token=csrf_token)
+                                csrf_token=csrf_token,
+                                has_unread_notifications=has_unread,
+                                unread_count=unread_count)
                                 
         except Exception as e:
             logging.error(f"Error loading edit profile: {str(e)}", exc_info=True)
@@ -273,9 +301,31 @@ def edit_profile():
 @app.route('/profile/create-publication', methods=['GET', 'POST'])
 @login_required
 def create_publication_route():
+    # Проверяем статус аккаунта
+    user = asyncio.run(get_user_by_id(session['user_id']))
+    has_unread = asyncio.run(get_unread_notifications_count(session['user_id'])) > 0
+    unread_count = asyncio.run(get_unread_notifications_count(session['user_id']))
+
+    if user['account_status'] != 'verified':
+        if request.method == 'POST':
+            return jsonify({
+                "success": False,
+                "message": "Для создания статей необходимо подтвердить аккаунт",
+                "show_verification_modal": True,
+                "redirect": url_for('passport_verification')
+            }), 403
+        else:
+            # Для GET запроса перенаправляем с параметром для показа модального окна
+            return redirect(url_for('account', showVerificationModal='true'))
+
+    # Остальной код обработчика
     if request.method == 'GET':
         csrf_token = generate_csrf()
-        return render_template('create-publication.html', csrf_token=csrf_token)
+        return render_template('create-publication.html', 
+                            csrf_token=csrf_token,
+                            current_user=user,
+                            has_unread_notifications=has_unread,
+                            unread_count=unread_count)
     
     if request.method == 'POST':
         try:
@@ -349,12 +399,16 @@ def create_publication_route():
                 "message": "Произошла ошибка при создании статьи"
             }), 500
 
-
 @app.route('/experts')
 def experts():
     user = None
+    has_unread = False
+    unread_count = 0
+    
     if 'user_id' in session:
         user = asyncio.run(get_user_by_id(session['user_id']))
+        has_unread = asyncio.run(get_unread_notifications_count(session['user_id'])) > 0
+        unread_count = asyncio.run(get_unread_notifications_count(session['user_id']))
     
     experts_list = asyncio.run(get_all_experts())
     
@@ -365,7 +419,9 @@ def experts():
     return render_template(
         'experts.html',
         current_user=user,
-        experts=experts_list
+        experts=experts_list,
+        has_unread_notifications=has_unread,
+        unread_count=unread_count
     )
 
 # ======================================================================================== ПРОСМОТР СТАТЬИ
@@ -386,8 +442,13 @@ def view_article(article_id, article_slug=None):
         
         # Получаем текущего пользователя
         current_user = None
+        has_unread = False
+        unread_count = 0
+        
         if 'user_id' in session:
             current_user = asyncio.run(get_user_by_id(session['user_id']))
+            has_unread = asyncio.run(get_unread_notifications_count(session['user_id'])) > 0
+            unread_count = asyncio.run(get_unread_notifications_count(session['user_id']))
         
         # Проверка прав доступа
         is_owner = current_user and current_user['id'] == article['public_creator']
@@ -428,11 +489,13 @@ def view_article(article_id, article_slug=None):
             user_has_liked=user_has_liked,
             likes_count=likes_count,
             is_article_owner=is_owner,
-            is_admin=is_admin
+            is_admin=is_admin,
+            has_unread_notifications=has_unread,
+            unread_count=unread_count
         )
     except Exception as e:
         logging.error(f"Ошибка просмотра статьи: {str(e)}", exc_info=True)
-        return render_template('404.html'), 404    
+        return render_template('404.html'), 404
 
 @app.route('/api/like', methods=['POST'])
 @csrf.exempt
@@ -513,6 +576,15 @@ def user_profile(user_id):
         if not user:
             return render_template('404.html'), 404
         
+        current_user = None
+        has_unread = False
+        unread_count = 0
+        
+        if 'user_id' in session:
+            current_user = asyncio.run(get_user_by_id(session['user_id']))
+            has_unread = asyncio.run(get_unread_notifications_count(session['user_id'])) > 0
+            unread_count = asyncio.run(get_unread_notifications_count(session['user_id']))
+        
         expert_info = None
         if user['user_role'] == 'expert':
             expert_info = asyncio.run(get_expert_info(user_id))
@@ -525,13 +597,16 @@ def user_profile(user_id):
             user=user,
             expert_info=expert_info,
             EXPERTISE_AREAS=EXPERTISE_AREAS,
-            current_user=asyncio.run(get_user_by_id(session['user_id'])) if 'user_id' in session else None,
+            current_user=current_user,
             user_articles=user_articles,
-            is_own_profile=is_own_profile
+            is_own_profile=is_own_profile,
+            has_unread_notifications=has_unread,
+            unread_count=unread_count
         )
     except Exception as e:
         logging.error(f"Error viewing user profile: {str(e)}")
         return render_template('404.html'), 404
+
     
 # ======================================================================================== ЭКСПЕРТЫ
 @app.route('/expert-request', methods=['GET', 'POST'])
@@ -753,10 +828,194 @@ def login():
 @app.route('/chats')
 @login_required
 def chat_page():
-    user = asyncio.run(get_user_by_id(session['user_id'])) if 'user_id' in session else None
-    return render_template('chats.html', current_user=user)
+    user = asyncio.run(get_user_by_id(session['user_id']))
+    has_unread = asyncio.run(get_unread_notifications_count(session['user_id'])) > 0
+    unread_count = asyncio.run(get_unread_notifications_count(session['user_id']))
+    
+    return render_template('chats.html', 
+                         current_user=user,
+                         has_unread_notifications=has_unread,
+                         unread_count=unread_count)
 
 
+
+
+@app.route('/profile/passport-verification', methods=['GET', 'POST'])
+@login_required
+def passport_verification():
+    user_id = session['user_id']
+    current_user = asyncio.run(get_user_by_id(user_id))
+    has_unread = asyncio.run(get_unread_notifications_count(user_id)) > 0
+    unread_count = asyncio.run(get_unread_notifications_count(user_id))
+
+    
+    # Если аккаунт уже подтвержден, перенаправляем в профиль
+    if current_user['account_status'] == 'verified':
+        return redirect(url_for('account'))
+    
+    if request.method == 'GET':
+        try:
+            # Проверяем, есть ли уже заявка
+            existing_request = asyncio.run(get_passport_request(user_id))
+        
+            if existing_request and existing_request['status'] == 'pending':
+                return render_template('passport-verification.html', 
+                                    current_user=current_user,
+                                    pending_request=True,
+                                    has_unread_notifications=has_unread,
+                                    unread_count=unread_count)
+
+            
+            csrf_token = generate_csrf()
+            return render_template('passport-verification.html', 
+                                    current_user=current_user,
+                                    csrf_token=csrf_token,
+                                    has_unread_notifications=has_unread,
+                                    unread_count=unread_count)
+            
+        except Exception as e:
+                logging.error(f"Error loading passport verification page: {str(e)}")
+                return redirect(url_for('account'))
+
+    # Обработка POST запроса
+    try:
+        validate_csrf(request.form.get('csrf_token'))
+        
+        # Проверяем, нет ли уже ожидающей заявки
+        if asyncio.run(has_pending_passport_request(user_id)):
+            return jsonify({
+                "success": False,
+                "message": "У вас уже есть ожидающая заявка на верификацию"
+            }), 400
+        
+        # Получаем данные формы
+        issued_by = request.form.get('issued_by')
+        issue_date = request.form.get('issue_date')
+        division_code = request.form.get('division_code')
+        series = request.form.get('series')
+        number = request.form.get('number')
+        gender = request.form.get('gender')
+        birth_date = request.form.get('birth_date')
+        birth_place = request.form.get('birth_place')
+        passport_photo = request.files.get('passport_photo')
+        
+        # Валидация данных
+        if not all([issued_by, issue_date, division_code, series, number, 
+                   gender, birth_date, birth_place, passport_photo]):
+            return jsonify({
+                "success": False,
+                "message": "Все обязательные поля должны быть заполнены"
+            }), 400
+        
+        # Проверка размера файла (до 5MB)
+        if passport_photo.content_length > 5 * 1024 * 1024:
+            return jsonify({
+                "success": False,
+                "message": "Размер файла не должен превышать 5MB"
+            }), 400
+        
+        # Проверка формата файла
+        allowed_extensions = {'png', 'jpg', 'jpeg'}
+        file_ext = passport_photo.filename.rsplit('.', 1)[1].lower() if '.' in passport_photo.filename else ''
+        
+        if file_ext not in allowed_extensions:
+            return jsonify({
+                "success": False,
+                "message": "Допустимые форматы изображений: JPG, PNG"
+            }), 400
+        
+        # Сохраняем заявку
+        request_id = asyncio.run(create_passport_request(
+            user_id=user_id,
+            issued_by=issued_by,
+            issue_date=issue_date,
+            division_code=division_code,
+            series=series,
+            number=number,
+            gender=gender,
+            birth_date=birth_date,
+            birth_place=birth_place,
+            passport_photo=passport_photo.read()
+        ))
+        
+        return jsonify({
+            "success": True,
+            "message": "Заявка на верификацию успешно отправлена",
+            "redirect": url_for('account')
+        })
+        
+    except ValidationError as e:
+        return jsonify({
+            "success": False,
+            "message": "Ошибка безопасности. Обновите страницу и попробуйте снова"
+        }), 403
+        
+    except Exception as e:
+        logging.error(f"Error submitting passport verification: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": "Произошла ошибка при отправке заявки"
+        }), 500
+
+@app.route('/passport-photo/<int:request_id>')
+@login_required
+def get_passport_photo(request_id):
+    try:
+        # Проверяем, что пользователь имеет доступ к этому фото
+        passport_request = asyncio.run(get_passport_request(session['user_id']))
+        if not passport_request or passport_request['id'] != request_id:
+            abort(403)
+        
+        photo_data = asyncio.run(get_passport_photo(request_id))
+        if not photo_data:
+            abort(404)
+            
+        return send_file(
+            BytesIO(photo_data),
+            mimetype='image/jpeg',
+            as_attachment=False
+        )
+    except Exception as e:
+        logging.error(f"Error getting passport photo: {str(e)}")
+        abort(500)
+
+@app.route('/check-account-status')
+@login_required
+def check_account_status():
+    user = asyncio.run(get_user_by_id(session['user_id']))
+    return jsonify({
+        'status': user['account_status']
+    })
+
+@app.route('/notifications')
+@login_required
+def notifications():
+    user_id = session['user_id']
+    # Получаем все уведомления пользователя
+    notifications_list = asyncio.run(get_user_notifications(user_id))
+    
+    # Помечаем уведомления как прочитанные
+    asyncio.run(mark_notifications_as_read(user_id))
+    
+    # Получаем данные пользователя и счетчик непрочитанных уведомлений
+    current_user = asyncio.run(get_user_by_id(user_id))
+    unread_count = asyncio.run(get_unread_notifications_count(user_id))
+    has_unread = unread_count > 0
+    
+    return render_template(
+        'notifications.html',
+        current_user=current_user,
+        notifications=notifications_list,
+        unread_count=unread_count,  # Добавляем счетчик
+        has_unread_notifications=has_unread  # Добавляем флаг
+    )
+
+@app.route('/api/notifications/count')
+@login_required
+def unread_notifications_count():
+    user_id = session['user_id']
+    count = asyncio.run(get_unread_notifications_count(user_id))
+    return jsonify({'count': count})
 
 async def main():
     start = None

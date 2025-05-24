@@ -14,14 +14,33 @@
 <body class="reading-page">
   <header class="header">
     <div class="header-inner">
-      <a class="logo" href="{{ url_for('index') }}">
+      <!-- logo -->
+      <a class="logo" href="/index">
         <img src="{{ url_for('static', filename='img/logo.png')}}" alt="logo" width="65" height="65">
         Бизнес‑Мост
       </a>
+
+      <!-- Навигация -->
       <nav class="header-nav">
         <a href="/index">Главная</a>
+        <a href="/chats">Чаты</a>
         <a href="/experts">Эксперты</a>
         {% if current_user %}
+          <!-- Уведомления - теперь отдельный элемент навигации -->
+          {% if current_user %}
+            <div class="notifications-wrapper">
+              <a href="/notifications" class="notification-button">
+                <img src="{{ url_for('static', filename='img/notification' + ('-no-read' if has_unread_notifications else '') + '.png') }}" 
+                    alt="Уведомления" 
+                    class="notification-icon">
+                {% if unread_count > 0 %}
+                  <span class="notification-badge">{{ unread_count }}</span>
+                {% endif %}
+              </a>
+            </div>
+          {% endif %}
+          
+          <!-- Аккаунт -->
           <div class="account-dropdown">
             <a href="#" class="account-button-if-login">
               <img src="{{ url_for('user_avatar', user_id=current_user.id) }}" 
@@ -48,6 +67,7 @@
       </nav>
     </div>
   </header>
+
 
   <main class="article-container">
     <!-- Заголовок статьи -->

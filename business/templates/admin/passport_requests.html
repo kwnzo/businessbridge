@@ -1,0 +1,439 @@
+{% extends "admin/requests.html" %}
+
+{% block requests_content %}
+<meta name="csrf-token" content="{{ csrf_token() }}">
+
+<div class="admin-header">
+  <h2>Заявки на верификацию аккаунта</h2>
+  <div class="admin-actions">
+    <form method="get" action="{{ url_for('admin_bp.passport_requests') }}" class="search-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        
+        <input type="date" name="date_from" value="{{ filters.date_from }}" 
+              class="admin-date-filter" placeholder="От">
+        <input type="date" name="date_to" value="{{ filters.date_to }}" 
+              class="admin-date-filter" placeholder="До">
+              
+        <select name="status" class="admin-filter">
+            <option value="">Все статусы</option>
+            <option value="pending" {% if filters.status == 'pending' %}selected{% endif %}>Ожидают</option>
+            <option value="approved" {% if filters.status == 'approved' %}selected{% endif %}>Одобрены</option>
+            <option value="rejected" {% if filters.status == 'rejected' %}selected{% endif %}>Отклонены</option>
+        </select>
+        
+        <select name="sort" class="admin-filter">
+            <option value="newest" {% if filters.sort == 'newest' %}selected{% endif %}>Сначала новые</option>
+            <option value="oldest" {% if filters.sort == 'oldest' %}selected{% endif %}>Сначала старые</option>
+        </select>
+        
+        <input type="text" name="q" value="{{ filters.q }}" 
+              placeholder="Поиск по ФИО..." class="admin-search">
+        
+        <button type="submit" class="btn-filter">Применить</button>
+        {% if filters.q or filters.date_from or filters.date_to or filters.status %}
+            <a href="{{ url_for('admin_bp.passport_requests') }}" class="btn-clear">Сбросить</a>
+        {% endif %}
+    </form>
+  </div>
+</div>
+
+{% if requests %}
+<div class="passport-requests-container">
+  {% for req in requests %}
+  <div class="passport-request-card {% if req.status == 'rejected' %}rejected{% elif req.status == 'approved' %}approved{% endif %}">
+    <div class="passport-user-info">
+      <div class="passport-user-header">
+        <h3>
+          <a href="{{ url_for('user_profile', user_id=req.user_id) }}" class="user-link">
+            {{ req.user_surname }} {{ req.user_name }}
+          </a>
+          <span class="status-badge status-{{ req.status }}">
+            {% if req.status == 'pending' %}Ожидает проверки
+            {% elif req.status == 'approved' %}Одобрено
+            {% else %}Отклонено{% endif %}
+          </span>
+        </h3>
+        <div class="passport-request-date">
+          {{ req.created_at.strftime('%d.%m.%Y %H:%M') }}
+        </div>
+      </div>
+      
+      <div class="passport-details-grid">
+        <div class="passport-photo-container">
+          <div class="passport-photo-wrapper">
+            <img src="{{ url_for('admin_bp.passport_request_photo', request_id=req.id) }}" 
+                 alt="Фото паспорта" class="passport-photo-preview"
+                 onclick="openPassportModal(this.src)">
+          </div>
+        </div>
+        
+        <div class="passport-data-container">
+          <div class="passport-data-section">
+            <h4>Паспортные данные:</h4>
+            <div class="passport-data-row">
+              <span>Серия/Номер:</span>
+              <strong>{{ req.passport_series }} {{ req.passport_number }}</strong>
+            </div>
+            <div class="passport-data-row">
+              <span>Выдан:</span>
+              <strong>{{ req.passport_issued_by }}</strong>
+            </div>
+            <div class="passport-data-row">
+              <span>Дата выдачи:</span>
+              <strong>{{ req.passport_issue_date.strftime('%d.%m.%Y') }}</strong>
+            </div>
+            <div class="passport-data-row">
+              <span>Код подразделения:</span>
+              <strong>{{ req.passport_division_code }}</strong>
+            </div>
+          </div>
+          
+          <div class="passport-data-section">
+            <h4>Личные данные:</h4>
+            <div class="passport-data-row">
+              <span>Дата рождения:</span>
+              <strong>{{ req.birth_date.strftime('%d.%m.%Y') }}</strong>
+            </div>
+            <div class="passport-data-row">
+              <span>Пол:</span>
+              <strong>{{ 'Мужской' if req.gender == 'male' else 'Женский' }}</strong>
+            </div>
+            <div class="passport-data-row">
+              <span>Место рождения:</span>
+              <strong>{{ req.birth_place }}</strong>
+            </div>
+          </div>
+          
+          {% if req.rejection_reason %}
+          <div class="passport-data-section rejection-reason">
+            <h4>Причина отклонения:</h4>
+            <p>{{ req.rejection_reason }}</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    
+    {% if req.status == 'pending' %}
+    <div class="passport-actions">
+      <button class="btn-approve" onclick="approveRequest({{ req.id }})">Одобрить</button>
+      <button class="btn-reject" onclick="rejectRequest({{ req.id }})">Отклонить</button>
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+{% if total_pages > 1 %}
+<div class="admin-pagination">
+  {% for page_num in range(1, total_pages + 1) %}
+    <a href="{{ url_for('admin_bp.passport_requests', page=page_num,
+                      date_from=request.args.get('date_from'),
+                      date_to=request.args.get('date_to'),
+                      status=request.args.get('status'),
+                      sort=request.args.get('sort'),
+                      q=request.args.get('q')) }}"
+       class="{% if page_num == current_page %}active{% endif %}">
+      {{ page_num }}
+    </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% else %}
+<p class="no-requests">Нет заявок на верификацию</p>
+{% endif %}
+
+<!-- Модальное окно для фото паспорта -->
+<div id="passportModal" class="modal">
+  <span class="close" onclick="closePassportModal()">&times;</span>
+  <img class="modal-content" id="modalPassportImage">
+</div>
+
+<!-- Модальное окно для отклонения -->
+<div id="rejectModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeRejectModal()">&times;</span>
+    <h3>Отклонить заявку</h3>
+    <p>Укажите причину отказа:</p>
+    <textarea id="rejectionReason" rows="4"></textarea>
+    <button onclick="confirmReject()" class="btn-confirm-reject">Подтвердить отклонение</button>
+  </div>
+</div>
+
+<style>
+.passport-requests-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.passport-request-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.passport-request-card.rejected {
+  border-left: 4px solid #ff5252;
+}
+
+.passport-request-card.approved {
+  border-left: 4px solid #4caf50;
+}
+
+.passport-user-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: #f5f5f5;
+  border-bottom: 1px solid #eee;
+}
+
+.passport-details-grid {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 20px;
+  padding: 20px;
+}
+
+.passport-photo-container {
+  display: flex;
+  justify-content: center;
+}
+
+.passport-photo-wrapper {
+  width: 280px;
+  height: 180px;
+  border: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.passport-photo-preview {
+  max-width: 100%;
+  max-height: 100%;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.passport-photo-preview:hover {
+  transform: scale(1.03);
+}
+
+.passport-data-container {
+  padding: 10px;
+}
+
+.passport-data-section {
+  margin-bottom: 20px;
+}
+
+.passport-data-section h4 {
+  margin: 0 0 10px 0;
+  color: #333;
+}
+
+.passport-data-row {
+  display: flex;
+  margin-bottom: 8px;
+}
+
+.passport-data-row span {
+  width: 160px;
+  color: #666;
+}
+
+.passport-data-row strong {
+  flex: 1;
+}
+
+.rejection-reason {
+  background: #fff8f8;
+  padding: 10px;
+  border-radius: 4px;
+  border-left: 3px solid #ff5252;
+}
+
+.passport-actions {
+  padding: 15px 20px;
+  background: #f9f9f9;
+  border-top: 1px solid #eee;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+/* Модальные окна */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+  margin: auto;
+  display: block;
+  max-width: 80%;
+  max-height: 80vh;
+  margin-top: 5vh;
+}
+
+.close {
+  position: absolute;
+  top: 15px;
+  right: 35px;
+  color: #f1f1f1;
+  font-size: 40px;
+  font-weight: bold;
+  transition: 0.3s;
+  cursor: pointer;
+}
+
+.close:hover {
+  color: #bbb;
+}
+
+#rejectModal .modal-content {
+  background: white;
+  padding: 20px;
+  width: 500px;
+  max-width: 90%;
+  margin: 100px auto;
+  border-radius: 8px;
+}
+
+#rejectionReason {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.btn-confirm-reject {
+  background: #ff5252;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-confirm-reject:hover {
+  background: #ff3232;
+}
+
+.no-requests {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+</style>
+
+<script>
+let currentRequestId = null;
+
+function openPassportModal(src) {
+  const modal = document.getElementById('passportModal');
+  const modalImg = document.getElementById('modalPassportImage');
+  modal.style.display = 'block';
+  modalImg.src = src;
+}
+
+function closePassportModal() {
+  document.getElementById('passportModal').style.display = 'none';
+}
+
+function approveRequest(requestId) {
+  if (!confirm('Вы уверены, что хотите одобрить эту заявку?')) return;
+  
+  const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+  
+  fetch(`/admin/passport-requests/${requestId}/approve`, {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': csrfToken,
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      location.reload();
+    } else {
+      alert(data.message || 'Ошибка при одобрении заявки');
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Ошибка при выполнении запроса');
+  });
+}
+
+function rejectRequest(requestId) {
+  currentRequestId = requestId;
+  document.getElementById('rejectModal').style.display = 'block';
+}
+
+function closeRejectModal() {
+  document.getElementById('rejectModal').style.display = 'none';
+  document.getElementById('rejectionReason').value = '';
+  currentRequestId = null;
+}
+
+function confirmReject() {
+  const reason = document.getElementById('rejectionReason').value.trim();
+  if (!reason) {
+    alert('Пожалуйста, укажите причину отказа');
+    return;
+  }
+  
+  const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+  
+  fetch(`/admin/passport-requests/${currentRequestId}/reject`, {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': csrfToken,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ reason })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      location.reload();
+    } else {
+      alert(data.message || 'Ошибка при отклонении заявки');
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Ошибка при выполнении запроса');
+  });
+}
+
+// Закрытие модальных окон при клике вне контента
+window.onclick = function(event) {
+  const passportModal = document.getElementById('passportModal');
+  const rejectModal = document.getElementById('rejectModal');
+  
+  if (event.target === passportModal) {
+    closePassportModal();
+  }
+  if (event.target === rejectModal) {
+    closeRejectModal();
+  }
+}
+</script>
+
+{% endblock %}

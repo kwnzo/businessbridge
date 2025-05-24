@@ -1646,3 +1646,344 @@ async def reject_article_db(article_id: int, rejection_reason: str) -> bool:
                 await conn.rollback()
                 logging.error(f"Error rejecting article: {str(e)}")
                 return False
+            
+async def create_passport_request(
+    user_id: int,
+    issued_by: str,
+    issue_date: str,  # Ожидается формат 'YYYY-MM-DD'
+    division_code: str,
+    series: str,
+    number: str,
+    gender: str,
+    birth_date: str,  # Ожидается формат 'YYYY-MM-DD'
+    birth_place: str,
+    passport_photo: bytes = None
+) -> int:
+    """Создает заявку на верификацию паспорта"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            try:
+                await cur.execute("""
+                    INSERT INTO passport_requests (
+                        user_id, passport_issued_by, passport_issue_date, 
+                        passport_division_code, passport_series, passport_number,
+                        gender, birth_date, birth_place, passport_photo
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (
+                    user_id, issued_by, issue_date, 
+                    division_code, series, number,
+                    gender, birth_date, birth_place, passport_photo
+                ))
+                await conn.commit()
+                return cur.lastrowid
+            except Exception as e:
+                await conn.rollback()
+                logging.error(f"Error creating passport request: {str(e)}")
+                raise
+
+async def get_passport_request(user_id: int) -> Optional[dict]:
+    """Получает заявку на верификацию паспорта пользователя"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute("""
+                SELECT * FROM passport_requests 
+                WHERE user_id = %s 
+                ORDER BY created_at DESC 
+                LIMIT 1
+            """, (user_id,))
+            return await cur.fetchone()
+
+async def has_pending_passport_request(user_id: int) -> bool:
+    """Проверяет, есть ли у пользователя ожидающая заявка на верификацию"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("""
+                SELECT 1 FROM passport_requests 
+                WHERE user_id = %s AND status = 'pending'
+                LIMIT 1
+            """, (user_id,))
+            return await cur.fetchone() is not None
+
+async def get_passport_photo(request_id: int) -> Optional[bytes]:
+    """Получает фото паспорта по ID заявки"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("""
+                SELECT passport_photo FROM passport_requests 
+                WHERE id = %s
+                LIMIT 1
+            """, (request_id,))
+            result = await cur.fetchone()
+            return result[0] if result else None
+        
+async def get_passport_requests(
+    search: str = '',
+    status: str = '',
+    date_from: str = '',
+    date_to: str = '',
+    sort: str = 'newest',
+    limit: int = 10,
+    offset: int = 0
+) -> list:
+    """Получает список заявок на верификацию паспорта"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            sql = """
+                SELECT 
+                    pr.*,
+                    u.user_name,
+                    u.user_surname,
+                    u.user_email
+                FROM passport_requests pr
+                JOIN users u ON pr.user_id = u.id
+                WHERE 1=1
+            """
+            params = []
+            
+            if search:
+                sql += " AND (u.user_name LIKE %s OR u.user_surname LIKE %s)"
+                search_term = f"%{search}%"
+                params.extend([search_term, search_term])
+            
+            if status:
+                sql += " AND pr.status = %s"
+                params.append(status)
+                
+            if date_from:
+                sql += " AND DATE(pr.created_at) >= %s"
+                params.append(date_from)
+            
+            if date_to:
+                sql += " AND DATE(pr.created_at) <= %s"
+                params.append(date_to)
+            
+            sql += " ORDER BY pr.created_at " + ("DESC" if sort == 'newest' else "ASC")
+            
+            if limit:
+                sql += " LIMIT %s OFFSET %s"
+                params.extend([limit, offset])
+            
+            await cur.execute(sql, params)
+            return await cur.fetchall()
+
+async def get_passport_requests_count(
+    search: str = '',
+    status: str = '',
+    date_from: str = '',
+    date_to: str = ''
+) -> int:
+    """Получает количество заявок на верификацию"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            sql = """
+                SELECT COUNT(*)
+                FROM passport_requests pr
+                JOIN users u ON pr.user_id = u.id
+                WHERE 1=1
+            """
+            params = []
+            
+            if search:
+                sql += " AND (u.user_name LIKE %s OR u.user_surname LIKE %s)"
+                search_term = f"%{search}%"
+                params.extend([search_term, search_term])
+            
+            if status:
+                sql += " AND pr.status = %s"
+                params.append(status)
+                
+            if date_from:
+                sql += " AND DATE(pr.created_at) >= %s"
+                params.append(date_from)
+            
+            if date_to:
+                sql += " AND DATE(pr.created_at) <= %s"
+                params.append(date_to)
+            
+            await cur.execute(sql, params)
+            result = await cur.fetchone()
+            return result[0] if result else 0
+
+async def approve_passport_request_db(request_id: int) -> bool:
+    """Одобряет заявку на верификацию и обновляет статус аккаунта"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            try:
+                # Получаем user_id из заявки
+                await cur.execute(
+                    "SELECT user_id FROM passport_requests WHERE id = %s",
+                    (request_id,))
+                result = await cur.fetchone()
+                if not result:
+                    return False
+                
+                user_id = result[0]
+                
+                # Обновляем статус заявки
+                await cur.execute("""
+                    UPDATE passport_requests 
+                    SET status = 'approved', 
+                        updated_at = NOW() 
+                    WHERE id = %s
+                """, (request_id,))
+                
+                # Обновляем статус аккаунта пользователя
+                await cur.execute("""
+                    UPDATE users 
+                    SET account_status = 'verified' 
+                    WHERE id = %s
+                """, (user_id,))
+                
+                await conn.commit()
+                return True
+            except Exception as e:
+                await conn.rollback()
+                logging.error(f"Error approving passport request: {str(e)}")
+                return False
+
+async def reject_passport_request_db(request_id: int, rejection_reason: str) -> bool:
+    """Отклоняет заявку на верификацию"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            try:
+                await cur.execute("""
+                    UPDATE passport_requests 
+                    SET status = 'rejected', 
+                        rejection_reason = %s, 
+                        updated_at = NOW() 
+                    WHERE id = %s
+                """, (rejection_reason, request_id))
+                
+                await conn.commit()
+                return True
+            except Exception as e:
+                await conn.rollback()
+                logging.error(f"Error rejecting passport request: {str(e)}")
+                return False
+            
+
+async def create_notification(
+    user_id: int,
+    message: str,
+    notification_type: str,
+    related_id: int = None
+) -> int:
+    """Создает новое уведомление"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("""
+                INSERT INTO notifications 
+                (user_id, message, type, related_id, is_read)
+                VALUES (%s, %s, %s, %s, FALSE)
+            """, (user_id, message, notification_type, related_id))
+            await conn.commit()
+            return cur.lastrowid
+
+async def get_user_notifications(user_id: int, limit: int = 20) -> list:
+    """Получает уведомления пользователя"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute("""
+                SELECT id, message, type, related_id, created_at, is_read
+                FROM notifications
+                WHERE user_id = %s
+                ORDER BY created_at DESC
+                LIMIT %s
+            """, (user_id, limit))
+            return await cur.fetchall()
+
+async def get_unread_notifications_count(user_id: int) -> int:
+    """Получает количество непрочитанных уведомлений"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("""
+                SELECT COUNT(*) 
+                FROM notifications
+                WHERE user_id = %s AND is_read = FALSE
+            """, (user_id,))
+            result = await cur.fetchone()
+            return result[0] if result else 0
+
+async def mark_notifications_as_read(user_id: int) -> bool:
+    """Помечает все уведомления пользователя как прочитанные"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("""
+                UPDATE notifications
+                SET is_read = TRUE
+                WHERE user_id = %s AND is_read = FALSE
+            """, (user_id,))
+            await conn.commit()
+            return cur.rowcount > 0

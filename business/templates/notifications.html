@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap" rel="stylesheet">
+  <title>Уведомления | Бизнес‑Мост</title>
+</head>
+<body class="notifications-page">
+    <header class="header">
+      <div class="header-inner">
+        <!-- logo -->
+        <a class="logo" href="/index">
+          <img src="{{ url_for('static', filename='img/logo.png')}}" alt="logo" width="65" height="65">
+          Бизнес‑Мост
+        </a>
+
+        <!-- Навигация -->
+        <nav class="header-nav">
+          <a href="/index">Главная</a>
+          <a href="/chats">Чаты</a>
+          <a href="/experts">Эксперты</a>
+          {% if current_user %}
+            <!-- Уведомления - теперь отдельный элемент навигации -->
+            {% if current_user %}
+              <div class="notifications-wrapper">
+                <a href="" class="notification-button">
+                  <img src="{{ url_for('static', filename='img/notification' + ('-no-read' if has_unread_notifications else '') + '.png') }}" 
+                      alt="Уведомления" 
+                      class="notification-icon">
+                  {% if unread_count > 0 %}
+                    <span class="notification-badge">{{ unread_count }}</span>
+                  {% endif %}
+                </a>
+              </div>
+            {% endif %}
+            
+            <!-- Аккаунт -->
+            <div class="account-dropdown">
+              <a href="#" class="account-button-if-login">
+                <img src="{{ url_for('user_avatar', user_id=current_user.id) }}" 
+                    alt="Аватар" 
+                    class="avatar-icon-if-login js-avatar"
+                    data-fallback="{{ url_for('static', filename='img/avatar-placeholder.png') }}">
+                <svg class="dropdown-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+                  <path d="M7 10l5 5 5-5"/>
+                </svg>
+              </a>
+              <div class="account-dropdown-content">
+                <a href="/profile" class="account-dropdown-item">Мой профиль</a>
+                {% if current_user.user_role == 'admin' %}
+                  <hr class="account-dropdown-divider">
+                  <a href="/admin" class="account-dropdown-item">Админ-панель</a>
+                {% endif %}
+                <hr class="account-dropdown-divider">
+                <a href="/logout" class="account-dropdown-item">Выйти</a>
+              </div>
+            </div>
+          {% else %}
+            <a href="login" class="login-button" id="login-btn">Вход</a>
+          {% endif %}
+        </nav>
+      </div>
+    </header>
+
+  <div class="page-wrapper">
+    <main class="notifications-container">
+      <h1>Уведомления</h1>
+      
+      {% if not notifications %}
+        <div class="no-notifications">
+          У вас нет уведомлений
+        </div>
+      {% else %}
+        <ul class="notifications-list">
+          {% for notification in notifications %}
+            <li class="notification-item {% if not notification.is_read %}unread{% endif %}">
+              <div class="notification-content">
+                <p class="notification-message">{{ notification.message }}</p>
+                <time class="notification-time">
+                  {{ notification.created_at.strftime('%d.%m.%Y %H:%M') }}
+                </time>
+              </div>
+              {% if notification.type == 'article' %}
+                <a href="{{ url_for('view_article', article_id=notification.related_id) }}" class="notification-link">
+                  Перейти
+                </a>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </main>
+  </div>
+</body>
+</html>

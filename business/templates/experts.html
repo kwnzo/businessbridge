@@ -14,43 +14,60 @@
     <!-- ======= Header ======= -->
     <header class="header">
       <div class="header-inner">
-      <!-- logo -->
-      <a class="logo" href="index">
-        <img src="{{ url_for('static', filename='img/logo.png')}}" alt="logo" width="65" height="65">
-        Бизнес‑Мост
-      </a>
+        <!-- logo -->
+        <a class="logo" href="/index">
+          <img src="{{ url_for('static', filename='img/logo.png')}}" alt="logo" width="65" height="65">
+          Бизнес‑Мост
+        </a>
 
-      <!-- Навигация -->
-      <nav class="header-nav">
-        <a href="index">Главная</a>
-        <a href="experts">Эксперты</a>
-        {% if current_user %}
-          <div class="account-dropdown">
-            <a href="#" class="account-button-if-login">
-              <img src="{{ url_for('user_avatar', user_id=current_user.id) }}" 
-                  alt="Аватар" 
-                  class="avatar-icon-if-login js-avatar"
-                  data-fallback="{{ url_for('static', filename='img/avatar-placeholder.png') }}">
-              <svg class="dropdown-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
-                <path d="M7 10l5 5 5-5"/>
-              </svg>
-            </a>
-            <div class="account-dropdown-content">
-              <a href="/profile" class="account-dropdown-item">Мой профиль</a>
-              {% if current_user.user_role == 'admin' %}
+        <!-- Навигация -->
+        <nav class="header-nav">
+          <a href="/index">Главная</a>
+          <a href="/chats">Чаты</a>
+          <a href="">Эксперты</a>
+          {% if current_user %}
+            <!-- Уведомления - теперь отдельный элемент навигации -->
+            {% if current_user %}
+              <div class="notifications-wrapper">
+                <a href="/notifications" class="notification-button">
+                  <img src="{{ url_for('static', filename='img/notification' + ('-no-read' if has_unread_notifications else '') + '.png') }}" 
+                      alt="Уведомления" 
+                      class="notification-icon">
+                  {% if unread_count > 0 %}
+                    <span class="notification-badge">{{ unread_count }}</span>
+                  {% endif %}
+                </a>
+              </div>
+            {% endif %}
+            
+            <!-- Аккаунт -->
+            <div class="account-dropdown">
+              <a href="#" class="account-button-if-login">
+                <img src="{{ url_for('user_avatar', user_id=current_user.id) }}" 
+                    alt="Аватар" 
+                    class="avatar-icon-if-login js-avatar"
+                    data-fallback="{{ url_for('static', filename='img/avatar-placeholder.png') }}">
+                <svg class="dropdown-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+                  <path d="M7 10l5 5 5-5"/>
+                </svg>
+              </a>
+              <div class="account-dropdown-content">
+                <a href="/profile" class="account-dropdown-item">Мой профиль</a>
+                {% if current_user.user_role == 'admin' %}
+                  <hr class="account-dropdown-divider">
+                  <a href="/admin" class="account-dropdown-item">Админ-панель</a>
+                {% endif %}
                 <hr class="account-dropdown-divider">
-                <a href="/admin" class="account-dropdown-item">Админ-панель</a>
-              {% endif %}
-              <hr class="account-dropdown-divider">
-              <a href="/logout" class="account-dropdown-item">Выйти</a>
+                <a href="/logout" class="account-dropdown-item">Выйти</a>
+              </div>
             </div>
-          </div>
-        {% else %}
-          <a href="login" class="login-button" id="login-btn">Вход</a>
-        {% endif %}
-      </nav>
-    </div>
-  </header>
+          {% else %}
+            <a href="login" class="login-button" id="login-btn">Вход</a>
+          {% endif %}
+        </nav>
+      </div>
+    </header>
+
 
     <section class="experts-welcome" aria-labelledby="experts-welcome-title">
         <h2 id="experts-welcome-title">Эксперты</h2>

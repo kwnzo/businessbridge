@@ -13,10 +13,14 @@
       class="tab-btn {% if request.endpoint == 'admin_bp.expert_requests' %}active{% endif %}">
       Заявки на эксперта
     </a>
-    <!-- Добавляем новую вкладку -->
     <a href="{{ url_for('admin_bp.article_requests') }}" 
       class="tab-btn {% if request.endpoint == 'admin_bp.article_requests' %}active{% endif %}">
       Статьи на проверку
+    </a>
+    <!-- Новая вкладка для заявок на верификацию -->
+    <a href="{{ url_for('admin_bp.passport_requests') }}" 
+      class="tab-btn {% if request.endpoint == 'admin_bp.passport_requests' %}active{% endif %}">
+      Верификация аккаунтов
     </a>
   </div>
 
