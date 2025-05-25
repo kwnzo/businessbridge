@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap" rel="stylesheet">
+  <link rel="icon", type="image/png", href="{{ url_for('static', filename='img/favicon.png') }}">
+  <title>Бизнес‑Мост</title>
+</head>
+<body class="articles-page">
+
+<!-- ======= Header ======= -->
+<header class="header">
+  <div class="header-inner">
+    <!-- logo -->
+    <a class="logo" href="/index">
+      <img src="{{ url_for('static', filename='img/logo.png')}}" alt="logo" width="65" height="65">
+      Бизнес‑Мост
+    </a>
+
+    <!-- Навигация -->
+    <nav class="header-nav">
+      <a href="/index">Главная</a>
+      <a href="">Статьи</a>
+      <a href="/chats">Чаты</a>
+      <a href="/experts">Эксперты</a>
+      {% if current_user %}
+        <!-- Уведомления - теперь отдельный элемент навигации -->
+        {% if current_user %}
+          <div class="notifications-wrapper">
+            <a href="/notifications" class="notification-button">
+              <img src="{{ url_for('static', filename='img/notification' + ('-no-read' if has_unread_notifications else '') + '.png') }}" 
+                  alt="Уведомления" 
+                  class="notification-icon">
+              {% if unread_count > 0 %}
+                <span class="notification-badge">{{ unread_count }}</span>
+              {% endif %}
+            </a>
+          </div>
+        {% endif %}
+        
+        <!-- Аккаунт -->
+        <div class="account-dropdown">
+          <a href="#" class="account-button-if-login">
+            <img src="{{ url_for('user_avatar', user_id=current_user.id) }}" 
+                alt="Аватар" 
+                class="avatar-icon-if-login js-avatar"
+                data-fallback="{{ url_for('static', filename='img/avatar-placeholder.png') }}">
+            <svg class="dropdown-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+              <path d="M7 10l5 5 5-5"/>
+            </svg>
+          </a>
+          <div class="account-dropdown-content">
+            <a href="/profile" class="account-dropdown-item">Мой профиль</a>
+            {% if current_user.user_role == 'admin' %}
+              <hr class="account-dropdown-divider">
+              <a href="/admin" class="account-dropdown-item">Админ-панель</a>
+            {% endif %}
+            <hr class="account-dropdown-divider">
+            <a href="/logout" class="account-dropdown-item">Выйти</a>
+          </div>
+        </div>
+      {% else %}
+        <a href="login" class="login-button" id="login-btn">Вход</a>
+      {% endif %}
+    </nav>
+  </div>
+</header>
+
+<!-- Основной контент -->
+<section class="experts-welcome" aria-labelledby="experts-welcome-title">
+  <h2 id="experts-welcome-title">Статьи</h2>
+</section>
+<div class="page-wrapper">
+  <div class="publications">
+    <div class="search-container">
+        <input type="text" id="article-search" placeholder="Поиск по названию статьи...">
+        <button id="search-button">Найти</button>
+    </div>
+
+    <!-- Категории -->
+    <div class="categories-filter">
+      <button class="category-btn {% if active_category == 'all' %}active{% endif %}" 
+              data-category="all"
+              onclick="window.location.href='{{ url_for('all_articles') }}'">
+        Все категории
+      </button>
+      {% for key, name in EXPERTISE_AREAS.items() %}
+        <button class="category-btn {% if key == active_category %}active{% endif %}" 
+                data-category="{{ key }}"
+                onclick="window.location.href='{{ url_for('all_articles') }}?category={{ key }}'">
+          {{ name }}
+        </button>
+      {% endfor %}
+    </div>
+
+    <!-- Заголовок выбранной категории -->
+    <h2 class="category-title">{{ EXPERTISE_AREAS.get(active_category, 'Все категории') }}</h2>
+
+    <!-- Публикации -->
+    <div class="articles-grid">
+        {% if articles %}
+            {% for article in articles %}
+            <a href="{{ url_for('view_article', article_id=article.id, article_slug=article.topic_name_en) }}" class="article-link">
+                <div class="article">
+                    {% if article.preview_image %}
+                        <img src="{{ url_for('article_image', article_id=article.id) }}" 
+                            class="article-card" 
+                            alt="{{ article.topic_name }}">
+                    {% else %}
+                        <div class="article-card no-image">
+                            <span>Нет изображения</span>
+                        </div>
+                    {% endif %}
+                    <h3>{{ article.topic_name }}</h3>
+                </div>
+            </a>
+            {% endfor %}
+        {% else %}
+            <div class="no-articles">Нет доступных публикаций</div>
+        {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Стили для страницы статей -->
+<style>
+    .publications {
+        padding: 20px 200px 40px 200px;
+        color: #111111;
+    }
+
+    .publications-title {
+        font-size: 28px;
+        font-weight: 600;
+        color: #2E2138;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    
+    .publications h2 {
+        font-size: 35px;
+        font-weight: 600;
+        color: #111111;
+        padding-bottom: 25px;
+        padding-top: 25px;
+    }
+
+    .categories-filter {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 30px;
+    }
+
+    .category-btn {
+        background: #f0f0f0;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-family: 'Unbounded', sans-serif;
+        font-weight: 400;
+        color: #2E2138;
+        font-size: 14px;
+    }
+
+    .category-btn:hover {
+        background: #e0e0e0;
+    }
+
+    .category-btn.active {
+        background: #2E2138;
+        color: white;
+    }
+
+    .category-title {
+        font-size: 24px;
+        font-weight: 600;
+        color: #2E2138;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    .search-container {
+        display: flex;
+        margin-bottom: 20px;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+  
+    #article-search {
+        flex-grow: 1;
+        padding: 10px 15px;
+        border: 1px solid #ddd;
+        border-radius: 20px 0 0 20px;
+        font-family: 'Unbounded', sans-serif;
+    }
+  
+    #search-button {
+        padding: 10px 20px;
+        background: #2E2138;
+        color: white;
+        border: none;
+        border-radius: 0 20px 20px 0;
+        cursor: pointer;
+        font-family: 'Unbounded', sans-serif;
+    }
+
+    .loading, .error {
+        text-align: center;
+        padding: 20px;
+        grid-column: 1 / -1;
+    }
+
+    .error {
+        color: #d32f2f;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Инициализация элементов DOM
+    const elements = {
+        searchInput: document.getElementById('article-search'),
+        searchButton: document.getElementById('search-button'),
+        categoryButtons: document.querySelectorAll('.category-btn'),
+        articlesGrid: document.querySelector('.articles-grid'),
+        categoryTitle: document.querySelector('.category-title')
+    };
+
+    // 2. Получение данных из шаблона
+    const templateData = {
+        expertiseAreas: JSON.parse('{{ EXPERTISE_AREAS|tojson|safe }}'),
+        currentCategory: '{{ active_category|default("all") }}',
+        currentSearch: '{{ search_query|default("") }}',
+        initialArticles: JSON.parse('{{ articles|tojson|safe }}')
+    };
+
+    // 3. Состояние приложения
+    const state = {
+        category: templateData.currentCategory,
+        searchQuery: templateData.currentSearch,
+        articles: templateData.initialArticles
+    };
+
+    // 4. Инициализация представления
+    function initializeView() {
+        elements.searchInput.value = state.searchQuery;
+        updateCategoryTitle();
+        renderArticles(state.articles);
+        highlightActiveCategory();
+    }
+
+    // 5. Обновление заголовка категории
+    function updateCategoryTitle() {
+        if (state.searchQuery) {
+            elements.categoryTitle.textContent = 'Результаты поиска: "' + state.searchQuery + '"';
+        } else if (state.category === 'all') {
+            elements.categoryTitle.textContent = 'Все категории';
+        } else {
+            elements.categoryTitle.textContent = templateData.expertiseAreas[state.category] || state.category;
+        }
+    }
+
+    // 6. Подсветка активной категории
+    function highlightActiveCategory() {
+        elements.categoryButtons.forEach(btn => {
+            const category = btn.dataset.category;
+            btn.classList.toggle('active', category === state.category);
+        });
+    }
+
+    // 7. Рендеринг статей
+    function renderArticles(articles) {
+        elements.articlesGrid.innerHTML = '';
+
+        if (!articles || articles.length === 0) {
+            const message = state.searchQuery
+                ? 'Ничего не найдено по запросу "' + state.searchQuery + '"'
+                : 'Нет статей в категории "' + (templateData.expertiseAreas[state.category] || state.category) + '"';
+            
+            elements.articlesGrid.innerHTML = '<div class="no-articles">' + message + '</div>';
+            return;
+        }
+
+        articles.forEach(article => {
+            const card = createArticleCard(article);
+            elements.articlesGrid.appendChild(card);
+        });
+    }
+
+    // 8. Создание карточки статьи
+    function createArticleCard(article) {
+        const card = document.createElement('a');
+        card.href = `/article/${article.id}/${article.topic_name_en || 'no-slug'}`;
+        card.className = 'article-link';
+
+        const imageHtml = article.has_image
+            ? `<img src="/article-image/${article.id}" class="article-card" alt="${article.topic_name}">`
+            : `<div class="article-card no-image"><span>Нет изображения</span></div>`;
+
+        card.innerHTML = `
+            <div class="article">
+                ${imageHtml}
+                <h3>${article.topic_name}</h3>
+            </div>
+        `;
+
+        return card;
+    }
+
+    // 9. Обработчики событий
+    function setupEventListeners() {
+        // Поиск
+        elements.searchButton.addEventListener('click', handleSearch);
+        elements.searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') handleSearch();
+        });
+
+        // Категории
+        elements.categoryButtons.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const category = this.dataset.category;
+                window.location.href = category === 'all' 
+                    ? '/articles' 
+                    : `/articles?category=${category}`;
+            });
+        });
+    }
+
+    // 10. Обработка поиска
+    function handleSearch() {
+        const query = elements.searchInput.value.trim();
+        if (query) {
+            window.location.href = `/articles?search=${encodeURIComponent(query)}`;
+        } else {
+            window.location.href = '/articles';
+        }
+    }
+
+    // Запуск приложения
+    initializeView();
+    setupEventListeners();
+});
+</script>
+<script src="{{ url_for('static', filename='js/account-dropdown.js') }}"></script>
+
+</body>
+</html>

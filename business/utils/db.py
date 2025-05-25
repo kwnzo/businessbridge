@@ -1987,3 +1987,38 @@ async def mark_notifications_as_read(user_id: int) -> bool:
             """, (user_id,))
             await conn.commit()
             return cur.rowcount > 0
+        
+
+async def get_all_articles_for_display():
+    """Получает все статьи для отображения с основной информацией"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute('''
+                SELECT 
+                    p.id,
+                    p.topic_name,
+                    p.topic_name_en,
+                    p.topic_text,
+                    p.category,  
+                    p.public_status,
+                    p.created_at,
+                    p.preview_image,
+                    u.user_name,
+                    u.user_surname,
+                    COALESCE(ps.views, 0) AS views,
+                    COALESCE(ps.likes, 0) AS likes
+                FROM publics p
+                LEFT JOIN publication_stats ps ON p.id = ps.public_id
+                JOIN users u ON p.public_creator = u.id
+                WHERE p.public_status = 'accept'
+                ORDER BY p.created_at DESC
+            ''')
+            return await cur.fetchall()
+        
+    

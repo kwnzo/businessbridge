@@ -21,6 +21,7 @@
         <!-- Навигация -->
         <nav class="header-nav">
           <a href="/index">Главная</a>
+          <a href="/articles">Статьи</a>
           <a href="/chats">Чаты</a>
           <a href="/experts">Эксперты</a>
           {% if current_user %}
@@ -95,5 +96,8 @@
       {% endif %}
     </main>
   </div>
+
+  <script src="{{ url_for('static', filename='js/account-dropdown.js') }}"></script>
+
 </body>
 </html>

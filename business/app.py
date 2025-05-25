@@ -8,7 +8,8 @@ from utils.db import (init_db,get_views, get_publics, record_view,
                       has_expert_request, get_random_quote, get_all_experts, 
                       get_expert_articles, get_expert_info, EXPERTISE_AREAS, delete_article_db,
                       get_passport_request, has_pending_passport_request, create_passport_request,
-                      get_user_notifications, mark_notifications_as_read, get_unread_notifications_count)
+                      get_user_notifications, mark_notifications_as_read, get_unread_notifications_count,
+                      get_all_articles_for_display)
 from flask_limiter import Limiter
 from flask_mysqldb import MySQL
 from flask_wtf.csrf import CSRFProtect, generate_csrf, validate_csrf   
@@ -427,10 +428,19 @@ def experts():
 # ======================================================================================== ПРОСМОТР СТАТЬИ
 @app.route('/article-image/<int:article_id>')
 def article_image(article_id):
-    article = asyncio.run(get_article_by_id(article_id))
-    if article and article.get('preview_image'):
-        return send_file(BytesIO(article['preview_image']), mimetype='image/jpeg')
-    return send_file('static/img/article-placeholder.png')
+    try:
+        article = asyncio.run(get_article_by_id(article_id))
+        if not article or not article.get('preview_image'):
+            return send_file('static/img/article-placeholder.png')
+        
+        return send_file(
+            BytesIO(article['preview_image']),
+            mimetype='image/jpeg',
+            download_name=f"article_{article_id}.jpg"
+        )
+    except Exception as e:
+        logging.error(f"Error loading article image: {str(e)}")
+        return send_file('static/img/article-placeholder.png')
 
 @app.route('/article/<int:article_id>/<article_slug>')
 @app.route('/article/<int:article_id>')
@@ -1016,6 +1026,111 @@ def unread_notifications_count():
     user_id = session['user_id']
     count = asyncio.run(get_unread_notifications_count(user_id))
     return jsonify({'count': count})
+
+
+@app.route('/articles')
+def all_articles():
+    try:
+        # Получаем текущего пользователя и данные для шапки
+        user = None
+        has_unread = False
+        unread_count = 0
+        
+        if 'user_id' in session:
+            user = asyncio.run(get_user_by_id(session['user_id']))
+            has_unread = asyncio.run(get_unread_notifications_count(session['user_id'])) > 0
+            unread_count = asyncio.run(get_unread_notifications_count(session['user_id']))
+        
+        # Обрабатываем параметры запроса
+        selected_category = request.args.get('category', 'all')
+        search_query = request.args.get('search', '').strip()
+        
+        # Получаем все статьи из базы данных
+        all_articles = asyncio.run(get_all_articles_for_display())
+        
+        # Фильтрация статей
+        filtered_articles = []
+        for article in all_articles:
+            # Проверяем соответствие категории (если выбрана не "все")
+            category_match = (selected_category == 'all') or (article['category'] == selected_category)
+            # Проверяем соответствие поисковому запросу (если есть)
+            search_match = not search_query or (
+                search_query.lower() in article['topic_name'].lower() or
+                search_query.lower() in article['topic_text'].lower()
+            )
+            
+            if category_match and search_match:
+                # Удаляем бинарные данные для JSON сериализации
+                safe_article = {k: v for k, v in article.items() if k != 'preview_image'}
+                safe_article['has_image'] = bool(article.get('preview_image'))
+                filtered_articles.append(safe_article)
+        
+        # Определяем заголовок для отображения
+        if search_query:
+            category_title = f'Результаты поиска: "{search_query}"'
+        else:
+            category_title = EXPERTISE_AREAS.get(selected_category, 'Все категории')
+        
+        return render_template(
+            'articles.html',
+            current_user=user,
+            articles=filtered_articles,
+            active_category=selected_category,
+            search_query=search_query,
+            EXPERTISE_AREAS=EXPERTISE_AREAS,
+            has_unread_notifications=has_unread,
+            unread_count=unread_count,
+            category_title=category_title
+        )
+    except Exception as e:
+        logging.error(f"Ошибка в маршруте /articles: {str(e)}", exc_info=True)
+        abort(500)
+
+@app.route('/api/articles')
+def api_articles():
+    category = request.args.get('category', 'marketing')
+    all_articles = asyncio.run(get_all_articles_for_display())
+    filtered = [a for a in all_articles if a['category'] == category]
+
+    return jsonify({
+        'category_name': EXPERTISE_AREAS.get(category, 'Категория'),
+        'articles': [
+            {
+                'id': a['id'],
+                'topic_name': a['topic_name'],
+                'topic_name_en': a['topic_name_en'],
+                'has_image': bool(a['preview_image'])
+            } for a in filtered
+        ]
+    })
+
+@app.route('/api/articles/search')
+def search_articles_api():
+    query = request.args.get('q', '').strip()
+    print(f"Search query: '{query}'")  # Логирование
+    
+    if not query:
+        return jsonify({'articles': []})
+    
+    all_articles = asyncio.run(get_all_articles_for_display())
+    print(f"Total articles: {len(all_articles)}")  # Логирование
+    
+    filtered = [a for a in all_articles if query.lower() in a['topic_name'].lower()]
+    print(f"Found articles: {len(filtered)}")  # Логирование
+    
+    result = {
+        'articles': [
+            {
+                'id': a['id'],
+                'topic_name': a['topic_name'],
+                'topic_name_en': a.get('topic_name_en', ''),
+                'has_image': bool(a.get('preview_image'))
+            } for a in filtered
+        ]
+    }
+    
+    print(f"Returning: {result}")  # Логирование
+    return jsonify(result)
 
 async def main():
     start = None

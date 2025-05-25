@@ -25,7 +25,7 @@ body {
   min-height: 100vh; /* Минимальная высота - весь экран */
 }
 
-.index-page, .account-page, .writing-an-article, .editor-page, .reading-page, .experts-page, .expert-application-page, .chat-page, .passport-verification, .notifications-page {
+.index-page, .account-page, .writing-an-article, .editor-page, .reading-page, .experts-page, .expert-application-page, .chat-page, .passport-verification, .notifications-page, .articles-page {
   zoom: 80%
 }
 
