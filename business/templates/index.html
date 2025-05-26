@@ -96,7 +96,7 @@
             <div class="no-articles">Нет доступных публикаций</div>
         {% else %}
             {% for article in data %}
-              {% if article.public_status == 'accept' %}  <!-- Добавляем проверку статуса -->
+                {% if article.public_status == 'accept' or (current_user and (current_user.id == article.public_creator or current_user.user_role == 'admin')) %}<!-- Добавляем проверку статуса -->
                 <a href="{{ url_for('view_article', article_id=article.id, article_slug=article.topic_name_en) }}">
                   <div class="article">
                     {% if article['preview_image'] %}
@@ -111,7 +111,7 @@
                     <h3>{{ article['topic_name'] }}</h3>
                   </div>
                 </a>
-              {% endif %}
+                {% endif %}
             {% endfor %}
         {% endif %}
     </div>

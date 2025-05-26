@@ -483,9 +483,6 @@
           </div>
         </div>
         <div class="message-input-wrapper">
-          <button class="emoji-btn">😊</button>
-          <input type="file" class="file-input" hidden>
-          <button class="attach-btn">📎</button>
           <input type="text" class="message-input" placeholder="Введите сообщение...">
           <button class="send-btn">➤</button>
         </div>
@@ -533,9 +530,6 @@
       const messagesBox = document.querySelector('.messages');
       const messageInput = document.querySelector('.message-input');
       const sendBtn = document.querySelector('.send-btn');
-      const emojiBtn = document.querySelector('.emoji-btn');
-      const attachBtn = document.querySelector('.attach-btn');
-      const fileInput = document.querySelector('.file-input');
       const closeChatBtn = document.querySelector('.close-chat-btn');
       const chatSearch = document.querySelector('.chat-search');
       const createGroupBtn = document.querySelector('.create-group-btn');
@@ -559,6 +553,12 @@
           
           // Загрузка сообщений для выбранного чата
           loadChatMessages(activeChatId);
+          // Адаптивное поведение на мобильных
+          if (window.innerWidth <= 768) {
+            document.querySelector('.chat-main').classList.add('active');
+            document.querySelector('.chat-sidebar').classList.add('hidden');
+          }
+
         });
       });
 
@@ -653,27 +653,19 @@
         }
       });
 
-      // Эмодзи
-      emojiBtn.addEventListener('click', () => {
-        messageInput.value += '😊';
-        messageInput.focus();
-      });
-
-      // Прикрепление файлов
-      attachBtn.addEventListener('click', () => {
-        fileInput.click();
-      });
-
-      fileInput.addEventListener('change', () => {
-        const file = fileInput.files[0];
-        if (file) {
-          addMessage('sent', `📎 Файл: ${file.name}`, getCurrentTime());
-        }
-        fileInput.value = '';
-      });
-
       // Закрытие чата
-      closeChatBtn.addEventListener('click', closeActiveChat);
+      closeChatBtn.addEventListener('click', () => {
+        // Возвращаемся к списку чатов
+        document.querySelector('.chat-main').classList.remove('active');
+        document.querySelector('.chat-sidebar').classList.remove('hidden');
+
+        // Скрываем чат
+        chatWindow.classList.add('hidden');
+        noChat.style.display = 'flex';
+
+        // Снимаем активность с чатов
+        chatItems.forEach(i => i.classList.remove('active'));
+      });
 
       // Закрытие активного чата
       function closeActiveChat() {

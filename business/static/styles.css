@@ -1077,26 +1077,34 @@ header.logo {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  min-height: 100vh;
   margin: 0;
   color: #ffffff;
   text-align: center;
+  padding: 20px;
 }
 .container-error {
   max-width: 500px;
+  width: 100%;
   padding: 2rem;
+  animation: fadeIn 0.5s ease-out;
 }
+
 .h1-error {
   font-size: 6rem;
   font-weight: 500;
   margin: 0;
   animation: glitch 0.5s ease-in-out;
+  line-height: 1;
 }
+
 .p-error {
   font-size: 1.2rem;
   opacity: 0.8;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
 }
+
 .btn-in-error {
   background: #2E2138;
   color: white;
@@ -1106,12 +1114,61 @@ header.logo {
   font-size: 1rem;
   cursor: pointer;
   transition: all 0.3s ease;
-}
-.btn-in-error:hover {
-  background: #2E2138;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  display: inline-block;
+  min-width: 160px;
 }
 
+.btn-in-error:hover {
+  background: #3a2a4a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Медиазапросы для адаптивности */
+@media (max-width: 768px) {
+  .h1-error {
+    font-size: 4.5rem;
+  }
+  
+  .p-error {
+    font-size: 1rem;
+    margin-bottom: 1.2rem;
+  }
+  
+  .container-error {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .h1-error {
+    font-size: 3.5rem;
+  }
+  
+  .p-error {
+    font-size: 0.9rem;
+  }
+  
+  .btn-in-error {
+    padding: 10px 20px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .h1-error {
+    font-size: 3rem;
+  }
+  
+  .container-error {
+    padding: 1rem;
+  }
+}
 
 /* ====== РЕДАКТИРОВАНИЕ ПРОФИЛЯ ===================================================================================== */
 .avatar-section {
@@ -2679,8 +2736,7 @@ a.article-link:focus {
   flex: 1;
   display: flex;
   justify-content: space-between;
-  align-items: center;
-}
+  }
 
 .message-button {
   padding: 20px 50px;
@@ -2777,4 +2833,1299 @@ a.article-link:focus {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+
+
+
+
+@media (max-width: 1200px) {
+   .header-inner {
+    padding: 6px 100px;
+  }
+  
+  .about-us,
+  .publications {
+    padding: 40px 100px;
+  }
+
+  .articles-grid {
+    gap: 15px;
+    justify-content: center;
+  }
+  
+  .article {
+    width: calc(33.33% - 10px);
+  }
+
+  .publications {
+    padding: 20px 100px 40px;
+  }
+  
+  .articles-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+}
+
+@media (max-width: 992px) {
+  .article {
+    width: calc(50% - 10px);
+  }
+  
+  .article-card {
+    height: 180px;
+  }
+
+  .header-inner {
+    padding: 6px 50px;
+  }
+  
+  .about-us,
+  .publications {
+    padding: 40px 50px;
+  }
+  
+  .expert-list {
+    padding: 0 50px;
+  }
+  .publications {
+    padding: 20px 50px 40px;
+  }
+  
+  .category-title {
+    font-size: 22px;
+  }
+  
+  .categories-filter {
+    gap: 10px;
+  }
+  
+  .category-btn {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header-inner {
+    padding: 6px 20px;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .header-nav {
+    width: 100%;
+    justify-content: space-between;
+    gap: 15px;
+  }
+
+  .profile-outer-frame {
+    width: 95%;
+    margin: 15px auto;
+  }
+  
+  .profile-inner-container {
+    padding: 0 15px 20px;
+  }
+  
+  .profile-main {
+    flex-direction: column;
+    gap: 20px;
+    align-items: flex-start;
+  }
+  
+  .profile-buttons {
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+  }
+  
+  .edit-profile-button,
+  .confirm-profile-button,
+  .become-expert-button,
+  .expert-request-status,
+  .friend-button {
+    width: 100%;
+    text-align: left;
+    padding: 12px;
+  }
+  
+  .publications-divider {
+    display: none;
+  }
+
+  .articles-grid {
+    justify-content: center;
+    gap: 15px;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+  
+  .article {
+    width: 100%;
+    max-width: 350px;
+  }
+  
+  .article-card {
+    height: 175px; /* Сохраняем пропорции ~2:1 для 350px ширины */
+  }
+  
+  .article h3 {
+    width: 100%;
+    padding: 0 5px;
+    font-size: 16px;
+  }
+  
+
+  .publications {
+    padding: 20px 30px 40px;
+  }
+  
+  .search-container {
+    max-width: 100%;
+    margin-bottom: 15px;
+  }
+  
+  .categories-filter {
+    justify-content: flex-start;
+    margin-bottom: 20px;
+  }
+}
+
+@media (max-width: 576px) {
+
+  .articles-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .article-card {
+    height: 150px; /* 300x150 - соотношение 2:1 */
+  }
+  
+  .article-card.add-article-card {
+    font-size: 60px;
+  }
+
+  .header-nav {
+    flex-wrap: wrap;
+  }
+  
+  .header-nav a {
+    font-size: 14px;
+  }
+  
+  .login-button {
+    padding: 6px 12px;
+    font-size: 14px;
+  }
+  
+  .join-us h2 {
+    font-size: 24px;
+  }
+  
+  .join-us p {
+    font-size: 16px;
+  }
+  
+  .about-us h2 {
+    font-size: 22px;
+  }
+  
+  .about-us p {
+    font-size: 16px;
+  }
+  
+  .publications {
+    padding: 20px 15px 30px;
+  }
+  
+  .publications h2 {
+    font-size: 24px;
+    padding-bottom: 15px;
+    padding-top: 15px;
+  }
+  .category-title {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+
+  .category-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  
+  .search-container {
+    flex-direction: column;
+  }
+  
+  #article-search {
+    border-radius: 20px !important;
+    margin-bottom: 10px;
+  }
+  
+  #search-button {
+    border-radius: 20px !important;
+    width: 100%;
+  }
+  
+  /* Стили для выпадающего меню аккаунта */
+  .account-dropdown {
+    width: 100%;
+  }
+  
+  .account-button-if-login {
+    justify-content: center;
+    width: 100%;
+  }
+  
+  .account-dropdown-content {
+    width: 100%;
+    left: 0;
+  }
+  
+  /* Модальное окно */
+  .modal-content {
+    width: 90%;
+  }
+  
+  .modal-buttons {
+    flex-direction: column;
+  }
+  
+  .modal-button {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+}
+
+@media (max-width: 400px) {
+  .article-card {
+    height: 120px; /* 240x120 - сохраняем 2:1 */
+  }
+  
+  .article h3 {
+    font-size: 14px;
+    margin-top: 5px;
+  }
+  .logo {
+    font-size: 16px;
+  }
+  
+  .logo img {
+    width: 45px;
+    height: 45px;
+  }
+  
+  .header-nav {
+    gap: 10px;
+  }
+  
+  .publications h2 {
+    font-size: 22px;
+  }
+  
+  .category-title {
+    font-size: 18px;
+  }
+  
+  .profile-title {
+    font-size: 20px;
+    padding: 0 15px 5px;
+  }
+  
+  .profile-avatar img {
+    width: 120px;
+    height: 120px;
+  }
+}
+
+
+
+@media (max-width: 768px) {
+  .chat-wrapper {
+    flex-direction: row;
+    position: relative;
+  }
+
+  .chat-sidebar {
+    width: 100%;
+    max-width: 100%;
+    z-index: 1;
+    height: 100vh;
+    overflow-y: auto;
+    transition: transform 0.3s ease;
+    position: absolute;
+    left: 0;
+    top: 0;
+    background-color: #2F1E60;
+  }
+
+  .chat-main {
+    width: 100%;
+    height: 100vh;
+    background-color: #fff;
+    flex: none;
+    position: absolute;
+    left: 100%;
+    top: 0;
+    z-index: 2;
+    transition: transform 0.3s ease;
+  }
+
+  .chat-main.active {
+    transform: translateX(-100%);
+  }
+
+  .chat-sidebar.hidden {
+    transform: translateX(-100%);
+  }
+
+  .chat-header .close-chat-btn {
+    display: inline;
+  }
+}
+@media (min-width: 769px) {
+  .chat-header .close-chat-btn {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .confirmation-container {
+    padding: 30px 20px;
+  }
+
+  .confirmation-container h1 {
+    font-size: 22px;
+  }
+
+  .confirmation-container p {
+    font-size: 16px;
+  }
+
+  .confirm-buttons {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .confirm-btn {
+    width: 100%;
+    max-width: none;
+    font-size: 16px;
+    padding: 12px;
+  }
+
+    .new-article-container {
+    padding: 20px;
+    width: 95%;
+    font-size: 15px;
+  }
+
+  .header-wrapper {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .header-article {
+    text-align: left;
+    font-size: 20px;
+    margin-right: 0;
+  }
+
+  .back-button {
+    margin-right: 0;
+  }
+
+  .form-label {
+    font-size: 15px;
+  }
+
+  .form-input {
+    font-size: 15px;
+    padding: 12px;
+  }
+
+  #content {
+    height: 200px;
+    min-height: 200px;
+    max-height: 300px;
+  }
+
+  .file-input-button {
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  .submit-btn {
+    font-size: 15px;
+    padding: 12px 20px;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .confirmation-container {
+    padding: 20px 15px;
+  }
+
+  .confirmation-container h1 {
+    font-size: 20px;
+  }
+
+  .confirmation-container p {
+    font-size: 15px;
+  }
+
+  .confirm-btn {
+    font-size: 15px;
+    padding: 10px;
+  }
+  .new-article-container {
+    padding: 15px;
+    font-size: 14px;
+  }
+
+  .header-article {
+    font-size: 18px;
+  }
+
+  .form-input,
+  .file-input-button {
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  #content {
+    height: 180px;
+    min-height: 180px;
+    max-height: 250px;
+  }
+
+  .submit-btn {
+    font-size: 14px;
+    padding: 10px 16px;
+  }
+}
+
+
+@media (max-width: 768px) {
+  .profile-outer-frame {
+    width: 95%;
+    margin: 20px auto;
+    padding: 0;
+  }
+
+  .profile-inner-container {
+    padding: 20px;
+  }
+
+  .avatar-section {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .avatar-controls {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .avatar-upload-btn,
+  .avatar-remove-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .form-row-editor {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .form-group-editor input {
+    font-size: 15px;
+    padding: 12px;
+  }
+
+  .form-section-editor h4 {
+    font-size: 16px;
+  }
+
+  .form-actions-editor {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .save-btn-editor,
+  .cancel-btn-editor {
+    width: 100%;
+    font-size: 15px;
+    padding: 12px;
+  }
+  .profile-title {
+    font-size: 20px;
+    border-radius: 25px;
+    padding: 10px 20px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-title {
+    font-size: 20px;
+    border-radius: 25px;
+    padding: 10px 17px 10px;
+  }
+
+  .form-group-editor input {
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  .form-section-editor h4 {
+    font-size: 15px;
+  }
+
+  .avatar-preview {
+    width: 120px;
+    height: 120px;
+  }
+}
+
+
+/* Адаптивные стили */
+@media (max-width: 768px) {
+  .expert-application-page {
+    padding: 20px 15px;
+    align-items: flex-start;
+  }
+  
+  .expert-application-container {
+    padding: 25px;
+    margin-top: 20px;
+  }
+  
+  .expert-application-title {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+  
+  .expert-user-info {
+    padding: 12px;
+    font-size: 14px;
+  }
+  
+  .expert-form-label {
+    font-size: 14px;
+  }
+  
+  .expert-form-input,
+  .expert-form-select {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+  
+  textarea.expert-form-input {
+    min-height: 80px;
+  }
+  
+  .expert-submit-btn {
+    padding: 12px;
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .expert-application-container {
+    padding: 20px 15px;
+    border-radius: 15px;
+  }
+  
+  .expert-application-title {
+    font-size: 22px;
+    margin-bottom: 15px;
+  }
+  
+  .expert-form-group {
+    margin-bottom: 12px;
+  }
+  
+  .expert-form-input,
+  .expert-form-select {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+  
+  .expert-submit-btn {
+    padding: 10px;
+    font-size: 14px;
+  }
+  
+  /* Улучшаем отображение выпадающего списка на мобильных */
+  .expert-form-select {
+    background-position: right 8px center;
+    background-size: 12px;
+  }
+}
+
+/* Для очень маленьких экранов */
+@media (max-width: 360px) {
+  .expert-application-title {
+    font-size: 20px;
+  }
+  
+  .expert-user-info p {
+    font-size: 13px;
+  }
+  
+  .expert-form-label {
+    font-size: 13px;
+  }
+  
+  .expert-required-field {
+    margin-left: 2px;
+  }
+}
+
+
+@media (max-width: 768px) {
+  .friends-container {
+    width: 100%;
+    max-width: 100%;
+    margin: 10px auto;
+    padding: 10px;
+    box-sizing: border-box;
+  }
+
+  .friends-tabs {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .tab-button {
+    width: 100%;
+    text-align: center;
+  }
+
+  .friend-item,
+  .request-item {
+    flex-direction: column;
+    align-items: flex-start;    
+    text-align: center;
+    gap: 12px;
+  }
+
+  .friend-avatar,
+  .request-avatar {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 8px;
+  }
+
+  .friend-avatar img,
+  .request-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+
+  .friend-info,
+  .request-info {
+    align-items: center;
+  }
+
+  .request-actions {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .message-button-in-friends,
+  .accept-button,
+  .decline-button {
+    padding: 6px 12px;
+    font-size: 14px;
+  }
+
+  .friend-name,
+  .request-name {
+    font-size: 15px;
+    font-weight: 500;
+    padding-right: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .friend-avatar,
+  .request-avatar {
+    width: 50px;
+    height: 50px;
+  }
+
+  .friend-name,
+  .request-name {
+    font-size: 14px;
+  }
+
+  .message-button-in-friends,
+  .accept-button,
+  .decline-button {
+    font-size: 13px;
+    padding: 5px 10px;
+  }
+}
+
+
+@media (max-width: 1024px) {
+  .header-inner {
+    padding: 6px 30px;
+  }
+
+  .about-us,
+  .publications {
+    padding: 40px 30px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .header-nav {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .join-us h2 {
+    font-size: 24px;
+  }
+
+  .join-us p {
+    font-size: 16px;
+  }
+
+  .about-us h2,
+  .publications h2 {
+    font-size: 22px;
+  }
+
+  .about-us p {
+    font-size: 16px;
+    padding-left: 0;
+  }
+
+
+
+
+
+  .quote-wrapper {
+    padding: 20px;
+    margin: 40px auto;
+  }
+
+  .quote blockquote {
+    font-size: 18px;
+  }
+
+  .quote blockquote::before,
+  .quote blockquote::after {
+    font-size: 120px;
+    top: -40px;
+    left: -15px;
+  }
+
+  .quote p,
+  .quote cite {
+    margin-left: 80px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .join-us h2 {
+    font-size: 20px;
+  }
+
+  .join-us p {
+    font-size: 14px;
+  }
+
+  .about-us h2,
+  .publications h2 {
+    font-size: 20px;
+  }
+
+  .about-us p {
+    font-size: 14px;
+  }
+
+
+  .quote-wrapper {
+    padding: 16px;
+  }
+
+  .quote blockquote {
+    font-size: 16px;
+  }
+
+  .quote p,
+  .quote cite {
+    margin-left: 60px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  .quote-wrapper {
+    display: none;
+  }
+}
+
+
+@media (max-width: 768px) {
+  .container-login {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .auth-box {
+    width: 100%;
+    max-width: 400px;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+
+  .auth-form-login,
+  .auth-form-registration {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .input-group-login,
+  .input-group-registration {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .input-group-registration.row {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .FIO {
+    width: 100%;
+  }
+
+  .auth-toggle {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .auth-toggle button {
+    flex: 1;
+    padding: 10px;
+    font-size: 16px;
+  }
+
+  input[type="text"],
+  input[type="tel"],
+  input[type="email"],
+  input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    box-sizing: border-box;
+  }
+
+  .terms-of-use {
+    text-align: center;
+    font-size: 14px;
+  }
+
+  .login-btn,
+  .registration-btn {
+    width: 100%;
+    font-size: 16px;
+    padding: 12px;
+  }
+
+  .registration,
+  .login {
+    text-align: center;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-box h2 {
+    font-size: 20px;
+    text-align: center;
+  }
+
+  .auth-toggle button {
+    font-size: 14px;
+    padding: 8px;
+  }
+
+  input[type="text"],
+  input[type="tel"],
+  input[type="email"],
+  input[type="password"] {
+    font-size: 14px;
+    padding: 8px;
+  }
+
+  .login-btn,
+  .registration-btn {
+    font-size: 14px;
+    padding: 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .input-group-login .icon {
+    display: none;
+  }
+}
+
+
+@media (max-width: 768px) {
+  .header-inner {
+    padding: 10px 20px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .header-nav {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .notifications-container {
+    padding: 0 16px;
+    box-sizing: border-box;
+  }
+
+  .notifications-container h1 {
+    font-size: 22px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .notifications-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .notification-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 14px;
+    border-radius: 10px;
+    word-break: break-word;
+  }
+
+  .notification-content {
+    width: 100%;
+  }
+
+  .notification-message {
+    font-size: 15px;
+  }
+
+  .notification-time {
+    font-size: 13px;
+    color: #777;
+  }
+
+  .notification-link {
+    align-self: flex-start;
+    font-size: 14px;
+    margin-top: 6px;
+  }
+
+  .no-notifications {
+    text-align: center;
+    font-size: 15px;
+    padding: 30px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .notifications-container h1 {
+    font-size: 20px;
+  }
+
+  .notification-message {
+    font-size: 14px;
+  }
+
+  .notification-time {
+    font-size: 12px;
+  }
+
+  .notification-link {
+    font-size: 13px;
+  }
+}
+
+
+@media (max-width: 768px) {
+  .passport-form-container {
+    padding: 20px;
+    margin: 0 12px;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .form-group {
+    width: 100%;
+  }
+
+  .form-label {
+    font-size: 15px;
+  }
+
+  .form-input {
+    font-size: 15px;
+    padding: 10px;
+  }
+
+  .file-upload {
+    padding: 20px 16px;
+  }
+
+  .file-upload-label {
+    width: 100%;
+    text-align: center;
+  }
+
+  .file-hint {
+    font-size: 13px;
+  }
+
+  .file-preview {
+    max-height: 200px;
+  }
+
+  .submit-btn,
+  .next-btn,
+  .back-btn {
+    width: 100%;
+    font-size: 15px;
+    padding: 12px;
+    margin-top: 16px;
+  }
+
+  .status-notice {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 14px;
+  }
+
+  .progress-steps {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .step {
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
+    margin: 0 8px;
+  }
+
+  .step:not(:last-child)::after {
+    width: 20px;
+  }
+
+  .modal-content {
+    padding: 20px;
+    font-size: 14px;
+  }
+
+  .modal-title {
+    font-size: 18px;
+  }
+
+  .modal-message {
+    font-size: 14px;
+  }
+
+  .modal-btn {
+    font-size: 14px;
+    padding: 10px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .passport-form-container {
+    padding: 16px;
+    margin: 0 8px;
+  }
+
+  .form-label {
+    font-size: 14px;
+  }
+
+  .form-input {
+    font-size: 14px;
+  }
+
+  .file-hint {
+    font-size: 12px;
+  }
+
+  .submit-btn,
+  .next-btn,
+  .back-btn {
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  .status-notice {
+    font-size: 13px;
+  }
+
+  .step {
+    width: 28px;
+    height: 28px;
+    font-size: 13px;
+  }
+}
+
+
+@media (max-width: 768px) {
+  .header-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px 20px;
+    gap: 10px;
+  }
+
+  .header-nav {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .article-container {
+    padding: 0 16px;
+  }
+
+  .article-header {
+    padding-top: 20px;
+  }
+
+  .article-title {
+    font-size: 22px;
+    text-align: center;
+  }
+
+  .article-meta {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .author-info {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .author-avatar {
+    width: 60px;
+    height: 60px;
+  }
+
+  .article-stats {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .article-image-wrapper img,
+  .article-image {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+  }
+
+  .article-content {
+    font-size: 16px;
+    line-height: 1.6;
+    padding-top: 20px;
+  }
+
+  .article-actions {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .like-button,
+  .btn-delete-article {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 15px;
+  }
+
+  .footer-in-reading {
+    text-align: center;
+    padding: 20px 0;
+    font-size: 14px;
+  }
+
+  .modal-content {
+    width: 90%;
+    max-width: 360px;
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .article-title {
+    font-size: 20px;
+  }
+
+  .article-content {
+    font-size: 15px;
+  }
+
+  .like-button span,
+  .btn-delete-article {
+    font-size: 14px;
+  }
+
+  .author-name {
+    font-size: 14px;
+  }
+
+  .article-date {
+    font-size: 13px;
+  }
 }
