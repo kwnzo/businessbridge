@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+  <title>Бизнес‑Мост | Друзья</title>
+</head>
+<body class="friends-page">
+  <!-- ======= Header ======= -->
+<header class="header">
+  <div class="header-inner">
+    <!-- logo -->
+    <a class="logo" href="/index">
+      <img src="{{ url_for('static', filename='img/logo.png')}}" alt="logo" width="65" height="65">
+      Бизнес‑Мост
+    </a>
+
+    <!-- Навигация -->
+    <nav class="header-nav">
+      <a href="/index">Главная</a>
+      <a href="/articles">Статьи</a>
+      <a href="/chats">Чаты</a>
+      <a href="/experts">Эксперты</a>
+      {% if current_user %}
+        <!-- Уведомления - теперь отдельный элемент навигации -->
+        {% if current_user %}
+          <div class="notifications-wrapper">
+            <a href="/notifications" class="notification-button">
+              <img src="{{ url_for('static', filename='img/notification' + ('-no-read' if has_unread_notifications else '') + '.png') }}" 
+                  alt="Уведомления" 
+                  class="notification-icon">
+              {% if unread_count > 0 %}
+                <span class="notification-badge">{{ unread_count }}</span>
+              {% endif %}
+            </a>
+          </div>
+        {% endif %}
+        
+        <!-- Аккаунт -->
+        <div class="account-dropdown">
+          <a href="#" class="account-button-if-login">
+            <img src="{{ url_for('user_avatar', user_id=current_user.id) }}" 
+                alt="Аватар" 
+                class="avatar-icon-if-login js-avatar"
+                data-fallback="{{ url_for('static', filename='img/avatar-placeholder.png') }}">
+            <svg class="dropdown-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+              <path d="M7 10l5 5 5-5"/>
+            </svg>
+          </a>
+          <div class="account-dropdown-content">
+            <a href="/profile" class="account-dropdown-item">Мой профиль</a>
+            <hr class="account-dropdown-divider">
+            <a href="/friends" class="account-dropdown-item">Друзья</a>
+            {% if current_user.user_role == 'admin' %}
+              <hr class="account-dropdown-divider">
+              <a href="/admin" class="account-dropdown-item">Админ-панель</a>
+            {% endif %}
+            <hr class="account-dropdown-divider">
+            <a href="/logout" class="account-dropdown-item">Выйти</a>
+          </div>
+        </div>
+      {% else %}
+        <a href="login" class="login-button" id="login-btn">Вход</a>
+      {% endif %}
+    </nav>
+  </div>
+</header>
+
+  <div class="friends-container">
+    <div class="friends-tabs">
+      <button class="tab-button active" data-tab="friends">Друзья</button>
+      <button class="tab-button" data-tab="requests">Заявки</button>
+    </div>
+
+    <div class="tab-content active" id="friends-tab">
+      <h2>Ваши друзья</h2>
+      <div class="friends-list">
+        {% if friends %}
+          {% for friend in friends %}
+            <div class="friend-item">
+              <a href="/user/{{ friend.id }}" class="friend-avatar-link">
+                <div class="friend-avatar">
+                  <img src="{{ url_for('user_avatar', user_id=friend.id) }}" alt="Аватар">
+                </div>
+              </a>
+              <div class="friend-info">
+                <a href="/user/{{ friend.id }}" class="friend-name-link">
+                  <div class="friend-name">{{ friend.user_surname }} {{ friend.user_name }}</div>
+                </a>
+                <a href="/chats?user_id={{ friend.id }}" class="message-button-in-friends">Написать</a>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <p class="no-friends">У вас пока нет друзей</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="tab-content" id="requests-tab">
+      <h2>Входящие заявки</h2>
+      <div class="requests-list">
+        {% if pending_requests %}
+          {% for request in pending_requests %}
+            <div class="request-item">
+              <a href="/user/{{ request.id }}" class="request-avatar-link">
+                <div class="request-avatar">
+                  <img src="{{ url_for('user_avatar', user_id=request.id) }}" alt="Аватар">
+                </div>
+              </a>
+              <div class="request-info">
+                <a href="/user/{{ request.id }}" class="request-name-link">
+                  <div class="request-name">{{ request.user_surname }} {{ request.user_name }}</div>
+                </a>
+                <div class="request-actions">
+                  <button class="accept-button" data-user-id="{{ request.id }}">Принять</button>
+                  <button class="decline-button" data-user-id="{{ request.id }}">Отклонить</button>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <p class="no-requests">У вас нет новых заявок</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Переключение между вкладками
+      const tabs = document.querySelectorAll('.tab-button');
+      tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+          tabs.forEach(t => t.classList.remove('active'));
+          this.classList.add('active');
+          
+          document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+          });
+          
+          const tabId = this.getAttribute('data-tab') + '-tab';
+          document.getElementById(tabId).classList.add('active');
+        });
+      });
+
+        // Обработка ответов на заявки
+        document.querySelectorAll('.accept-button, .decline-button').forEach(button => {
+            button.addEventListener('click', async function() {
+                const userId = this.getAttribute('data-user-id');
+                const isAccept = this.classList.contains('accept-button');
+                
+                try {
+                    const response = await fetch('/api/friends/respond', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            friend_id: userId,
+                            accept: isAccept
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        if (result.refresh) {
+                            location.reload();
+                        }
+                    } else {
+                        alert(result.message || 'Ошибка при обработке заявки');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Ошибка при отправке запроса');
+                }
+            });
+        });
+    });
+  </script>
+  <script src="{{ url_for('static', filename='js/account-dropdown.js') }}"></script>
+
+</body>
+</html>

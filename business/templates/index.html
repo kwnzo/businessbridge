@@ -55,6 +55,8 @@
           </a>
           <div class="account-dropdown-content">
             <a href="/profile" class="account-dropdown-item">Мой профиль</a>
+            <hr class="account-dropdown-divider">
+            <a href="/friends" class="account-dropdown-item">Друзья</a>
             {% if current_user.user_role == 'admin' %}
               <hr class="account-dropdown-divider">
               <a href="/admin" class="account-dropdown-item">Админ-панель</a>

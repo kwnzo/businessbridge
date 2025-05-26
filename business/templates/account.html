@@ -129,6 +129,8 @@
           </a>
           <div class="account-dropdown-content">
             <a href="/profile" class="account-dropdown-item">Мой профиль</a>
+            <hr class="account-dropdown-divider">
+            <a href="/friends" class="account-dropdown-item">Друзья</a>
             {% if current_user.user_role == 'admin' %}
               <hr class="account-dropdown-divider">
               <a href="/admin" class="account-dropdown-item">Админ-панель</a>
@@ -222,7 +224,25 @@
             </div>
           {% endif %}
         {% endif %}
+        {% if not is_own_profile and current_user %}
+          <div class="friend-actions">
+            {% if friendship_status == 'pending' %}
+              {% if current_user.id == friendship_requester %}
+                <button class="friend-button pending" disabled>Заявка отправлена</button>
+              {% else %}
+                <button class="friend-button pending" disabled>Есть входящая заявка</button>
+              {% endif %}
+            {% elif friendship_status == 'accepted' %}
+              <div class="friend-status">
+                <a href="/chats?user_id={{ user.id }}" class="message-button">Написать</a>
+              </div>
+            {% else %}
+              <button class="friend-button" onclick="sendFriendRequest({{ user.id }})">Добавить в друзья</button>
+            {% endif %}
+          </div>
+        {% endif %}
       </div>
+      
 
       <!-- ======= Публикации ======= -->
       <div class="profile-publications-wrapper">
@@ -368,7 +388,35 @@
       };
     })();
   </script>
-  
 
+  <script>
+    async function sendFriendRequest(friendId) {
+        try {
+            const response = await fetch('/api/friends/send-request', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ friend_id: friendId })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                if (result.refresh) {
+                    location.reload(); // Обновляем страницу, если нужно
+                } else {
+                    alert(result.message || 'Заявка отправлена');
+                }
+            } else {
+                alert(result.message || 'Ошибка при отправке заявки');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Ошибка при отправке запроса');
+        }
+    }
+</script>
 </body>
 </html>

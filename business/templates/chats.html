@@ -85,7 +85,6 @@
       border-radius: 10px;
       margin: 6px 12px;
       cursor: pointer;
-      justify-content: space-between;
       transition: background-color 0.3s ease;
     }
 
@@ -104,11 +103,13 @@
       background-color: #2c1f46;
       margin-right: 10px;
       flex-shrink: 0;
+      overflow: hidden; /* Добавляем это свойство */
     }
 
-    .chat-info {
-      flex-grow: 1;
-      min-width: 0; /* Важно для правильной работы flex */
+    .chat-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover; /* Это обеспечит правильное масштабирование изображения */
     }
 
     .chat-title {
@@ -419,6 +420,8 @@
           </a>
           <div class="account-dropdown-content">
             <a href="/profile" class="account-dropdown-item">Мой профиль</a>
+            <hr class="account-dropdown-divider">
+            <a href="/friends" class="account-dropdown-item">Друзья</a>
             {% if current_user.user_role == 'admin' %}
               <hr class="account-dropdown-divider">
               <a href="/admin" class="account-dropdown-item">Админ-панель</a>
@@ -442,20 +445,17 @@
         <button class="create-group-btn">Создать</button>
       </div>
       <div class="chat-list">
-        <div class="chat-item">
-          <div class="chat-avatar"></div>
+        {% for friend in friends %}
+        <div class="chat-item" data-chat-id="friend_{{ friend.id }}">
+          <div class="chat-avatar">
+            <img src="{{ url_for('user_avatar', user_id=friend.id) }}" alt="Аватар">
+          </div>
           <div class="chat-info">
-            <div class="chat-title">Чат 1</div>
-            <div class="chat-last-message">Последнее сообщение</div>
+            <div class="chat-title">{{ friend.user_surname }} {{ friend.user_name }}</div>
+            <div class="chat-last-message">Написать сообщение</div>
           </div>
         </div>
-        <div class="chat-item">
-          <div class="chat-avatar"></div>
-          <div class="chat-info">
-            <div class="chat-title">Чат 2</div>
-            <div class="chat-last-message">Последнее сообщение</div>
-          </div>
-        </div>
+        {% endfor %}
       </div>
     </div>
 

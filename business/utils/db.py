@@ -2021,4 +2021,147 @@ async def get_all_articles_for_display():
             ''')
             return await cur.fetchall()
         
-    
+async def send_friend_request(user_id: int, friend_id: int) -> bool:
+    """Отправляет заявку в друзья"""
+    if user_id == friend_id:
+        return False
+        
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            try:
+                # Проверяем, нет ли уже существующей заявки
+                await cur.execute("""
+                    SELECT 1 FROM friendships
+                    WHERE (user_id = %s AND friend_id = %s)
+                    OR (user_id = %s AND friend_id = %s)
+                    LIMIT 1
+                """, (user_id, friend_id, friend_id, user_id))
+                existing = await cur.fetchone()
+                
+                if existing:
+                    return False  # Уже есть какое-то отношение между пользователями
+                
+                # Создаем новую заявку
+                await cur.execute("""
+                    INSERT INTO friendships (user_id, friend_id, status)
+                    VALUES (%s, %s, 'pending')
+                """, (user_id, friend_id))
+                
+                await conn.commit()
+                return True
+            except Exception as e:
+                await conn.rollback()
+                logging.error(f"Error sending friend request: {str(e)}")
+                return False
+
+async def get_friendship_status(user_id: int, friend_id: int) -> tuple:
+    """Получает статус дружбы и ID инициатора"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute("""
+                SELECT status, user_id as requester_id
+                FROM friendships
+                WHERE (user_id = %s AND friend_id = %s)
+                OR (user_id = %s AND friend_id = %s)
+                LIMIT 1
+            """, (user_id, friend_id, friend_id, user_id))
+            result = await cur.fetchone()
+            return (result['status'], result['requester_id']) if result else (None, None)
+
+async def respond_to_friend_request(user_id: int, friend_id: int, accept: bool) -> bool:
+    """Обрабатывает ответ на заявку в друзья"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            try:
+                # Проверяем, существует ли заявка
+                await cur.execute("""
+                    SELECT 1 FROM friendships
+                    WHERE user_id = %s AND friend_id = %s AND status = 'pending'
+                """, (friend_id, user_id))
+                
+                if not await cur.fetchone():
+                    return False  # Заявка не существует
+
+                if accept:
+                    # Принимаем заявку (создаем взаимную запись)
+                    await cur.execute("""
+                        INSERT INTO friendships (user_id, friend_id, status)
+                        VALUES (%s, %s, 'accepted')
+                        ON DUPLICATE KEY UPDATE status = 'accepted'
+                    """, (user_id, friend_id))
+                    
+                    await cur.execute("""
+                        UPDATE friendships
+                        SET status = 'accepted'
+                        WHERE user_id = %s AND friend_id = %s
+                    """, (friend_id, user_id))
+                else:
+                    # Отклоняем заявку
+                    await cur.execute("""
+                        DELETE FROM friendships
+                        WHERE (user_id = %s AND friend_id = %s)
+                        OR (user_id = %s AND friend_id = %s)
+                    """, (friend_id, user_id, user_id, friend_id))
+                
+                await conn.commit()
+                return True
+            except Exception as e:
+                await conn.rollback()
+                logging.error(f"Error responding to friend request: {str(e)}")
+                return False
+
+async def get_friends(user_id: int) -> list:
+    """Получает список друзей пользователя"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute("""
+                SELECT u.id, u.user_name, u.user_surname, u.user_avatar
+                FROM users u
+                JOIN friendships f ON u.id = f.friend_id
+                WHERE f.user_id = %s AND f.status = 'accepted'
+                ORDER BY u.user_surname, u.user_name
+            """, (user_id,))
+            return await cur.fetchall()
+
+async def get_pending_requests(user_id: int) -> list:
+    """Получает входящие заявки в друзья"""
+    async with aiomysql.connect(
+            user=user,
+            password=dbpassword,
+            db=db,
+            host=host,
+            port=port
+    ) as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute("""
+                SELECT u.id, u.user_name, u.user_surname, u.user_avatar, f.created_at
+                FROM users u
+                JOIN friendships f ON u.id = f.user_id
+                WHERE f.friend_id = %s AND f.status = 'pending'
+                ORDER BY f.created_at DESC
+            """, (user_id,))
+            return await cur.fetchall()

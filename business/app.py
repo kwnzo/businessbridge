@@ -9,7 +9,8 @@ from utils.db import (init_db,get_views, get_publics, record_view,
                       get_expert_articles, get_expert_info, EXPERTISE_AREAS, delete_article_db,
                       get_passport_request, has_pending_passport_request, create_passport_request,
                       get_user_notifications, mark_notifications_as_read, get_unread_notifications_count,
-                      get_all_articles_for_display)
+                      get_all_articles_for_display, get_friends, get_pending_requests, get_friendship_status, 
+                      create_notification, send_friend_request, respond_to_friend_request)
 from flask_limiter import Limiter
 from flask_mysqldb import MySQL
 from flask_wtf.csrf import CSRFProtect, generate_csrf, validate_csrf   
@@ -581,19 +582,30 @@ def delete_article(article_id):
 # ======================================================================================== ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ
 @app.route('/user/<int:user_id>')
 def user_profile(user_id):
+    print(f"Запрошен профиль пользователя с ID: {user_id}")  # Отладочное сообщение
     try:
         user = asyncio.run(get_user_by_id(user_id))
+        print(f"Найден пользователь: {user}")  # Отладочное сообщение
+
         if not user:
+            print("Пользователь не найден")  # Отладочное сообщение
             return render_template('404.html'), 404
         
         current_user = None
         has_unread = False
         unread_count = 0
+        friendship_status = None
         
         if 'user_id' in session:
             current_user = asyncio.run(get_user_by_id(session['user_id']))
             has_unread = asyncio.run(get_unread_notifications_count(session['user_id'])) > 0
             unread_count = asyncio.run(get_unread_notifications_count(session['user_id']))
+            
+            # Получаем статус дружбы, если пользователь авторизован
+            friendship_status, friendship_requester = asyncio.run(get_friendship_status(
+                current_user['id'], 
+                user_id
+            )) if 'user_id' in session else (None, None)
         
         expert_info = None
         if user['user_role'] == 'expert':
@@ -610,6 +622,8 @@ def user_profile(user_id):
             current_user=current_user,
             user_articles=user_articles,
             is_own_profile=is_own_profile,
+            friendship_status=friendship_status,
+            friendship_requester=friendship_requester,  # Добавляем информацию об отправителе
             has_unread_notifications=has_unread,
             unread_count=unread_count
         )
@@ -842,10 +856,15 @@ def chat_page():
     has_unread = asyncio.run(get_unread_notifications_count(session['user_id'])) > 0
     unread_count = asyncio.run(get_unread_notifications_count(session['user_id']))
     
+    # Получаем список друзей для чатов
+    friends = asyncio.run(get_friends(session['user_id']))
+    
     return render_template('chats.html', 
                          current_user=user,
+                         friends=friends,
                          has_unread_notifications=has_unread,
                          unread_count=unread_count)
+
 
 
 
@@ -1131,6 +1150,137 @@ def search_articles_api():
     
     print(f"Returning: {result}")  # Логирование
     return jsonify(result)
+
+@app.route('/friends')
+@login_required
+def friends_page():
+    user_id = session['user_id']
+    print(f"\n=== DEBUG: Getting friends for user {user_id} ===")  # Debug
+    
+    friends = asyncio.run(get_friends(user_id))
+    print(f"Friends: {friends}")  # Debug
+    
+    pending_requests = asyncio.run(get_pending_requests(user_id))
+    print(f"Pending requests: {pending_requests}")  # Debug
+    
+    current_user = asyncio.run(get_user_by_id(user_id))
+    has_unread = asyncio.run(get_unread_notifications_count(user_id)) > 0
+    unread_count = asyncio.run(get_unread_notifications_count(user_id))
+    
+    return render_template(
+        'friends.html',
+        current_user=current_user,
+        friends=friends,
+        pending_requests=pending_requests,  # Исправлено с friend_requests на pending_requests
+        has_unread_notifications=has_unread,
+        unread_count=unread_count
+    )
+
+@app.route('/api/friends/send-request', methods=['POST'])
+@login_required
+def handle_send_friend_request():
+    """Обрабатывает отправку заявки в друзья"""
+    try:
+        data = request.get_json()
+        friend_id = int(data.get('friend_id'))
+        
+        if not friend_id:
+            return jsonify({'success': False, 'message': 'Не указан ID пользователя'}), 400
+            
+        success = asyncio.run(send_friend_request(session['user_id'], friend_id))
+        
+        if success:
+            # Создаем уведомление для получателя
+            current_user = asyncio.run(get_user_by_id(session['user_id']))
+            notification_message = (
+                f"{current_user['user_name']} {current_user['user_surname']} "
+                f"отправил(а) вам заявку в друзья"
+            )
+            asyncio.run(create_notification(
+                friend_id,
+                notification_message,
+                'friend_request',
+                session['user_id']
+            ))
+            
+            return jsonify({
+                'success': True, 
+                'message': 'Заявка отправлена',
+                'refresh': True
+            })
+        return jsonify({
+            'success': False, 
+            'message': 'Не удалось отправить заявку (возможно, она уже существует)'
+        }), 400
+        
+    except Exception as e:
+        logging.error(f"Error sending friend request: {str(e)}")
+        return jsonify({'success': False, 'message': 'Внутренняя ошибка сервера'}), 500
+
+@app.route('/api/friends/respond', methods=['POST'])
+@login_required
+def handle_respond_to_friend_request():
+    """Обрабатывает ответ на заявку в друзья"""
+    try:
+        data = request.get_json()
+        friend_id = int(data.get('friend_id'))
+        accept = bool(data.get('accept', False))
+        
+        if not friend_id:
+            return jsonify({'success': False, 'message': 'Не указан ID пользователя'}), 400
+            
+        success = asyncio.run(respond_to_friend_request(
+            session['user_id'], 
+            friend_id, 
+            accept
+        ))
+        
+        if success:
+            # Создаем уведомление
+            current_user = asyncio.run(get_user_by_id(session['user_id']))
+            target_user = asyncio.run(get_user_by_id(friend_id))
+            
+            if accept:
+                # Уведомление для того, кто отправил заявку
+                notification_message = (
+                    f"{current_user['user_name']} {current_user['user_surname']} "
+                    f"принял(а) вашу заявку в друзья"
+                )
+                asyncio.run(create_notification(
+                    friend_id,
+                    notification_message,
+                    'friend_request_accepted',
+                    session['user_id']
+                ))
+            else:
+                # Уведомление об отклонении
+                notification_message = (
+                    f"{current_user['user_name']} {current_user['user_surname']} "
+                    f"отклонил(а) вашу заявку в друзья"
+                )
+                asyncio.run(create_notification(
+                    friend_id,
+                    notification_message,
+                    'friend_request_declined',
+                    session['user_id']
+                ))
+            
+            return jsonify({
+                'success': True, 
+                'message': 'Заявка ' + ('принята' if accept else 'отклонена'),
+                'refresh': True
+            })
+        return jsonify({
+            'success': False, 
+            'message': 'Ошибка при обработке заявки'
+        }), 500
+        
+    except Exception as e:
+        logging.error(f"Error responding to friend request: {str(e)}")
+        return jsonify({
+            'success': False, 
+            'message': 'Внутренняя ошибка сервера'
+        }), 500
 
 async def main():
     start = None
