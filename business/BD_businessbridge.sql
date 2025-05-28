@@ -136,13 +136,13 @@ create table if not exists business.user_chats(
 	message_id int AUTO_INCREMENT,
 	FOREIGN KEY (sender) REFERENCES `business`.`users`(id),
 	FOREIGN KEY (recipient) REFERENCES `business`.`users`(recipient)
-)
+);
 
 create table if not exists business.groups(
 	chat_id int auto_increment,
 	member int,
 	FOREIGN KEY (member) REFERENCES `business`.`users`(id)
-) 
+);
 
 create table if not exists business.group_members(
 	group_id int,
@@ -152,5 +152,5 @@ create table if not exists business.group_members(
 	message_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	FOREIGN KEY (group_id) REFERENCES `business`.`groups`(chat_id),
 	FOREIGN KEY (message_sender) REFERENCES `business`.`groups`(member)
-)
+);
 
