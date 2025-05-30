@@ -27,8 +27,14 @@
                 <a href="{{ url_for('admin_bp.articles_management') }}" class="admin-nav-item">
                     <span>Статьи</span>
                 </a>
-                <a href="{{ url_for('admin_bp.requests_management') }}" class="admin-nav-item">
-                    <span>Запросы</span>
+                <a href="{{ url_for('admin_bp.passport_requests') }}" class="admin-nav-item">
+                    <span>Верификация аккаунтов</span>
+                </a>
+                <a href="{{ url_for('admin_bp.article_requests') }}" class="admin-nav-item">
+                    <span>Статьи на проверку</span>
+                </a>
+                <a href="{{ url_for('admin_bp.expert_requests') }}" class="admin-nav-item">
+                    <span>Заявки на эксперта</span>
                 </a>
                 <a href="{{ url_for('account') }}" class="admin-nav-item">
                     <span>Вернуться на сайт</span>

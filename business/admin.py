@@ -417,25 +417,16 @@ def article_requests():
 def approve_article(article_id):
     try:
         csrf_token = request.headers.get('X-CSRFToken') or request.form.get('csrf_token')
-        if not csrf_token:
-            logger.warning("CSRF token is missing for approve article")
-            return jsonify({'success': False, 'message': 'CSRF token is missing'}), 400
-            
         validate_csrf(csrf_token)
         
         success = asyncio.run(update_article_status(article_id, 'accept'))
         if success:
-            logger.info(f"Article {article_id} approved successfully")
             return jsonify({'success': True})
-        
-        logger.warning(f"Article {article_id} not found or not updated")
-        return jsonify({'success': False, 'message': 'Статья не найдена'}), 404
-        
-    except ValidationError as e:
-        logger.warning(f"CSRF validation failed: {str(e)}")
+        return jsonify({'success': False, 'message': 'Ошибка обновления статуса'}), 400
+    except ValidationError:
         return jsonify({'success': False, 'message': 'Ошибка безопасности'}), 403
     except Exception as e:
-        logger.error(f"Error approving article: {str(e)}")
+        logging.error(f"Ошибка подтверждения статьи: {e}")
         return jsonify({'success': False, 'message': 'Внутренняя ошибка сервера'}), 500
 
 @admin_bp.route('/articles/<int:article_id>/reject', methods=['POST'])
@@ -443,78 +434,23 @@ def approve_article(article_id):
 def reject_article(article_id):
     try:
         csrf_token = request.headers.get('X-CSRFToken') or request.form.get('csrf_token')
-        if not csrf_token:
-            logger.warning("CSRF token is missing for reject article")
-            return jsonify({'success': False, 'message': 'CSRF token is missing'}), 400
-            
         validate_csrf(csrf_token)
-        
-        rejection_reason = request.json.get('reason', '')
-        if not rejection_reason:
+
+        data = request.get_json()
+        reason = data.get('reason', '').strip()
+        if not reason:
             return jsonify({'success': False, 'message': 'Укажите причину отказа'}), 400
-        
-        success = asyncio.run(reject_article_db(article_id, rejection_reason))
+
+        success = asyncio.run(reject_article_db(article_id, reason))
         if success:
-            logger.info(f"Article {article_id} rejected with reason")
             return jsonify({'success': True})
-        
-        logger.warning(f"Article {article_id} not found or not rejected")
-        return jsonify({'success': False, 'message': 'Статья не найдена'}), 404
-        
-    except ValidationError as e:
-        logger.warning(f"CSRF validation failed: {str(e)}")
+        return jsonify({'success': False, 'message': 'Ошибка отклонения'}), 400
+    except ValidationError:
         return jsonify({'success': False, 'message': 'Ошибка безопасности'}), 403
     except Exception as e:
-        logger.error(f"Error rejecting article: {str(e)}")
+        logging.error(f"Ошибка отклонения статьи: {e}")
         return jsonify({'success': False, 'message': 'Внутренняя ошибка сервера'}), 500
     
-@admin_bp.route('/requests/passport')
-@admin_required
-def passport_requests():
-    try:
-        page = request.args.get('page', 1, type=int)
-        per_page = 10
-        offset = (page - 1) * per_page
-        
-        # Получаем параметры фильтрации
-        filters = {
-            'q': request.args.get('q', '').strip(),
-            'status': request.args.get('status', ''),
-            'date_from': request.args.get('date_from', ''),
-            'date_to': request.args.get('date_to', ''),
-            'sort': request.args.get('sort', 'newest')
-        }
-        
-        # Получаем заявки с учетом фильтров
-        requests = asyncio.run(get_passport_requests(
-            search=filters['q'],
-            status=filters['status'],
-            date_from=filters['date_from'],
-            date_to=filters['date_to'],
-            sort=filters['sort'],
-            limit=per_page,
-            offset=offset
-        ))
-        
-        # Получаем общее количество с учетом фильтров
-        total_requests = asyncio.run(get_passport_requests_count(
-            search=filters['q'],
-            status=filters['status'],
-            date_from=filters['date_from'],
-            date_to=filters['date_to']
-        ))
-        
-        total_pages = (total_requests + per_page - 1) // per_page if total_requests else 1
-        
-        return render_template('admin/passport_requests.html',
-                            requests=requests,
-                            current_page=page,
-                            total_pages=total_pages,
-                            csrf_token_value=generate_csrf(),
-                            filters=filters)
-    except Exception as e:
-        logger.error(f"Passport requests error: {str(e)}", exc_info=True)
-        return render_template('admin/error.html', message="Ошибка загрузки заявок"), 500
 
 @admin_bp.route('/passport-requests/<int:request_id>/photo')
 @admin_required
@@ -582,3 +518,84 @@ def reject_passport_request(request_id):
     except Exception as e:
         logger.error(f"Error rejecting passport request: {str(e)}")
         return jsonify({'success': False, 'message': 'Внутренняя ошибка сервера'}), 500
+    
+
+
+@admin_bp.route('/requests/passport')
+@admin_required
+def passport_requests():
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = 10
+        offset = (page - 1) * per_page
+
+        # Собираем фильтры
+        filters = {
+            'q': request.args.get('q', '').strip(),
+            'status': request.args.get('status', ''),
+            'date_from': request.args.get('date_from', ''),
+            'date_to': request.args.get('date_to', ''),
+            'sort': request.args.get('sort', 'newest')
+        }
+
+        # Получаем заявки (тебе нужно будет адаптировать get_passport_requests к фильтрам)
+        passport_requests = asyncio.run(get_passport_requests(
+            query=filters['q'],
+            status=filters['status'],
+            date_from=filters['date_from'],
+            date_to=filters['date_to'],
+            sort=filters['sort'],
+            limit=per_page,
+            offset=offset
+        ))
+
+        total = asyncio.run(get_passport_requests_count(
+            query=filters['q'],
+            status=filters['status'],
+            date_from=filters['date_from'],
+            date_to=filters['date_to']
+        ))
+
+        total_pages = (total + per_page - 1) // per_page if total > 0 else 1
+
+        return render_template(
+            'admin/passport_requests.html',
+            requests=passport_requests,
+            current_page=page,
+            total_pages=total_pages,
+            csrf_token_value=generate_csrf(),
+            filters=filters  # ⬅️ вот это нужно было добавить
+        )
+    except Exception as e:
+        logger.error(f"Error loading verifications page: {str(e)}", exc_info=True)
+        return render_template('admin/error.html', message="Ошибка загрузки заявок"), 500
+
+
+@admin_bp.route('/verifications/<int:request_id>/approve', methods=['POST'])
+@admin_required
+def approve_passport(request_id):
+    try:
+        validate_csrf(request.form.get('csrf_token'))
+        success = asyncio.run(approve_passport_request_db(request_id))
+        if success:
+            return redirect(url_for('admin_bp.verifications'))
+        return abort(400)
+    except Exception as e:
+        logger.error(f"Error approving passport request: {str(e)}")
+        return abort(500)
+
+@admin_bp.route('/verifications/<int:request_id>/reject', methods=['POST'])
+@admin_required
+def reject_passport(request_id):
+    try:
+        validate_csrf(request.form.get('csrf_token'))
+        reason = request.form.get('reason', '').strip()
+        if not reason:
+            return abort(400)
+        success = asyncio.run(reject_passport_request_db(request_id, reason))
+        if success:
+            return redirect(url_for('admin_bp.verifications'))
+        return abort(400)
+    except Exception as e:
+        logger.error(f"Error rejecting passport request: {str(e)}")
+        return abort(500)

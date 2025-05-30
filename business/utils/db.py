@@ -299,21 +299,30 @@ async def record_view(public_id: int, user_id: int = None):
     ) as conn:
         async with conn.cursor() as cursor:
             try:
-                # Обновляем общий счётчик просмотров в publication_stats
+                # Проверка: был ли уже просмотр за последние 5 минут
+                if user_id:
+                    await cursor.execute("""
+                        SELECT 1 FROM views
+                        WHERE public_id = %s AND user_id = %s AND created_at > NOW() - INTERVAL 1 MINUTE
+                    """, (public_id, user_id))
+                    already_viewed = await cursor.fetchone()
+                    if already_viewed:
+                        return  # Не добавляем повторный просмотр
+
+                # Обновляем общий счётчик просмотров
                 await cursor.execute("""
                     INSERT INTO publication_stats (public_id, views)
                     VALUES (%s, 1)
                     ON DUPLICATE KEY UPDATE views = views + 1
                 """, (public_id,))
                 
-                # Записываем детализированный просмотр в таблицу views
+                # Записываем просмотр
                 if user_id:
                     await cursor.execute("""
                         INSERT INTO views (public_id, user_id)
                         VALUES (%s, %s)
-                        ON DUPLICATE KEY UPDATE created_at = NOW()
                     """, (public_id, user_id))
-                
+
                 await conn.commit()
             except Exception as e:
                 await conn.rollback()
@@ -1741,7 +1750,7 @@ async def get_passport_photo(request_id: int) -> Optional[bytes]:
             return result[0] if result else None
         
 async def get_passport_requests(
-    search: str = '',
+    query: str = '',
     status: str = '',
     date_from: str = '',
     date_to: str = '',
@@ -1749,66 +1758,59 @@ async def get_passport_requests(
     limit: int = 10,
     offset: int = 0
 ) -> list:
-    """Получает список заявок на верификацию паспорта"""
     async with aiomysql.connect(
-            user=user,
-            password=dbpassword,
-            db=db,
-            host=host,
-            port=port
+        user=user,
+        password=dbpassword,
+        db=db,
+        host=host,
+        port=port
     ) as conn:
         async with conn.cursor(aiomysql.DictCursor) as cur:
             sql = """
-                SELECT 
-                    pr.*,
-                    u.user_name,
-                    u.user_surname,
-                    u.user_email
+                SELECT pr.*, u.user_name, u.user_surname
                 FROM passport_requests pr
                 JOIN users u ON pr.user_id = u.id
                 WHERE 1=1
             """
             params = []
-            
-            if search:
+
+            if query:
                 sql += " AND (u.user_name LIKE %s OR u.user_surname LIKE %s)"
-                search_term = f"%{search}%"
-                params.extend([search_term, search_term])
-            
+                like_query = f"%{query}%"
+                params.extend([like_query, like_query])
+
             if status:
                 sql += " AND pr.status = %s"
                 params.append(status)
-                
+
             if date_from:
                 sql += " AND DATE(pr.created_at) >= %s"
                 params.append(date_from)
-            
+
             if date_to:
                 sql += " AND DATE(pr.created_at) <= %s"
                 params.append(date_to)
-            
-            sql += " ORDER BY pr.created_at " + ("DESC" if sort == 'newest' else "ASC")
-            
-            if limit:
-                sql += " LIMIT %s OFFSET %s"
-                params.extend([limit, offset])
-            
+
+            order = "DESC" if sort == 'newest' else "ASC"
+            sql += f" ORDER BY pr.created_at {order} LIMIT %s OFFSET %s"
+            params.extend([limit, offset])
+
             await cur.execute(sql, params)
             return await cur.fetchall()
 
+
 async def get_passport_requests_count(
-    search: str = '',
+    query: str = '',
     status: str = '',
     date_from: str = '',
     date_to: str = ''
 ) -> int:
-    """Получает количество заявок на верификацию"""
     async with aiomysql.connect(
-            user=user,
-            password=dbpassword,
-            db=db,
-            host=host,
-            port=port
+        user=user,
+        password=dbpassword,
+        db=db,
+        host=host,
+        port=port
     ) as conn:
         async with conn.cursor() as cur:
             sql = """
@@ -1818,27 +1820,28 @@ async def get_passport_requests_count(
                 WHERE 1=1
             """
             params = []
-            
-            if search:
+
+            if query:
                 sql += " AND (u.user_name LIKE %s OR u.user_surname LIKE %s)"
-                search_term = f"%{search}%"
-                params.extend([search_term, search_term])
-            
+                like_query = f"%{query}%"
+                params.extend([like_query, like_query])
+
             if status:
                 sql += " AND pr.status = %s"
                 params.append(status)
-                
+
             if date_from:
                 sql += " AND DATE(pr.created_at) >= %s"
                 params.append(date_from)
-            
+
             if date_to:
                 sql += " AND DATE(pr.created_at) <= %s"
                 params.append(date_to)
-            
+
             await cur.execute(sql, params)
             result = await cur.fetchone()
             return result[0] if result else 0
+
 
 async def approve_passport_request_db(request_id: int) -> bool:
     """Одобряет заявку на верификацию и обновляет статус аккаунта"""

@@ -1,6 +1,6 @@
-{% extends "admin/requests.html" %}
-
-{% block requests_content %}
+{% extends "admin/base.html" %}
+{% block title %}Подтверждение статей{% endblock %}
+{% block content %}
 <meta name="csrf-token" content="{{ csrf_token() }}">
 
 <div class="admin-header">

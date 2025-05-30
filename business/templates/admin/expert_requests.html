@@ -1,6 +1,7 @@
-{% extends "admin/requests.html" %}
+{% extends "admin/base.html" %}
+{% block title %}Заявки на эксперта{% endblock %}
 
-{% block requests_content %}
+{% block content %}
 <meta name="csrf-token" content="{{ csrf_token() }}">
 
 <div class="admin-header">

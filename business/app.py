@@ -472,7 +472,13 @@ def view_article(article_id, article_slug=None):
             return render_template('404.html'), 404
         
         # Записываем просмотр (если статья доступна)
-        asyncio.run(record_view(article_id, session.get('user_id')))
+        if 'viewed_articles' not in session:
+            session['viewed_articles'] = []
+
+        if article_id not in session['viewed_articles']:
+            asyncio.run(record_view(article_id))
+            session['viewed_articles'].append(article_id)
+
         
         # Проверка slug и редирект при необходимости
         if article_slug and article_slug != article.get('topic_name_en', ''):
