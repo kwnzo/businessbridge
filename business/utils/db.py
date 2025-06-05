@@ -126,6 +126,8 @@ async def get_user_by_id(user_id: int) -> Optional[dict]:
                 LIMIT 1
             """, (user_id,))
             return await cur.fetchone()
+
+
         
 
 async def update_user_profile(user_id: int, update_data: dict) -> bool:
@@ -2132,23 +2134,36 @@ async def respond_to_friend_request(user_id: int, friend_id: int, accept: bool) 
                 return False
 
 async def get_friends(user_id: int) -> list:
-    """Получает список друзей пользователя"""
+    """Получает всех друзей пользователя с возможным chat_id (если есть)"""
     async with aiomysql.connect(
-            user=user,
-            password=dbpassword,
-            db=db,
-            host=host,
-            port=port
+        user=user,
+        password=dbpassword,
+        db=db,
+        host=host,
+        port=port
     ) as conn:
         async with conn.cursor(aiomysql.DictCursor) as cur:
             await cur.execute("""
-                SELECT u.id, u.user_name, u.user_surname, u.user_avatar
+                SELECT 
+                    u.id, 
+                    u.user_name, 
+                    u.user_surname, 
+                    u.user_avatar,
+                    (
+                        SELECT cm1.chat_id 
+                        FROM chat_members cm1 
+                        JOIN chat_members cm2 ON cm1.chat_id = cm2.chat_id
+                        JOIN chats c ON c.id = cm1.chat_id AND c.is_group = 0
+                        WHERE cm1.user_id = u.id AND cm2.user_id = %s
+                        LIMIT 1
+                    ) AS chat_id
                 FROM users u
                 JOIN friendships f ON u.id = f.friend_id
                 WHERE f.user_id = %s AND f.status = 'accepted'
                 ORDER BY u.user_surname, u.user_name
-            """, (user_id,))
+            """, (user_id, user_id))
             return await cur.fetchall()
+
 
 async def get_pending_requests(user_id: int) -> list:
     """Получает входящие заявки в друзья"""
@@ -2168,3 +2183,89 @@ async def get_pending_requests(user_id: int) -> list:
                 ORDER BY f.created_at DESC
             """, (user_id,))
             return await cur.fetchall()
+
+# === ЧАТЫ ===
+
+async def create_chat(name: str, is_group: bool = False) -> int:
+    async with aiomysql.connect(
+        user=user, password=dbpassword, db=db, host=host, port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "INSERT INTO chats (name, is_group) VALUES (%s, %s)",
+                (name, is_group)
+            )
+            await conn.commit()
+            return cur.lastrowid
+
+async def add_user_to_chat(chat_id: int, user_id: int):
+    async with aiomysql.connect(
+        user=user, password=dbpassword, db=db, host=host, port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "INSERT IGNORE INTO chat_members (chat_id, user_id) VALUES (%s, %s)",
+                (chat_id, user_id)
+            )
+            await conn.commit()
+
+async def save_message(chat_id: int, sender_id: int, content: str):
+    async with aiomysql.connect(
+        user=user, password=dbpassword, db=db, host=host, port=port
+    ) as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "INSERT INTO messages (chat_id, sender_id, content) VALUES (%s, %s, %s)",
+                (chat_id, sender_id, content)
+            )
+            await conn.commit()
+
+async def get_messages(chat_id: int, limit: int = 50):
+    async with aiomysql.connect(
+        user=user, password=dbpassword, db=db, host=host, port=port
+    ) as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute(
+                """
+                SELECT m.id, m.sender_id, u.user_name, u.user_surname, m.content, m.timestamp
+                FROM messages m
+                JOIN users u ON m.sender_id = u.id
+                WHERE m.chat_id = %s
+                ORDER BY m.timestamp ASC
+                LIMIT %s
+                """,
+                (chat_id, limit)
+            )
+            return await cur.fetchall()
+
+async def get_user_chats(user_id: int):
+    async with aiomysql.connect(
+        user=user, password=dbpassword, db=db, host=host, port=port
+    ) as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute(
+                """
+                SELECT c.id, c.name, c.is_group
+                FROM chats c
+                JOIN chat_members cm ON cm.chat_id = c.id
+                WHERE cm.user_id = %s
+                """,
+                (user_id,)
+            )
+            return await cur.fetchall()
+
+
+async def get_private_chat_between_users(user1_id: int, user2_id: int) -> Optional[dict]:
+    async with aiomysql.connect(
+        user=user, password=dbpassword, db=db, host=host, port=port
+    ) as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute("""
+                SELECT c.id
+                FROM chats c
+                JOIN chat_members cm1 ON c.id = cm1.chat_id
+                JOIN chat_members cm2 ON c.id = cm2.chat_id
+                WHERE cm1.user_id = %s AND cm2.user_id = %s AND c.is_group = 0
+                LIMIT 1
+            """, (user1_id, user2_id))
+            return await cur.fetchone()

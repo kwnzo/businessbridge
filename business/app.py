@@ -10,10 +10,12 @@ from utils.db import (init_db,get_views, get_publics, record_view,
                       get_passport_request, has_pending_passport_request, create_passport_request,
                       get_user_notifications, mark_notifications_as_read, get_unread_notifications_count,
                       get_all_articles_for_display, get_friends, get_pending_requests, get_friendship_status, 
-                      create_notification, send_friend_request, respond_to_friend_request)
+                      create_notification, send_friend_request, respond_to_friend_request,
+                      get_private_chat_between_users, create_chat, add_user_to_chat)
 from flask_limiter import Limiter
 from flask_mysqldb import MySQL
-from flask_wtf.csrf import CSRFProtect, generate_csrf, validate_csrf   
+from flask_login import current_user
+from flask_wtf.csrf import CSRFProtect, generate_csrf, validate_csrf
 from wtforms import ValidationError
 from io import BytesIO  
 import hashlib
@@ -858,6 +860,7 @@ def login():
 @app.route('/chats')
 @login_required
 def chat_page():
+    id_user = session['user_id']
     user = asyncio.run(get_user_by_id(session['user_id']))
     has_unread = asyncio.run(get_unread_notifications_count(session['user_id'])) > 0
     unread_count = asyncio.run(get_unread_notifications_count(session['user_id']))
@@ -867,12 +870,44 @@ def chat_page():
     
     return render_template('chats.html', 
                          current_user=user,
+                         current_user_id = id_user,
                          friends=friends,
                          has_unread_notifications=has_unread,
                          unread_count=unread_count)
 
 
+@app.route('/create_private_chat', methods=['POST'])
+@csrf.exempt  # отключаем CSRF для fetch-запроса
+def create_private_chat():
+    # ✅ Получаем ID текущего юзера из сессии
+    user1 = session.get('user_id')
+    if not user1:
+        print("❌ Нет user_id в сессии")
+        return jsonify({'error': 'Unauthorized'}), 401
 
+    # ✅ Парсим тело запроса
+    try:
+        data = request.get_json()
+        user2 = int(data.get('friend_id'))
+    except Exception as e:
+        print("❌ Неверный формат данных:", e)
+        return jsonify({'error': 'Invalid data'}), 400
+
+    print(f"📩 Запрос на создание чата между {user1} и {user2}")
+
+    # ✅ Проверка: уже существует чат?
+    existing_chat = asyncio.run(get_private_chat_between_users(user1, user2))
+    if existing_chat:
+        print(f"✅ Уже есть чат: {existing_chat['id']}")
+        return jsonify({'chat_id': existing_chat['id']})
+
+    # ✅ Создаём новый чат
+    new_chat_id = asyncio.run(create_chat(name='', is_group=False))
+    asyncio.run(add_user_to_chat(new_chat_id, user1))
+    asyncio.run(add_user_to_chat(new_chat_id, user2))
+    print(f"✅ Новый чат создан: {new_chat_id}")
+
+    return jsonify({'chat_id': new_chat_id})
 
 
 @app.route('/profile/passport-verification', methods=['GET', 'POST'])

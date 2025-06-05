@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap" rel="stylesheet">
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
   <title>Бизнес‑Мост | Чаты</title>
   <style>
     html, body {
@@ -446,7 +447,7 @@
       </div>
       <div class="chat-list">
         {% for friend in friends %}
-        <div class="chat-item" data-chat-id="friend_{{ friend.id }}">
+        <div class="chat-item" data-chat-id="{{ friend.chat_id or '' }}" data-friend-id="{{ friend.id }}">
           <div class="chat-avatar">
             <img src="{{ url_for('user_avatar', user_id=friend.id) }}" alt="Аватар">
           </div>
@@ -483,8 +484,9 @@
           </div>
         </div>
         <div class="message-input-wrapper">
-          <input type="text" class="message-input" placeholder="Введите сообщение...">
-          <button class="send-btn">➤</button>
+          <input type="text" id="message-input" class="message-input" placeholder="Введите сообщение...">
+          
+          <button id = "send-btn"class="send-btn">➤</button>
         </div>
       </div>
     </div>
@@ -518,244 +520,251 @@
       </div>
     </div>
   </div>
-
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const chatItems = document.querySelectorAll('.chat-item');
-      const noChat = document.querySelector('.no-chat-selected');
-      const chatWindow = document.querySelector('.chat-window');
-      const chatHeader = document.querySelector('.chat-header');
-      const currentChatName = document.getElementById('current-chat-name');
-      const messagesContainer = document.querySelector('.messages-container');
-      const messagesBox = document.querySelector('.messages');
-      const messageInput = document.querySelector('.message-input');
-      const sendBtn = document.querySelector('.send-btn');
-      const closeChatBtn = document.querySelector('.close-chat-btn');
-      const chatSearch = document.querySelector('.chat-search');
-      const createGroupBtn = document.querySelector('.create-group-btn');
-      const modal = document.getElementById('create-chat-modal');
-      const closeModalBtn = document.querySelector('.close-modal');
-      const cancelModalBtn = document.querySelector('.modal-btn.cancel');
-      const createModalBtn = document.querySelector('.modal-btn.create');
-
-      let activeChatId = null;
-
-      // Переключение между чатами
-      chatItems.forEach(item => {
-        item.addEventListener('click', () => {
-          chatItems.forEach(i => i.classList.remove('active'));
-          item.classList.add('active');
-          const name = item.querySelector('.chat-title').innerText;
-          currentChatName.innerText = name;
-          noChat.style.display = 'none';
-          chatWindow.classList.remove('hidden');
-          activeChatId = item.dataset.chatId || 'default';
-          
-          // Загрузка сообщений для выбранного чата
-          loadChatMessages(activeChatId);
-          // Адаптивное поведение на мобильных
-          if (window.innerWidth <= 768) {
-            document.querySelector('.chat-main').classList.add('active');
-            document.querySelector('.chat-sidebar').classList.add('hidden');
-          }
-
-        });
-      });
-
-      // Функция добавления сообщения в чат с автоматической прокруткой
-      function addMessage(type, text, time) {
-        if (!text.trim()) return;
-        
-        // Создаем элемент сообщения
-        const msg = document.createElement('div');
-        msg.className = `message ${type}`;
-        msg.innerHTML = `${text}<div class="message-time">${time}</div>`;
-        
-        // Определяем, нужно ли прокручивать к новому сообщению
-        const shouldScroll = isNearBottom(messagesBox);
-        
-        // Добавляем сообщение в контейнер
-        messagesBox.appendChild(msg);
-        
-        // Прокручиваем к новому сообщению, если нужно
-        if (shouldScroll) {
-          scrollToBottom(messagesBox);
-        }
-      }
-
-      // Функция прокрутки к нижней части контейнера
-      function scrollToBottom(element) {
-        element.scrollTop = element.scrollHeight;
-      }
-
-      // Проверка, находится ли пользователь около нижней части чата
-      function isNearBottom(element) {
-        const threshold = 100; // пикселей от нижней границы
-        return element.scrollHeight - element.scrollTop - element.clientHeight <= threshold;
-      }
-
-      // Автоматическая прокрутка при загрузке чата
-      function loadChatMessages(chatId) {
-        // Очищаем сообщения
-        messagesBox.innerHTML = '';
-        
-        // Пример сообщений (в реальном приложении это будет AJAX запрос)
-        if (chatId === 'chat1') {
-          addMessage('received', 'Привет! Как дела?', '10:30');
-          addMessage('sent', 'Привет! Все отлично, спасибо!', '10:32');
-          // Добавим больше сообщений для демонстрации прокрутки
-          for (let i = 0; i < 20; i++) {
-            addMessage('received', `Тестовое сообщение ${i+1}`, `10:${33+i}`);
-          }
-        } else if (chatId === 'chat2') {
-          addMessage('received', 'Добрый день!', '09:15');
-          addMessage('sent', 'Здравствуйте! Чем могу помочь?', '09:20');
-        } else {
-          addMessage('received', 'Это начало нового чата', getCurrentTime());
-        }
-        
-        // Прокручиваем вниз после загрузки сообщений
-        setTimeout(() => {
-          scrollToBottom(messagesBox);
-        }, 50);
-      }
-
-      // Отправка сообщения с автоматической прокруткой
-      function sendMessage() {
-        const text = messageInput.value.trim();
-        if (!text || !activeChatId) return;
-        
-        addMessage('sent', text, getCurrentTime());
-        
-        // Обновляем последнее сообщение в списке чатов
-        const activeChat = document.querySelector('.chat-item.active');
-        if (activeChat) {
-          activeChat.querySelector('.chat-last-message').textContent = 
-            text.length > 20 ? text.substring(0, 20) + '...' : text;
-        }
-        
-        messageInput.value = '';
-      }
-
-      // Получение текущего времени в формате HH:MM
-      function getCurrentTime() {
-        const now = new Date();
-        return now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-      }
-
-      // Обработчики событий для отправки сообщения
-      sendBtn.addEventListener('click', sendMessage);
-
-      messageInput.addEventListener('keypress', e => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          sendMessage();
-        }
-      });
-
-      // Закрытие чата
-      closeChatBtn.addEventListener('click', () => {
-        // Возвращаемся к списку чатов
-        document.querySelector('.chat-main').classList.remove('active');
-        document.querySelector('.chat-sidebar').classList.remove('hidden');
-
-        // Скрываем чат
-        chatWindow.classList.add('hidden');
-        noChat.style.display = 'flex';
-
-        // Снимаем активность с чатов
-        chatItems.forEach(i => i.classList.remove('active'));
-      });
-
-      // Закрытие активного чата
-      function closeActiveChat() {
-        chatItems.forEach(i => i.classList.remove('active'));
-        noChat.style.display = 'flex';
-        chatWindow.classList.add('hidden');
-        activeChatId = null;
-        currentChatName.innerText = 'Собеседник';
-      }
-
-      // Поиск чатов
-      chatSearch.addEventListener('input', function() {
-        const searchText = this.value.toLowerCase();
-        chatItems.forEach(item => {
-          const title = item.querySelector('.chat-title').textContent.toLowerCase();
-          const lastMessage = item.querySelector('.chat-last-message').textContent.toLowerCase();
-          if (title.includes(searchText) || lastMessage.includes(searchText)) {
-            item.style.display = 'flex';
-          } else {
-            item.style.display = 'none';
-          }
-        });
-      });
-
-      // Модальное окно создания чата
-      createGroupBtn.addEventListener('click', () => {
-        modal.style.display = 'flex';
-      });
-
-      closeModalBtn.addEventListener('click', () => {
-        modal.style.display = 'none';
-      });
-
-      cancelModalBtn.addEventListener('click', () => {
-        modal.style.display = 'none';
-      });
-
-      createModalBtn.addEventListener('click', () => {
-        const chatName = document.getElementById('chat-name-input').value.trim();
-        if (!chatName) return;
-        
-        // Здесь должна быть логика создания чата на сервере
-        // Пока просто добавляем новый чат в список
-        const newChat = document.createElement('div');
-        newChat.className = 'chat-item';
-        newChat.dataset.chatId = 'chat' + (document.querySelectorAll('.chat-item').length + 1);
-        newChat.innerHTML = `
-          <div class="chat-avatar"></div>
-          <div class="chat-info">
-            <div class="chat-title">${chatName}</div>
-            <div class="chat-last-message">Новый чат</div>
-          </div>
-        `;
-        
-        document.querySelector('.chat-list').prepend(newChat);
-        
-        // Добавляем обработчик для нового чата
-        newChat.addEventListener('click', function() {
-          chatItems.forEach(i => i.classList.remove('active'));
-          this.classList.add('active');
-          currentChatName.innerText = chatName;
-          noChat.style.display = 'none';
-          chatWindow.classList.remove('hidden');
-          activeChatId = this.dataset.chatId;
-          loadChatMessages(activeChatId);
-        });
-        
-        // Закрываем модальное окно и очищаем поля
-        modal.style.display = 'none';
-        document.getElementById('chat-name-input').value = '';
-        document.querySelectorAll('.user-list input[type="checkbox"]').forEach(checkbox => {
-          checkbox.checked = false;
-        });
-      });
-
-      // Закрытие модального окна при клике вне его
-      modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-          modal.style.display = 'none';
-        }
-      });
-
-      // Закрытие чата по ESC
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && !modal.style.display === 'flex') {
-          closeActiveChat();
-        }
-      });
-    });
+    const currentUserId = "{{ current_user.id if current_user.id is not none else '' }}";
   </script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  console.log("💬 Чат инициализируется...");
+
+  const socket = io("http://localhost:5001");
+
+  const chatItems = document.querySelectorAll('.chat-item');
+  const noChat = document.querySelector('.no-chat-selected');
+  const chatWindow = document.querySelector('.chat-window');
+  const currentChatName = document.getElementById('current-chat-name');
+  const messagesBox = document.querySelector('.messages');
+  const closeChatBtn = document.querySelector('.close-chat-btn');
+  const sendBtn = document.getElementById('send-btn');           // ✅ добавлено
+  const messageInput = document.getElementById('message-input'); // ✅ добавлено
+
+  let activeChatId = null;
+
+  function joinChat(chatId) {
+    console.log("🔗 Присоединяемся к чату:", chatId);
+    socket.emit('join', { chat_id: chatId });
+  }
+
+  function scrollToBottom(el) {
+    el.scrollTop = el.scrollHeight;
+  }
+
+  function getCurrentTime() {
+    const now = new Date();
+    return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function addMessage(type, text, time, messageId = null) {
+    const msg = document.createElement('div');
+    msg.className = `message ${type}`;
+    msg.dataset.messageId = messageId;
+    msg.innerHTML = `
+      <div class="message-content">${text}</div>
+      <div class="message-meta">
+        <span class="message-time">${time}</span>
+        <span class="reaction">💬</span>
+        <span class="delete">❌</span>
+      </div>
+      <div class="reactions-container"></div>
+    `;
+
+    msg.querySelector('.reaction').addEventListener('click', () => {
+      const emoji = prompt("Выбери эмодзи (🔥 ❤️ 😂 😢)", "❤️");
+      if (emoji) {
+        const container = msg.querySelector('.reactions-container');
+        container.innerText += emoji + ' ';
+      }
+    });
+
+    msg.querySelector('.delete').addEventListener('click', () => {
+      if (confirm("Удалить сообщение?")) {
+        msg.remove();
+        console.log("🗑️ Сообщение удалено локально");
+      }
+    });
+
+    messagesBox.appendChild(msg);
+    scrollToBottom(messagesBox);
+  }
+
+  function sendMessage() {
+    const content = messageInput.value.trim();
+    if (!content) return;
+
+    if (!activeChatId || activeChatId === 'default' || activeChatId === 'None') {
+      alert("Выберите собеседника перед отправкой.");
+      return;
+    }
+
+    const msg = {
+      chat_id: activeChatId,
+      sender_id: currentUserId,
+      content: content
+    };
+
+    console.log("📤 Отправка сообщения:", msg);
+    socket.emit('send_message', msg);
+    addMessage('sent', content, getCurrentTime());
+    messageInput.value = '';
+  }
+
+  socket.on('new_message', (data) => {
+    console.log("📥 Новое сообщение:", data);
+    if (data.chat_id == activeChatId) {
+      addMessage('received', data.content, getCurrentTime(), data.message_id);
+    }
+  });
+
+  chatItems.forEach(item => {
+    item.addEventListener('click', async () => {
+      chatItems.forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+      currentChatName.innerText = item.querySelector('.chat-title').innerText;
+      noChat.style.display = 'none';
+      chatWindow.classList.remove('hidden');
+
+      let chatId = item.dataset.chatId;
+      const friendId = item.dataset.friendId;
+      console.log("👆 Клик по чату. chatId:", chatId, "| friendId:", friendId);
+
+      if (!chatId || chatId === 'None') {
+        if (!friendId) {
+          console.error("❌ Не передан friendId! Чат не создадим.");
+          return;
+        }
+
+        try {
+          const res = await fetch('/create_private_chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ friend_id: friendId })
+          });
+
+          if (!res.ok) throw new Error('Ошибка при создании чата');
+
+          const data = await res.json();
+          chatId = data.chat_id;
+          item.dataset.chatId = chatId;
+          console.log("✅ Новый чат создан:", chatId);
+        } catch (err) {
+          console.error('❌ Не удалось создать чат', err);
+          alert("Ошибка при создании чата");
+          return;
+        }
+      }
+
+      activeChatId = chatId;
+      joinChat(activeChatId);
+      loadChatMessages(activeChatId);
+    });
+  });
+
+  function loadChatMessages(chatId) {
+    console.log("📦 Загрузка сообщений для чата:", chatId);
+    messagesBox.innerHTML = '';
+    addMessage('received', 'Это начало чата', getCurrentTime());
+  }
+
+  // ✅ отправка по кнопке
+  if (sendBtn) {
+    sendBtn.addEventListener('click', () => {
+      console.log("📤 Клик по кнопке отправки");
+      sendMessage();
+    });
+  } else {
+    console.warn("❌ Кнопка отправки не найдена");
+  }
+
+  // ✅ отправка по Enter
+  if (messageInput) {
+    messageInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        console.log("⏎ Enter на поле ввода");
+        sendMessage();
+      }
+    });
+  } else {
+    console.warn("❌ Поле ввода не найдено");
+  }
+
+  closeChatBtn?.addEventListener('click', () => {
+    chatItems.forEach(i => i.classList.remove('active'));
+    chatWindow.classList.add('hidden');
+    noChat.style.display = 'flex';
+    activeChatId = null;
+    currentChatName.innerText = 'Собеседник';
+  });
+
+  // ===================== ГРУППОВОЙ ЧАТ =====================
+
+  const createGroupBtn = document.querySelector('.create-group-btn');
+  const modal = document.getElementById('create-chat-modal');
+  const closeModalBtn = document.querySelector('.close-modal');
+  const cancelModalBtn = document.querySelector('.modal-btn.cancel');
+  const createModalBtn = document.querySelector('.modal-btn.create');
+
+  if (createGroupBtn) {
+    createGroupBtn.addEventListener('click', () => {
+      modal.style.display = 'flex';
+    });
+  }
+
+  if (closeModalBtn) {
+    closeModalBtn.addEventListener('click', () => {
+      modal.style.display = 'none';
+    });
+  }
+
+  if (cancelModalBtn) {
+    cancelModalBtn.addEventListener('click', () => {
+      modal.style.display = 'none';
+    });
+  }
+
+  if (createModalBtn) {
+    createModalBtn.addEventListener('click', async () => {
+      const chatName = document.getElementById('chat-name-input')?.value.trim();
+      const checkboxes = document.querySelectorAll('.user-list input[type="checkbox"]:checked');
+      const memberIds = Array.from(checkboxes).map(cb => cb.value);
+
+      if (!chatName || memberIds.length < 1) {
+        alert("Укажи имя чата и выбери хотя бы одного участника");
+        return;
+      }
+
+      try {
+        const res = await fetch('/create_group_chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: chatName, members: memberIds })
+        });
+
+        if (!res.ok) throw new Error("Ошибка при создании группы");
+
+        const data = await res.json();
+        console.log("👥 Группа создана", data);
+      } catch (e) {
+        console.error("Ошибка:", e);
+        alert("Ошибка при создании группового чата");
+      }
+
+      modal.style.display = 'none';
+    });
+  }
+
+  modal?.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.style.display = 'none';
+    }
+  });
+
+});
+</script>
+
+
 
   <script src="{{ url_for('static', filename='js/account-dropdown.js') }}"></script>
 </body>
