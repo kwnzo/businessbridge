@@ -564,8 +564,6 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="message-content">${text}</div>
       <div class="message-meta">
         <span class="message-time">${time}</span>
-        <span class="reaction">💬</span>
-        <span class="delete">❌</span>
       </div>
       <div class="reactions-container"></div>
     `;
@@ -612,7 +610,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   socket.on('new_message', (data) => {
     console.log("📥 Новое сообщение:", data);
-    if (data.chat_id == activeChatId) {
+    if (data.chat_id == activeChatId && currentUserId != data.sender_id) {
       addMessage('received', data.content, getCurrentTime(), data.message_id);
     }
   });
