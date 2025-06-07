@@ -126,3 +126,51 @@ CREATE TABLE IF NOT EXISTS business.passport_requests (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   UNIQUE KEY unique_user_pending_request (user_id, status)  -- Простая уникальность (не идеально, но без ошибок)
 );
+
+CREATE TABLE IF NOT EXISTS business.friendships(
+  user_id INT NOT NULL,
+  friend_id INT NOT NULL,
+  status ENUM('pending', 'accepted', 'declined') NOT NULL,
+  created_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
+  updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
+
+  PRIMARY KEY (user_id, friend_id),
+  FOREIGN KEY  (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (friend_id) REFERENCES users(id) ON DELETE CASCADE,
+  CHECK (user_id != friend_id)
+);
+
+CREATE TABLE IF NOT EXISTS business.notifications (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL, 
+  message TEXT NOT NULL,
+  type VARCHAR(50),
+  related_id INT,
+  is_read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXITS business.chats (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255),
+  is_group BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE IF NOT EXISTS business.chat_members (
+  chat_id INT,
+  user_id INT,
+  PRIMARY KEY (chat_id, user_id),
+  FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXITS business.messages(
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  chat_id INT NOT NULL,
+  sender_id INT NOT NULL,
+  content TEXT,
+  timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE,
+  FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
+);
