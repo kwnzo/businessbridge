@@ -151,7 +151,7 @@ CREATE TABLE IF NOT EXISTS business.notifications (
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
-CREATE TABLE IF NOT EXITS business.chats (
+CREATE TABLE IF NOT EXISTS business.chats (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255),
   is_group BOOLEAN DEFAULT FALSE
@@ -165,7 +165,7 @@ CREATE TABLE IF NOT EXISTS business.chat_members (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXITS business.messages(
+CREATE TABLE IF NOT EXISTS business.messages(
   id INT AUTO_INCREMENT PRIMARY KEY,
   chat_id INT NOT NULL,
   sender_id INT NOT NULL,
