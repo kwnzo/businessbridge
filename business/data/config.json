@@ -1,8 +1,8 @@
 {
-    "user": "root",
-    "password": "t7Er3kOQkid2D!",
-    "db": "business",
+    "user": "11",
+    "password": "11!",
+    "db": "111",
     "host": "127.0.0.1",
     "port": 3306,
-    "secret-key": "81677a1020ad8001170ee366a9f5a1545dc934b55320631e50c056c0cc1891d6"
+    "secret-key": "111"
 }
